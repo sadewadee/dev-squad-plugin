@@ -1,0 +1,354 @@
+{
+  "team_name": "dev-squad",
+  "coordination_mode": "hierarchical",
+  "conflict_resolution": "coordinator_decides",
+  "context_sync": "real-time",
+  "members": [
+    {
+      "id": "coordinator",
+      "role": "Lead/Coordinator",
+      "model": "opus",
+      "capabilities": [
+        "task_decomposition",
+        "agent_coordination",
+        "conflict_resolution",
+        "quality_assurance",
+        "integration",
+        "skill_plugin_discovery",
+        "project_knowledge_management",
+        "risk_assessment",
+        "stakeholder_communication"
+      ],
+      "priority": 1,
+      "context_focus": ["visions", "considerations", "landscape", "risks", "dependencies"],
+      "auto_skills": [
+        "superpowers:brainstorming",
+        "superpowers:writing-plans",
+        "superpowers:dispatching-parallel-agents",
+        "superpowers:subagent-driven-development",
+        "superpowers:executing-plans",
+        "superpowers:verification-before-completion",
+        "superpowers:requesting-code-review",
+        "superpowers:finishing-a-development-branch",
+        "episodic-memory:remembering-conversations",
+        "issuetracker",
+        "find-skills",
+        "claude-md-management:revise-claude-md"
+      ],
+      "auto_mcp": [
+        "mcp__mermaid-mcp__validate_and_render_mermaid_diagram",
+        "mcp__mermaid-mcp__get_diagram_title",
+        "mcp__mermaid-mcp__get_diagram_summary",
+        "mcp__plugin_episodic-memory_episodic-memory__search",
+        "mcp__plugin_episodic-memory_episodic-memory__read"
+      ]
+    },
+    {
+      "id": "architect",
+      "role": "System Architect",
+      "model": "opus",
+      "capabilities": [
+        "system_design",
+        "architecture_review",
+        "tech_stack_decisions",
+        "database_schema",
+        "infrastructure_planning",
+        "microservices_design",
+        "event_driven_architecture",
+        "api_gateway_design",
+        "multi_tenant_architecture",
+        "security_architecture",
+        "performance_architecture"
+      ],
+      "priority": 2,
+      "context_focus": ["standards", "designs", "architecture", "scalability", "security"],
+      "auto_skills": [
+        "superpowers:brainstorming",
+        "superpowers:writing-plans",
+        "episodic-memory:remembering-conversations",
+        "claude-md-management:revise-claude-md"
+      ],
+      "auto_mcp": [
+        "mcp__context7__resolve-library-id",
+        "mcp__context7__query-docs",
+        "mcp__grep-github__searchGitHub",
+        "mcp__mermaid-mcp__validate_and_render_mermaid_diagram",
+        "mcp__mermaid-mcp__get_diagram_title",
+        "mcp__mermaid-mcp__get_diagram_summary",
+        "mcp__plugin_episodic-memory_episodic-memory__search",
+        "mcp__plugin_episodic-memory_episodic-memory__read"
+      ]
+    },
+    {
+      "id": "backend",
+      "role": "Backend Developer",
+      "model": "sonnet",
+      "capabilities": [
+        "api_development",
+        "database_operations",
+        "business_logic",
+        "server_optimization",
+        "authentication_authorization",
+        "message_queues",
+        "caching_strategies",
+        "background_jobs",
+        "data_migration",
+        "api_versioning"
+      ],
+      "languages": ["go", "nodejs", "python", "rust"],
+      "context_focus": ["standards", "designs", "implementation", "performance", "reliability"],
+      "auto_skills": [
+        "superpowers:test-driven-development",
+        "superpowers:systematic-debugging",
+        "superpowers:verification-before-completion",
+        "superpowers:receiving-code-review",
+        "simplify",
+        "issuetracker",
+        "episodic-memory:remembering-conversations"
+      ],
+      "auto_mcp": [
+        "mcp__context7__resolve-library-id",
+        "mcp__context7__query-docs",
+        "mcp__grep-github__searchGitHub",
+        "mcp__ide__getDiagnostics",
+        "mcp__plugin_episodic-memory_episodic-memory__search"
+      ]
+    },
+    {
+      "id": "frontend",
+      "role": "Frontend Developer",
+      "model": "sonnet",
+      "capabilities": [
+        "ui_implementation",
+        "react_nextjs",
+        "state_management",
+        "responsive_design",
+        "browser_testing",
+        "performance_optimization",
+        "internationalization",
+        "design_system",
+        "ssr_ssg",
+        "accessibility_compliance"
+      ],
+      "languages": ["typescript", "javascript"],
+      "context_focus": ["ui_patterns", "components", "user_experience", "performance", "accessibility"],
+      "auto_skills": [
+        "frontend-design:frontend-design",
+        "superpowers:test-driven-development",
+        "superpowers:verification-before-completion",
+        "superpowers:receiving-code-review",
+        "simplify",
+        "playwright-skill:playwright-skill",
+        "superpowers-chrome:browsing",
+        "episodic-memory:remembering-conversations"
+      ],
+      "auto_mcp": [
+        "mcp__context7__resolve-library-id",
+        "mcp__context7__query-docs",
+        "mcp__grep-github__searchGitHub",
+        "mcp__plugin_superpowers-chrome_chrome__use_browser",
+        "mcp__plugin_playwright_playwright__browser_navigate",
+        "mcp__plugin_playwright_playwright__browser_snapshot",
+        "mcp__plugin_playwright_playwright__browser_click",
+        "mcp__plugin_playwright_playwright__browser_type",
+        "mcp__plugin_playwright_playwright__browser_take_screenshot",
+        "mcp__plugin_playwright_playwright__browser_evaluate",
+        "mcp__plugin_playwright_playwright__browser_console_messages",
+        "mcp__plugin_playwright_playwright__browser_network_requests",
+        "mcp__plugin_playwright_playwright__browser_run_code",
+        "mcp__plugin_episodic-memory_episodic-memory__search"
+      ]
+    },
+    {
+      "id": "reviewer",
+      "role": "Code Reviewer/QA",
+      "model": "sonnet",
+      "capabilities": [
+        "code_review",
+        "code_simplification",
+        "security_analysis",
+        "test_validation",
+        "quality_metrics",
+        "issue_tracking",
+        "dependency_auditing",
+        "performance_profiling",
+        "compliance_checking",
+        "architecture_conformance"
+      ],
+      "context_focus": ["quality_standards", "security_patterns", "best_practices", "compliance", "performance"],
+      "auto_skills": [
+        "code-review:code-review",
+        "simplify",
+        "superpowers:systematic-debugging",
+        "superpowers:verification-before-completion",
+        "issuetracker",
+        "episodic-memory:remembering-conversations"
+      ],
+      "auto_mcp": [
+        "mcp__grep-github__searchGitHub",
+        "mcp__context7__resolve-library-id",
+        "mcp__context7__query-docs",
+        "mcp__ide__getDiagnostics",
+        "mcp__plugin_episodic-memory_episodic-memory__search"
+      ]
+    },
+    {
+      "id": "devops",
+      "role": "DevOps Engineer",
+      "model": "sonnet",
+      "capabilities": [
+        "docker_compose",
+        "traefik_config",
+        "deployment_automation",
+        "monitoring_setup",
+        "kubernetes",
+        "secrets_management",
+        "multi_environment",
+        "blue_green_deployment",
+        "infrastructure_as_code",
+        "log_aggregation",
+        "alerting",
+        "backup_recovery"
+      ],
+      "context_focus": ["infrastructure", "cicd", "observability", "security", "reliability"],
+      "auto_skills": [
+        "superpowers:verification-before-completion",
+        "superpowers:writing-plans",
+        "superpowers:systematic-debugging",
+        "episodic-memory:remembering-conversations"
+      ],
+      "auto_mcp": [
+        "mcp__context7__resolve-library-id",
+        "mcp__context7__query-docs",
+        "mcp__grep-github__searchGitHub",
+        "mcp__plugin_episodic-memory_episodic-memory__search"
+      ]
+    },
+    {
+      "id": "git-ops",
+      "role": "Git Operations Manager",
+      "model": "sonnet",
+      "capabilities": [
+        "branch_management",
+        "pr_workflows",
+        "merge_strategies",
+        "conflict_resolution",
+        "release_management",
+        "monorepo_management",
+        "changelog_generation",
+        "semantic_versioning",
+        "release_trains",
+        "hotfix_procedures"
+      ],
+      "context_focus": ["git_state", "workflows", "conventions", "release_strategy"],
+      "auto_skills": [
+        "superpowers:verification-before-completion",
+        "superpowers:finishing-a-development-branch",
+        "superpowers:using-git-worktrees",
+        "episodic-memory:remembering-conversations"
+      ],
+      "auto_mcp": [
+        "mcp__grep-github__searchGitHub",
+        "mcp__plugin_episodic-memory_episodic-memory__search"
+      ]
+    }
+  ],
+  "workflows": {
+    "feature_development": [
+      "coordinator → architect (design review + ADR)",
+      "architect → backend + frontend (parallel implementation with worktrees)",
+      "backend + frontend → reviewer (code review + security scan)",
+      "reviewer → devops (deployment config + staging)",
+      "devops → git-ops (branch/PR management)",
+      "git-ops → coordinator (completion report)"
+    ],
+    "bug_fix": [
+      "coordinator → reviewer (root cause via issuetracker + systematic-debugging)",
+      "reviewer → backend|frontend (fix implementation with TDD)",
+      "backend|frontend → reviewer (validation + regression check)",
+      "reviewer → git-ops (PR creation + hotfix if critical)",
+      "git-ops → coordinator (completion)"
+    ],
+    "infrastructure_change": [
+      "coordinator → architect (design validation + impact analysis)",
+      "architect → devops (implementation + IaC)",
+      "devops → reviewer (config review + security check)",
+      "reviewer → coordinator (deployment approval)"
+    ],
+    "refactoring": [
+      "coordinator → architect (target architecture + migration strategy)",
+      "architect → reviewer (review current code quality metrics)",
+      "reviewer → backend|frontend (incremental refactor with TDD)",
+      "backend|frontend → reviewer (verify no regression + improved metrics)",
+      "reviewer → git-ops (staged PRs)",
+      "git-ops → coordinator (completion)"
+    ],
+    "security_audit": [
+      "coordinator → reviewer (full security scan + OWASP check)",
+      "reviewer → architect (architecture-level findings)",
+      "architect → backend + frontend + devops (parallel fixes)",
+      "all → reviewer (re-validation)",
+      "reviewer → coordinator (audit report)"
+    ],
+    "data_migration": [
+      "coordinator → architect (migration strategy + rollback plan)",
+      "architect → backend (migration scripts + data validation)",
+      "backend → devops (staging environment + backup)",
+      "devops → reviewer (dry-run validation)",
+      "reviewer → coordinator (go/no-go decision)"
+    ],
+    "performance_optimization": [
+      "coordinator → reviewer (profiling + bottleneck identification)",
+      "reviewer → architect (architecture-level optimizations)",
+      "architect → backend + frontend (parallel optimization)",
+      "backend + frontend → reviewer (benchmark validation)",
+      "reviewer → devops (monitoring + alerting updates)",
+      "devops → coordinator (completion with metrics)"
+    ],
+    "new_project_setup": [
+      "coordinator → architect (full architecture design + tech stack)",
+      "architect → devops (project scaffolding + CI/CD + environments)",
+      "devops → backend + frontend (parallel initial implementation)",
+      "backend + frontend → reviewer (initial code review + standards check)",
+      "reviewer → git-ops (repo setup + branch protection + PR templates)",
+      "git-ops → coordinator (project ready)"
+    ]
+  },
+  "guardrails": {
+    "max_parallel_agents": 12,
+    "require_review_before_merge": true,
+    "coordinator_must_approve": true,
+    "max_task_duration_minutes": 120,
+    "require_tests_before_pr": true,
+    "require_security_check": true,
+    "require_adr_for_architecture_changes": true,
+    "max_pr_size_lines": 500,
+    "require_rollback_plan_for_migrations": true
+  },
+  "autonomous_behavior": {
+    "use_skills_without_asking": true,
+    "use_mcp_without_asking": true,
+    "lookup_docs_automatically": true,
+    "search_patterns_automatically": true,
+    "run_tests_before_completion": true,
+    "search_conversation_history": true,
+    "use_browser_for_testing": true,
+    "track_issues_automatically": true,
+    "update_project_knowledge": true,
+    "create_adr_for_decisions": true,
+    "profile_before_optimizing": true,
+    "audit_dependencies_on_review": true
+  },
+  "enterprise_patterns": {
+    "architecture_decision_records": true,
+    "conventional_commits": true,
+    "semantic_versioning": true,
+    "trunk_based_development": true,
+    "feature_flags": true,
+    "blue_green_deployment": true,
+    "circuit_breaker_pattern": true,
+    "health_check_endpoints": true,
+    "structured_logging": true,
+    "distributed_tracing": true
+  }
+}

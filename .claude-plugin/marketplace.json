@@ -1,0 +1,18 @@
+{
+  "name": "dev-squad-marketplace",
+  "description": "Marketplace for dev-squad agent swarm plugin",
+  "owner": {
+    "name": "sadewadee"
+  },
+  "plugins": [
+    {
+      "name": "dev-squad",
+      "description": "Full-stack dev team agent swarm with 7 specialized agents",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "sadewadee"
+      }
+    }
+  ]
+}

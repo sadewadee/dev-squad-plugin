@@ -1,0 +1,12 @@
+{
+  "name": "dev-squad",
+  "version": "1.0.0",
+  "description": "Full-stack dev team agent swarm with 7 specialized agents: coordinator (opus), architect (opus), backend (sonnet), frontend (sonnet), reviewer/security-lead (sonnet), devops (sonnet), git-ops (sonnet). Supports feature development, database tasks, bug fixes, architecture changes, security audits, and infrastructure work.",
+  "author": {
+    "name": "sadewadee"
+  },
+  "homepage": "https://github.com/sadewadee/dev-squad-plugin",
+  "repository": "https://github.com/sadewadee/dev-squad-plugin",
+  "license": "MIT",
+  "keywords": ["dev-squad", "agent-swarm", "full-stack", "multi-agent", "coordinator", "architect", "backend", "frontend", "reviewer", "devops", "git-ops", "security"]
+}
