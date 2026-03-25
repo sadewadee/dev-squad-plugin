@@ -9,12 +9,13 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 
 **Command Format:**
 - `/dev-squad` or `/dev-squad start` - Start coordinator for new task
+- `/dev-squad build <description>` - Zero-to-ship: build a full project from description through 6 automated phases
 - `/dev-squad db <description>` - Start database workflow (schema, migrations, optimization)
 - `/dev-squad schema <description>` - Schema design workflow
 - `/dev-squad migrate <description>` - Database migration workflow
 - `/dev-squad optimize <description>` - Query optimization workflow
 - `/dev-squad deploy-db <description>` - Database deployment workflow
-- `/dev-squad status` - Check swarm status
+- `/dev-squad status` - Check swarm progress (active agents, phases, blockers)
 - `/dev-squad help` - Show available commands
 
 ## Team Configuration
@@ -62,6 +63,49 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 - Profiling & bottleneck identification
 - Performance regression detection
 - Index strategy review
+
+## Workflow: Zero-to-Ship (Full Project Build)
+
+The `/dev-squad build <description>` command triggers a fully automated 6-phase project build:
+
+```
+/dev-squad build <description>
+    |
+    v
+Phase 1: DISCOVER
+    [Architect] → Brainstorm + research similar projects + generate PRD
+    >>> USER CHECKPOINT: Approve PRD before continuing <<<
+    |
+    v
+Phase 2: DESIGN
+    [Architect] → Full architecture + C4 diagrams + API contracts + ADR
+    [Reviewer]  → Threat model on proposed design
+    |
+    v
+Phase 3: SCAFFOLD
+    [DevOps]  → Project structure + Dockerfile + docker-compose + CI/CD + env templates
+    [Git-Ops] → Git init + .gitignore + branch protection + PR template + initial commit
+    |
+    v
+Phase 4: IMPLEMENT
+    [Backend]  → API development + database + business logic (TDD)
+    [Frontend] → UI implementation + state management (TDD)
+    (parallel execution with worktrees)
+    |
+    v
+Phase 5: REVIEW
+    [Reviewer] → Full code review + OWASP audit + dependency scan + performance check
+    All P0-P1 findings must be fixed before proceeding
+    |
+    v
+Phase 6: SHIP
+    [DevOps]   → Staging deployment + health checks
+    [Git-Ops]  → PR creation with full summary
+    [Reviewer] → Final sign-off
+    Completion report to user
+```
+
+Only one user checkpoint exists -- after PRD generation in Phase 1. All other phases execute autonomously.
 
 ## Workflow: Database Tasks (Primary Focus)
 
@@ -143,17 +187,22 @@ When user invokes `/dev-squad` or any variant:
 
 ### 1. Parse Command
 Extract the command type and description:
+- `build`: Zero-to-ship workflow -- launch coordinator with full 6-phase build prompt
 - `db` or `database`: General database workflow
 - `schema`: Schema design workflow
 - `migrate` or `migration`: Database migration workflow
 - `optimize` or `performance`: Query optimization workflow
 - `deploy-db`: Database deployment workflow
-- `status`: Show current swarm status
+- `status`: Show current swarm progress (active agents, phases, blockers)
 - No args or `start`: Ask user what they need
 
 ### 2. Start Coordinator
-**Immediately** use the Task tool to invoke the coordinator agent:
+**Immediately** use the Task tool to invoke the coordinator agent.
 
+#### For `build` command:
+Use the full zero-to-ship prompt from `commands/build.md`. The coordinator receives the user's project description and the complete 6-phase workflow instructions including team roster, phase transition protocol, and workflow tracking.
+
+#### For database commands (`db`, `schema`, `migrate`, `optimize`, `deploy-db`):
 ```
 Task tool with:
 - subagent_type: "coordinator"
@@ -189,6 +238,9 @@ Task tool with:
     ## Available Skills & Tools
     {include skills/tools section}
 ```
+
+#### For `status` command:
+Check `.dev-squad/workflow-active` and report current swarm progress as described in `commands/status.md`.
 
 ### 3. Monitor and Report
 - Track agent progress

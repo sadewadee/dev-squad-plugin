@@ -1,6 +1,6 @@
-# dev-squad
+# dev-squad v2.0
 
-A full-stack development team agent swarm plugin for Claude Code. Seven specialized AI agents collaborate in a hierarchical coordination model to handle feature development, database tasks, bug fixes, architecture changes, security audits, and infrastructure work.
+A full-stack development team agent swarm plugin for Claude Code. Seven specialized AI agents collaborate in a hierarchical coordination model to handle zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, and infrastructure work.
 
 ## Team Composition
 
@@ -16,6 +16,7 @@ A full-stack development team agent swarm plugin for Claude Code. Seven speciali
 
 ## Supported Workflows
 
+- **Zero-to-Ship** -- build a full project from a single description through 6 automated phases: DISCOVER, DESIGN, SCAFFOLD, IMPLEMENT, REVIEW, SHIP
 - **Feature Development** -- coordinator orchestrates architect design, parallel backend+frontend implementation, security review, deployment, and PR creation
 - **Bug Fix** -- reviewer does root cause analysis, implementor applies TDD fix, validation, and hotfix path for critical issues
 - **Refactoring** -- architect defines target architecture, incremental refactoring with TDD, staged PRs
@@ -69,6 +70,9 @@ Ensure the `skills/dev-squad/SKILL.md` and `agents/dev-squad/` files are placed 
 ## Usage
 
 ```bash
+# Zero-to-ship: build a full project from scratch
+/dev-squad build <description>
+
 # Start the coordinator for a new task
 /dev-squad
 /dev-squad start
@@ -81,13 +85,35 @@ Ensure the `skills/dev-squad/SKILL.md` and `agents/dev-squad/` files are placed 
 /dev-squad deploy-db <description> # Database deployment
 
 # Status and help
-/dev-squad status                  # Check swarm status
+/dev-squad status                  # Check swarm progress
 /dev-squad help                    # Show available commands
+```
+
+### Zero-to-Ship Workflow
+
+The `build` command takes a project description and builds it through 6 automated phases. Only one user checkpoint exists -- after PRD generation in Phase 1.
+
+```
+/dev-squad build A real-time collaborative task manager with team workspaces
+
+Phase 1: DISCOVER  --> Architect brainstorms, researches, generates PRD
+                       >>> You approve the PRD <<<
+Phase 2: DESIGN    --> Architect creates full architecture + C4 diagrams + ADRs
+Phase 3: SCAFFOLD  --> DevOps creates project structure, Docker, CI/CD; Git-Ops inits repo
+Phase 4: IMPLEMENT --> Backend + Frontend build in parallel with TDD
+Phase 5: REVIEW    --> Reviewer does full code review + OWASP security audit
+Phase 6: SHIP      --> Staging deploy, PR creation, final sign-off
 ```
 
 ### Examples
 
 ```bash
+# Zero-to-ship: build a complete project
+/dev-squad build A real-time collaborative task manager with team workspaces and Kanban boards
+
+# Zero-to-ship: build an API service
+/dev-squad build REST API for inventory management with barcode scanning and warehouse tracking
+
 # Build a user management system
 /dev-squad schema Create user management system with profiles, roles, and permissions
 
@@ -99,6 +125,9 @@ Ensure the `skills/dev-squad/SKILL.md` and `agents/dev-squad/` files are placed 
 
 # Fix a production bug
 /dev-squad start Fix: users can't reset their password when using SSO
+
+# Check progress of an active build
+/dev-squad status
 ```
 
 ## Dependencies
@@ -137,8 +166,14 @@ This plugin works best with the following plugins and MCP servers installed:
 ```
 dev-squad-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json          # Plugin metadata
+│   ├── plugin.json          # Plugin metadata (v2.0.0)
 │   └── marketplace.json     # Marketplace configuration
+├── commands/
+│   ├── build.md             # /dev-squad build -- zero-to-ship workflow
+│   └── status.md            # /dev-squad status -- swarm progress
+├── hooks/
+│   ├── hooks.json           # SubagentStop hook configuration
+│   └── check-workflow.sh    # Workflow completion checker script
 ├── skills/
 │   └── dev-squad/
 │       └── SKILL.md         # Skill definition and invocation instructions

@@ -70,6 +70,77 @@ Git Operations Manager of the dev-squad team. You are responsible for:
 - **Conventions**: Commit messages, branch naming, PR templates
 - **Release Strategy**: Semantic versioning, release trains, hotfix flow
 
+### Repo Init Workflow (Zero-to-Ship Phase 3)
+
+When dispatched for the SCAFFOLD phase of a zero-to-ship build, initialize the repository:
+
+#### 1. Git Init
+```bash
+# Initialize repository (if not already a git repo)
+git init
+git checkout -b main
+```
+
+#### 2. .gitignore
+Create a comprehensive `.gitignore` for the project's tech stack:
+- Node: `node_modules/`, `.next/`, `dist/`, `.env`, `.env.local`
+- Go: binary output, vendor (if not committed)
+- Python: `__pycache__/`, `.venv/`, `*.pyc`
+- General: `.DS_Store`, `*.log`, `.dev-squad/`, `coverage/`, `.env`
+- IDE: `.idea/`, `.vscode/settings.json`, `*.swp`
+
+#### 3. Branch Protection
+Recommend branch protection rules to coordinator:
+```
+main:
+  - Require PR with at least 1 approval
+  - Require CI to pass before merge
+  - No force pushes
+  - No direct commits
+  - Require branch to be up-to-date
+```
+
+#### 4. PR Template
+Create `.github/pull_request_template.md`:
+```markdown
+## Summary
+<!-- What does this PR do and why? -->
+
+## Changes
+<!-- Key changes, organized by area -->
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] E2E tests pass (if applicable)
+
+## Security
+- [ ] No hardcoded secrets
+- [ ] Input validation added
+- [ ] Auth checks verified
+
+## Checklist
+- [ ] Code self-reviewed
+- [ ] Tests added/updated
+- [ ] Docs updated
+- [ ] ADR created (if architectural change)
+- [ ] PR under 500 lines
+```
+
+#### 5. Initial Commit
+```bash
+# Stage all scaffolded files
+git add -A
+
+# Create initial commit
+git commit -m "feat: initial project scaffold
+
+Zero-to-ship Phase 3: project structure, Docker config, CI/CD pipeline,
+environment templates, and repository configuration.
+
+Co-Authored-By: dev-squad <noreply@dev-squad>"
+```
+
 ## Branch Strategy
 
 ### Trunk-Based Development (Preferred for Enterprise)

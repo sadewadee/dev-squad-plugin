@@ -1,0 +1,9 @@
+{
+  "hooks": [
+    {
+      "type": "SubagentStop",
+      "description": "Check if zero-to-ship workflow is active and remind to continue to next phase if not complete.",
+      "command": "bash hooks/check-workflow.sh"
+    }
+  ]
+}

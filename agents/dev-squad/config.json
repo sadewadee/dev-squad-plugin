@@ -312,6 +312,14 @@
       "backend + frontend → reviewer (initial code review + standards check)",
       "reviewer → git-ops (repo setup + branch protection + PR templates)",
       "git-ops → coordinator (project ready)"
+    ],
+    "zero_to_ship": [
+      "Phase 1 DISCOVER: coordinator → architect (brainstorm + research + PRD generation) → USER CHECKPOINT",
+      "Phase 2 DESIGN: coordinator → architect (architecture + C4 diagrams + ADR) → reviewer (threat model)",
+      "Phase 3 SCAFFOLD: coordinator → devops (project structure + Docker + CI/CD) + git-ops (repo init + branch protection)",
+      "Phase 4 IMPLEMENT: coordinator → backend + frontend (parallel implementation with worktrees + TDD)",
+      "Phase 5 REVIEW: coordinator → reviewer (full code review + OWASP audit + dependency scan + performance check)",
+      "Phase 6 SHIP: coordinator → devops (staging deploy) + git-ops (PR creation) → reviewer (final sign-off) → coordinator (completion report)"
     ]
   },
   "guardrails": {

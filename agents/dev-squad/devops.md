@@ -314,6 +314,74 @@ gunzip -c latest_backup.sql.gz | pg_restore --list > /dev/null
 - No privileged containers
 - Regular base image updates
 
+### Scaffold Workflow (Zero-to-Ship Phase 3)
+
+When dispatched for the SCAFFOLD phase of a zero-to-ship build, create the full project foundation:
+
+#### 1. Project Structure
+```
+{project-name}/
+├── src/                    # Application source code
+│   ├── api/                # API routes/handlers
+│   ├── config/             # Configuration management
+│   ├── lib/                # Shared utilities
+│   ├── models/             # Data models/schemas
+│   ├── services/           # Business logic
+│   └── middleware/         # Middleware (auth, logging, etc.)
+├── tests/                  # Test files (unit, integration, e2e)
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── scripts/                # Build, deploy, seed scripts
+├── docs/                   # Project documentation
+│   ├── adr/                # Architecture Decision Records
+│   └── diagrams/           # Architecture diagrams
+├── .dev-squad/             # Workflow tracking
+├── environments/           # Per-environment configs
+│   ├── dev/
+│   ├── staging/
+│   └── production/
+├── Dockerfile
+├── docker-compose.yml
+├── .env.template
+├── Makefile
+└── README.md
+```
+
+#### 2. Dockerfile
+Create a multi-stage Dockerfile following container best practices:
+- Multi-stage build (builder + production)
+- Non-root user
+- Health check instruction
+- Pinned base image versions
+- `.dockerignore` for build exclusions
+- Resource-efficient layers
+
+#### 3. Docker Compose
+Create `docker-compose.yml` with:
+- App service with health check and resource limits
+- Database service (as specified by architect)
+- Redis/cache service (if needed)
+- Volume mounts for persistence
+- Network configuration
+- Environment variable references (`.env`)
+
+#### 4. CI/CD Pipeline
+Create `.github/workflows/ci.yml` with:
+- Test job (lint, unit tests, integration tests)
+- Security scan job (dependency audit, secrets scan)
+- Build job (Docker image build and push)
+- Deploy staging job (on develop branch)
+- Deploy production job (on main branch, with environment protection)
+
+#### 5. Environment Templates
+Create `.env.template` with all required environment variables (placeholder values only, never real secrets):
+- Database connection strings
+- API keys placeholders
+- Feature flags
+- Service URLs
+- Logging/monitoring config
+
 ## Implementation Workflow
 
 ### 1. Understand Requirements

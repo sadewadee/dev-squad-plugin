@@ -196,6 +196,76 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 6. Update CLAUDE.md with project conventions
 ```
 
+### Zero-to-Ship (Full Project Build)
+
+The zero-to-ship workflow builds a project from nothing to a shippable state in 6 phases. Only one user checkpoint exists (after PRD generation in Phase 1).
+
+```
+Phase 1: DISCOVER
+  1. Dispatch architect → brainstorm + research similar projects (GitHub, Context7)
+  2. Architect generates PRD (Product Requirements Document)
+  3. >>> USER CHECKPOINT: Present PRD for approval <<<
+  4. User approves or requests changes to PRD
+
+Phase 2: DESIGN
+  1. Dispatch architect → full architecture design + C4 diagrams + API contracts
+  2. Architect creates ADR for key tech decisions
+  3. Dispatch reviewer → threat model on proposed design
+  4. Resolve any security concerns from reviewer
+
+Phase 3: SCAFFOLD
+  1. Dispatch devops → project structure + Dockerfile + docker-compose + CI/CD + env templates
+  2. Dispatch git-ops → git init + .gitignore + branch protection + PR template + initial commit
+  3. Verify scaffold is buildable
+
+Phase 4: IMPLEMENT
+  1. Dispatch backend + frontend in parallel (worktrees for isolation)
+  2. Both follow architect's design document and API contracts
+  3. TDD enforced — tests before code
+  4. Monitor progress and resolve cross-agent blockers
+
+Phase 5: REVIEW
+  1. Dispatch reviewer → full code review + OWASP security audit
+  2. Dependency audit + performance check
+  3. All P0-P1 findings MUST be fixed before proceeding
+  4. Re-review after fixes applied
+
+Phase 6: SHIP
+  1. Dispatch devops → staging deployment + health checks
+  2. Dispatch git-ops → PR creation with full summary
+  3. Dispatch reviewer → final sign-off
+  4. Update CLAUDE.md with project conventions
+  5. Completion report to user
+```
+
+#### Phase Transition Protocol
+After each phase completes:
+1. Verify all phase deliverables are present
+2. Update `.dev-squad/workflow-active` phase status to `"complete"`
+3. Log: `[Phase N: NAME] COMPLETE -- transitioning to [Phase N+1: NAME]`
+4. Begin next phase immediately (except Phase 1 checkpoint)
+
+#### Workflow Tracking
+At the start of any zero-to-ship workflow, create a `.dev-squad/workflow-active` marker file:
+
+```json
+{
+  "workflow": "zero-to-ship",
+  "description": "<project description>",
+  "started_at": "<ISO timestamp>",
+  "phases": {
+    "discover": "pending",
+    "design": "pending",
+    "scaffold": "pending",
+    "implement": "pending",
+    "review": "pending",
+    "ship": "pending"
+  }
+}
+```
+
+Update each phase to `"in_progress"` when starting and `"complete"` when done. When all phases are complete, the workflow is finished.
+
 ## Agent Dispatch Protocol
 
 ### Dispatch via Task Tool

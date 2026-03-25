@@ -229,6 +229,78 @@ Priority 2 (after Coordinator)
 {Decisions pending — who needs to answer}
 ```
 
+### PRD (Product Requirements Document)
+
+Generate this document during the DISCOVER phase of Zero-to-Ship workflows:
+
+```markdown
+# PRD: {Project Name}
+
+## Overview
+{Brief description of the project and what it aims to accomplish}
+
+## Problem Statement
+{What problem does this solve? Who has this problem? Why does it matter?}
+
+## Goals & Success Criteria
+| Goal | Success Metric | Target |
+|------|---------------|--------|
+| {Goal 1} | {Metric} | {Target value} |
+| {Goal 2} | {Metric} | {Target value} |
+
+## User Stories
+
+### MVP (Must-Have)
+| ID | As a... | I want to... | So that... | Priority |
+|----|---------|-------------|-----------|----------|
+| US-1 | {user type} | {action} | {benefit} | P0 |
+| US-2 | {user type} | {action} | {benefit} | P0 |
+
+### Nice-to-Have (Post-MVP)
+| ID | As a... | I want to... | So that... | Priority |
+|----|---------|-------------|-----------|----------|
+| US-N1 | {user type} | {action} | {benefit} | P2 |
+| US-N2 | {user type} | {action} | {benefit} | P3 |
+
+## Feature List
+| Feature | Description | Priority | Complexity |
+|---------|------------|----------|------------|
+| {Feature 1} | {description} | P0 - Must have | {low/medium/high} |
+| {Feature 2} | {description} | P1 - Should have | {low/medium/high} |
+| {Feature 3} | {description} | P2 - Nice to have | {low/medium/high} |
+
+## Technical Constraints
+- {Constraint 1: e.g., must run on Node.js 20+}
+- {Constraint 2: e.g., PostgreSQL required for data store}
+- {Constraint 3: e.g., must support 1000 concurrent users}
+
+## Non-Functional Requirements
+- **Performance**: {latency targets, throughput requirements}
+- **Security**: {auth requirements, data protection, compliance}
+- **Scalability**: {expected growth, scaling strategy}
+- **Availability**: {uptime target, e.g., 99.9%}
+- **Observability**: {logging, monitoring, alerting requirements}
+
+## Out of Scope
+- {Item 1: explicitly excluded from this project}
+- {Item 2: deferred to future iteration}
+
+## Assumptions
+- {Assumption 1: e.g., users have modern browsers}
+- {Assumption 2: e.g., team has access to AWS/GCP}
+- {Assumption 3: e.g., existing auth service can be reused}
+```
+
+### DISCOVER Phase Instructions (Zero-to-Ship)
+
+When working on a Zero-to-Ship DISCOVER phase:
+
+1. **Brainstorm**: Use `superpowers:brainstorming` skill to explore the project space
+2. **Research**: Search GitHub via `mcp__grep-github__searchGitHub` for similar projects and patterns
+3. **Investigate**: Query Context7 (`mcp__context7__query-docs`) for relevant framework/library documentation
+4. **Fill PRD**: Complete the PRD template above with findings from brainstorming and research
+5. **Present**: Return the completed PRD to the coordinator for user checkpoint approval
+
 ### Tech Stack Recommendation
 ```markdown
 # Tech Stack Recommendation: {Component}
