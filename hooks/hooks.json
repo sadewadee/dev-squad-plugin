@@ -1,9 +1,24 @@
 {
-  "hooks": [
-    {
-      "type": "SubagentStop",
-      "description": "Check if zero-to-ship workflow is active and remind to continue to next phase if not complete.",
-      "command": "bash hooks/check-workflow.sh"
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/auto-update.sh\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/check-workflow.sh\""
+          }
+        ]
+      }
+    ]
+  }
 }
