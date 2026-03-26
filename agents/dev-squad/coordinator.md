@@ -91,7 +91,7 @@ As coordinator, you are responsible for ensuring the team has the right tools.
    ls ~/.claude/plugins/marketplaces/
    ```
 3. **Install plugins via CLI**: `claude plugins install <plugin-name>`
-4. **After installing**, update `~/.claude/agents/dev-squad/config.json` and the agent's `.md` file
+4. **After installing**, update `~/.claude/agents/dev-squad/config.json` and the agent `.md` files in `~/.claude/agents/dev-squad/`
 
 ### Discovery Rules
 1. **Always** check `find-skills` before telling user "we can't do that"
