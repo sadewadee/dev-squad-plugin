@@ -318,35 +318,57 @@ gunzip -c latest_backup.sql.gz | pg_restore --list > /dev/null
 
 When dispatched for the SCAFFOLD phase of a zero-to-ship build, create the full project foundation:
 
-#### 1. Project Structure
+#### 1. Monorepo Structure (MANDATORY)
+All projects use monorepo layout to prevent code duplication:
 ```
 {project-name}/
-├── src/                    # Application source code
-│   ├── api/                # API routes/handlers
-│   ├── config/             # Configuration management
-│   ├── lib/                # Shared utilities
-│   ├── models/             # Data models/schemas
-│   ├── services/           # Business logic
-│   └── middleware/         # Middleware (auth, logging, etc.)
-├── tests/                  # Test files (unit, integration, e2e)
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-├── scripts/                # Build, deploy, seed scripts
-├── docs/                   # Project documentation
-│   ├── adr/                # Architecture Decision Records
-│   └── diagrams/           # Architecture diagrams
-├── .dev-squad/             # Workflow tracking
-├── environments/           # Per-environment configs
-│   ├── dev/
-│   ├── staging/
-│   └── production/
-├── Dockerfile
-├── docker-compose.yml
-├── .env.template
-├── Makefile
+├── apps/
+│   ├── backend/              # Backend app (API, DB, auth, business logic)
+│   │   ├── src/
+│   │   │   ├── config/       # Env config loader (never hardcode)
+│   │   │   ├── middleware/    # Auth, logging, rate-limit, CORS, error-handler
+│   │   │   ├── routes/       # /api/v1/... route definitions
+│   │   │   ├── controllers/  # Validate input → call service → respond
+│   │   │   ├── services/     # Business logic (pure functions, testable)
+│   │   │   ├── models/       # DB models/schemas
+│   │   │   ├── repositories/ # DB queries (parameterized, never raw SQL)
+│   │   │   └── utils/        # Logger, error classes, validators
+│   │   ├── tests/            # unit/, integration/, fixtures/
+│   │   ├── migrations/       # Reversible (up + down)
+│   │   ├── seeds/            # Dev seed data
+│   │   ├── Dockerfile        # Multi-stage, non-root, health check
+│   │   └── package.json
+│   └── frontend/             # Frontend app
+│       ├── src/
+│       │   ├── components/   # ui/ (primitives), features/ (composites), layout/
+│       │   ├── hooks/        # Custom React hooks
+│       │   ├── lib/          # API client, utilities
+│       │   ├── stores/       # Zustand state management
+│       │   ├── types/        # Local TypeScript types
+│       │   └── styles/       # Design tokens, global styles
+│       ├── tests/            # unit/, integration/, e2e/ (Playwright)
+│       ├── Dockerfile        # Multi-stage, non-root
+│       └── package.json
+├── packages/                 # Shared code (DRY principle)
+│   ├── shared-types/         # API types, model types, error codes
+│   ├── shared-config/        # ESLint, TSConfig, Prettier shared configs
+│   └── shared-validators/    # Zod schemas (used by BOTH backend + frontend)
+├── infra/
+│   ├── docker-compose.yml    # All services + health checks + resource limits
+│   ├── docker-compose.dev.yml
+│   ├── monitoring/           # Prometheus, Grafana dashboards, alert rules
+│   └── environments/         # dev/, staging/, production/
+├── docs/                     # prd.md, architecture.md, adr/, diagrams/
+├── scripts/                  # dev.sh, seed.sh, migrate.sh
+├── .github/workflows/ci.yml  # CI/CD pipeline
+├── .env.template             # Template only, NEVER real secrets
+├── .gitignore                # node_modules, .env, dist, .DS_Store
+├── Makefile                  # dev, test, build, lint, migrate, seed, docker-up
+├── CLAUDE.md
 └── README.md
 ```
+
+**Why monorepo?** Prevents the #1 beginner mistake: duplicated types, validators, and configs between backend and frontend. Shared packages ensure one source of truth.
 
 #### 2. Dockerfile
 Create a multi-stage Dockerfile following container best practices:

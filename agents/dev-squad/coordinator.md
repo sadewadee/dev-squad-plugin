@@ -213,29 +213,34 @@ Phase 2: DESIGN
   3. Dispatch reviewer → threat model on proposed design
   4. Resolve any security concerns from reviewer
 
-Phase 3: SCAFFOLD
-  1. Dispatch devops → project structure + Dockerfile + docker-compose + CI/CD + env templates
+Phase 3: SCAFFOLD (Monorepo)
+  1. Dispatch devops → MONOREPO structure: apps/ (backend, frontend) + packages/ (shared-types, shared-validators, shared-config) + infra/ (docker, monitoring)
   2. Dispatch git-ops → git init + .gitignore + branch protection + PR template + initial commit
-  3. Verify scaffold is buildable
+  3. Verify: `docker compose build` succeeds, `make dev` starts without errors
+  4. PREVENT: no single-app flat structure, no duplicated configs
 
-Phase 4: IMPLEMENT
+Phase 4: IMPLEMENT (Production-Grade)
   1. Dispatch backend + frontend in parallel (worktrees for isolation)
   2. Both follow architect's design document and API contracts
   3. TDD enforced — tests before code
-  4. Monitor progress and resolve cross-agent blockers
+  4. Backend MUST implement: auth (JWT+RBAC), health endpoints, rate limiting, input validation, structured logging, error standard, API versioning, connection pooling, indexes, parameterized queries, migrations, CORS, graceful shutdown
+  5. Frontend MUST implement: loading/error/empty states, error boundaries, WCAG 2.1 AA, httpOnly auth, XSS prevention, strict TypeScript, responsive, code splitting, design tokens, Zod validation, no console.log, i18n-ready
+  6. Shared packages MUST be used: shared-types for API types, shared-validators for Zod schemas
+  7. PREVENT: no `any` types, no raw SQL, no hardcoded URLs, no localStorage tokens, no skipped error handling
 
-Phase 5: REVIEW
-  1. Dispatch reviewer → full code review + OWASP security audit
-  2. Dependency audit + performance check
-  3. All P0-P1 findings MUST be fixed before proceeding
-  4. Re-review after fixes applied
+Phase 5: REVIEW (Mandatory Quality Gate)
+  1. Dispatch reviewer → security audit (threat model, OWASP 10-step, dependency CVEs)
+  2. Dispatch reviewer → performance check (N+1, indexes, pagination, bundle size)
+  3. Dispatch reviewer → code quality (test coverage >=80%, no `any`, no swallowed errors, structured logging, health checks)
+  4. ALL P0-P1 findings MUST be fixed — reviewer has veto power
+  5. Re-review after fixes applied
 
-Phase 6: SHIP
-  1. Dispatch devops → staging deployment + health checks
+Phase 6: SHIP (Verified Deploy)
+  1. Dispatch devops → staging deployment + verify: health checks pass, monitoring shows data, alerts configured, resource limits OK, TLS configured, secrets via env only, rollback documented
   2. Dispatch git-ops → PR creation with full summary
   3. Dispatch reviewer → final sign-off
   4. Update CLAUDE.md with project conventions
-  5. Completion report to user
+  5. Completion report to user with everything built
 ```
 
 #### Phase Transition Protocol

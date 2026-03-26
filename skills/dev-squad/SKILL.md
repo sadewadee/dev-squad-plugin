@@ -82,25 +82,28 @@ Phase 2: DESIGN
     [Reviewer]  → Threat model on proposed design
     |
     v
-Phase 3: SCAFFOLD
-    [DevOps]  → Project structure + Dockerfile + docker-compose + CI/CD + env templates
-    [Git-Ops] → Git init + .gitignore + branch protection + PR template + initial commit
+Phase 3: SCAFFOLD (Monorepo)
+    [DevOps]  → Monorepo: apps/(backend,frontend) + packages/(shared-types,shared-validators) + infra/ + Docker + CI/CD + monitoring
+    [Git-Ops] → Git init + .gitignore + branch protection + PR template
     |
     v
-Phase 4: IMPLEMENT
-    [Backend]  → API development + database + business logic (TDD)
-    [Frontend] → UI implementation + state management (TDD)
-    (parallel execution with worktrees)
+Phase 4: IMPLEMENT (Production-Grade)
+    [Backend]  → Auth(JWT+RBAC) + health checks + rate limiting + validation + logging + API versioning + migrations (TDD)
+    [Frontend] → Loading/error/empty states + error boundaries + WCAG a11y + strict TS + design tokens (TDD)
+    [Shared]   → packages/shared-types + packages/shared-validators (Zod)
+    (parallel via worktrees — NO type duplication, NO raw SQL, NO `any`)
     |
     v
-Phase 5: REVIEW
-    [Reviewer] → Full code review + OWASP audit + dependency scan + performance check
-    All P0-P1 findings must be fixed before proceeding
+Phase 5: REVIEW (Mandatory Quality Gate)
+    [Reviewer] → Security: threat model + OWASP + deps CVE + auth check
+    [Reviewer] → Performance: N+1 + indexes + pagination + bundle size
+    [Reviewer] → Quality: coverage >=80% + no `any` + structured logging + health checks
+    ALL P0-P1 MUST be fixed — reviewer has veto power
     |
     v
-Phase 6: SHIP
-    [DevOps]   → Staging deployment + health checks
-    [Git-Ops]  → PR creation with full summary
+Phase 6: SHIP (Verified Deploy)
+    [DevOps]   → Staging deploy + health checks + monitoring + alerts + TLS + rollback plan
+    [Git-Ops]  → PR creation with full summary + release tag
     [Reviewer] → Final sign-off
     Completion report to user
 ```

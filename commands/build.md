@@ -32,40 +32,241 @@ Task tool with:
     - Search GitHub (grep-github MCP) for similar projects
     - Research tech options via Context7 MCP
     - Generate a PRD (Product Requirements Document) using the architect's PRD template
+    - PRD MUST include: auth requirements, API scope, data model, non-functional requirements
     - >>> CHECKPOINT: Present PRD to user for approval before continuing <<<
 
     ### Phase 2: DESIGN
     - Dispatch architect for full architecture design
     - Create Architecture Design Document with C4 diagrams (mermaid-mcp)
-    - Define API contracts, data models, tech stack
+    - Define API contracts (OpenAPI spec with versioning /api/v1/)
+    - Define database schema with indexes, constraints, relations
     - Create ADR for key technology decisions
     - Dispatch reviewer for threat model on the design
+    - Design MUST include:
+      - Auth flow (JWT access + refresh tokens, RBAC/ABAC)
+      - API error response standard (error codes, request_id, details)
+      - Caching strategy (what, where, TTL)
+      - Rate limiting strategy (per-endpoint limits)
+      - Observability plan (structured logging, metrics, traces)
 
-    ### Phase 3: SCAFFOLD
-    - Dispatch devops for project structure, Dockerfile, docker-compose, CI/CD pipeline, env templates
-    - Dispatch git-ops for repo init, .gitignore, branch protection, PR template, initial commit
-    - Write .dev-squad/workflow-active marker file to track progress
+    ### Phase 3: SCAFFOLD (Monorepo)
+    - Dispatch devops → create MONOREPO structure (see Monorepo Standard below)
+    - Dispatch git-ops → repo init, .gitignore, branch protection, PR template, initial commit
+    - Write .dev-squad/workflow-active marker file
+    - Scaffold MUST include:
+      - Monorepo with apps/ (backend, frontend) + packages/ (shared)
+      - Workspace package manager (pnpm/npm/go workspaces)
+      - Shared TypeScript/Go config across packages
+      - Dockerfile per app (multi-stage, non-root, health check, pinned versions)
+      - docker-compose.yml with ALL services + health checks + resource limits
+      - .env.template (NEVER real secrets)
+      - CI/CD pipeline (test → security scan → build → deploy staging → deploy prod)
+      - Makefile with: dev, test, build, lint, migrate, seed, docker-up, docker-down
+      - Monitoring stack config (Prometheus + Grafana + Loki)
+      - Alerting rules (error rate, latency p95, service down)
 
-    ### Phase 4: IMPLEMENT
+    ### Phase 4: IMPLEMENT (Production-Grade)
     - Dispatch backend + frontend in parallel (use worktrees)
     - Follow architect's design document and API contracts
-    - TDD enforced -- tests written before implementation
-    - Coordinator monitors progress and resolves blockers
+    - TDD enforced — tests written before implementation
 
-    ### Phase 5: REVIEW
-    - Dispatch reviewer for full code review + security audit
-    - OWASP Top 10 check on all endpoints
-    - Dependency audit
-    - Performance review (N+1, missing indexes, bundle size)
-    - All findings must be addressed before proceeding
+    Backend MUST implement (no shortcuts):
+      - Auth middleware (JWT verify + refresh + RBAC enforcement)
+      - Health endpoints: GET /health (liveness) + GET /ready (readiness)
+      - Rate limiting on auth endpoints (brute-force protection)
+      - Input validation at ALL controller boundaries (reject bad input early)
+      - Structured logging (JSON format, correlation ID per request)
+      - Error response standard: { error: { code, message, request_id, details[] } }
+      - API versioning: /api/v1/ prefix from day one
+      - Database connection pooling configured for expected load
+      - Database indexes for every query pattern (EXPLAIN before deploy)
+      - Parameterized queries everywhere (zero SQL injection tolerance)
+      - Migration files: reversible (up + down), backward-compatible
+      - Seed data for development
+      - CORS configured correctly (NOT wildcard in production)
+      - Graceful shutdown (drain connections, finish in-flight requests)
+
+    Frontend MUST implement (no shortcuts):
+      - Loading/error/empty states for EVERY async operation
+      - Error boundaries for component tree isolation
+      - Accessibility: semantic HTML, ARIA, keyboard nav (WCAG 2.1 AA)
+      - Auth token handling via httpOnly cookies (NOT localStorage)
+      - XSS prevention: sanitize all user-rendered content
+      - Strict TypeScript — zero `any` types
+      - Responsive: mobile-first, tested at breakpoints
+      - Core Web Vitals: LCP < 2.5s, FID < 100ms, CLS < 0.1
+      - Code splitting with React.lazy + Suspense
+      - Design tokens/system — no inline styles
+      - Form validation with Zod schemas (shared with backend if possible)
+      - No console.log in production code
+      - i18n-ready: no hardcoded user-facing strings
+
+    ### Phase 5: REVIEW (Security + Quality Gate)
+    - Dispatch reviewer for full review — ALL items below are MANDATORY:
+
+    Security (reviewer MUST verify each):
+      - [ ] Threat model completed for all features
+      - [ ] Auth: JWT flow correct, tokens rotated, RBAC enforced
+      - [ ] Input validation at all system boundaries
+      - [ ] Output encoding (XSS prevention)
+      - [ ] SQL injection: all queries parameterized
+      - [ ] No hardcoded secrets/keys/tokens anywhere
+      - [ ] Dependencies: zero known CVEs (npm audit / govulncheck)
+      - [ ] CSRF protection for state-changing operations
+      - [ ] Rate limiting configured on auth + sensitive endpoints
+      - [ ] Access control: no IDOR, no privilege escalation
+
+    Performance (reviewer MUST verify each):
+      - [ ] No N+1 query patterns
+      - [ ] Database indexes for all query patterns
+      - [ ] Pagination on all list endpoints (cursor-based preferred)
+      - [ ] Caching configured where architect specified
+      - [ ] Frontend bundle size acceptable (check with analyzer)
+      - [ ] No unnecessary re-renders (React profiler)
+
+    Quality (reviewer MUST verify each):
+      - [ ] Test coverage >= 80% for new code
+      - [ ] Unit + integration + E2E tests present
+      - [ ] No `any` types in TypeScript
+      - [ ] Error handling: no swallowed errors
+      - [ ] Structured logging with correlation IDs
+      - [ ] Health check endpoints working
+      - [ ] All P0-P1 findings FIXED before proceeding
 
     ### Phase 6: SHIP
-    - Dispatch devops for staging deployment verification
+    - Dispatch devops for staging deployment:
+      - [ ] docker compose up succeeds
+      - [ ] All health checks passing
+      - [ ] Monitoring dashboards showing data
+      - [ ] Alerting rules firing correctly (test with synthetic error)
+      - [ ] Resource limits not exceeded
+      - [ ] TLS configured
+      - [ ] Secrets injected via env (not in image/compose)
+      - [ ] Rollback procedure documented
     - Dispatch git-ops for PR creation with full description
     - Dispatch reviewer for final sign-off
     - Update CLAUDE.md with project conventions
     - Mark .dev-squad/workflow-active as complete
     - Completion report to user
+
+    ## Monorepo Standard Structure
+    All projects MUST use this monorepo layout:
+    ```
+    {project-name}/
+    ├── apps/
+    │   ├── backend/              # Backend application
+    │   │   ├── src/
+    │   │   │   ├── config/       # Environment config loader
+    │   │   │   ├── middleware/    # Auth, logging, rate-limit, CORS, error-handler
+    │   │   │   ├── routes/       # API route definitions (/api/v1/...)
+    │   │   │   ├── controllers/  # Request handlers (validate → call service → respond)
+    │   │   │   ├── services/     # Business logic (pure, testable)
+    │   │   │   ├── models/       # Database models/schemas
+    │   │   │   ├── repositories/ # Database queries (parameterized, no raw SQL)
+    │   │   │   └── utils/        # Helpers (logger, error classes, validators)
+    │   │   ├── tests/
+    │   │   │   ├── unit/
+    │   │   │   ├── integration/
+    │   │   │   └── fixtures/
+    │   │   ├── migrations/       # Reversible DB migrations (up + down)
+    │   │   ├── seeds/            # Development seed data
+    │   │   ├── Dockerfile        # Multi-stage, non-root, health check
+    │   │   └── package.json      # or go.mod
+    │   │
+    │   └── frontend/             # Frontend application
+    │       ├── src/
+    │       │   ├── components/
+    │       │   │   ├── ui/       # Design system primitives (Button, Input, Modal)
+    │       │   │   ├── features/ # Feature composites (LoginForm, TaskCard)
+    │       │   │   └── layout/   # Layout (Header, Sidebar, Page)
+    │       │   ├── hooks/        # Custom React hooks
+    │       │   ├── lib/          # API client, utilities
+    │       │   ├── stores/       # State management (Zustand)
+    │       │   ├── types/        # Shared TypeScript types
+    │       │   └── styles/       # Global styles, design tokens
+    │       ├── tests/
+    │       │   ├── unit/
+    │       │   ├── integration/
+    │       │   └── e2e/          # Playwright tests
+    │       ├── public/           # Static assets
+    │       ├── Dockerfile        # Multi-stage, non-root
+    │       └── package.json
+    │
+    ├── packages/                 # Shared packages
+    │   ├── shared-types/         # TypeScript types shared between apps
+    │   │   ├── src/
+    │   │   │   ├── api.ts        # API request/response types
+    │   │   │   ├── models.ts     # Domain model types
+    │   │   │   └── errors.ts     # Error code enums
+    │   │   └── package.json
+    │   ├── shared-config/        # Shared configs (ESLint, TSConfig, Prettier)
+    │   │   ├── eslint.config.js
+    │   │   ├── tsconfig.base.json
+    │   │   └── package.json
+    │   └── shared-validators/    # Zod schemas shared between backend + frontend
+    │       ├── src/
+    │       │   ├── user.ts       # User validation schemas
+    │       │   └── index.ts
+    │       └── package.json
+    │
+    ├── infra/                    # Infrastructure configs
+    │   ├── docker-compose.yml    # All services + health checks + resource limits
+    │   ├── docker-compose.dev.yml
+    │   ├── monitoring/
+    │   │   ├── prometheus.yml
+    │   │   ├── grafana/
+    │   │   │   └── dashboards/
+    │   │   └── alerts.yml
+    │   └── environments/
+    │       ├── dev/
+    │       ├── staging/
+    │       └── production/
+    │
+    ├── docs/
+    │   ├── prd.md                # Auto-generated PRD
+    │   ├── architecture.md       # Architecture design document
+    │   ├── adr/                  # Architecture Decision Records
+    │   └── diagrams/             # Mermaid diagrams
+    │
+    ├── scripts/
+    │   ├── dev.sh                # Start dev environment
+    │   ├── seed.sh               # Seed database
+    │   └── migrate.sh            # Run migrations
+    │
+    ├── .dev-squad/               # Workflow tracking
+    ├── .github/
+    │   └── workflows/
+    │       └── ci.yml            # CI/CD pipeline
+    ├── .env.template             # Environment variable template (no secrets)
+    ├── .gitignore
+    ├── Makefile                  # dev, test, build, lint, migrate, seed, docker-up
+    ├── CLAUDE.md                 # Project conventions for Claude
+    └── README.md
+    ```
+
+    ## Common Beginner Mistakes to PREVENT
+    These are NON-NEGOTIABLE. Every agent must enforce:
+
+    1. **NEVER store secrets in code/git** — use .env + .env.template pattern
+    2. **NEVER use `any` in TypeScript** — type everything, use Zod for runtime
+    3. **NEVER skip error handling** — every async op needs try/catch or error boundary
+    4. **NEVER use raw SQL** — always parameterized queries via ORM/query builder
+    5. **NEVER hardcode URLs/ports** — use config/env variables
+    6. **NEVER run containers as root** — always non-root USER in Dockerfile
+    7. **NEVER use `latest` tag** — pin all Docker image versions
+    8. **NEVER skip health checks** — every service needs /health + /ready
+    9. **NEVER store auth tokens in localStorage** — use httpOnly cookies
+    10. **NEVER skip input validation** — validate at controller AND client
+    11. **NEVER commit node_modules/.env/dist** — .gitignore from day one
+    12. **NEVER use wildcard CORS in production** — explicit origin list
+    13. **NEVER skip loading/error states** — every async UI needs all 3 states
+    14. **NEVER deploy without migrations** — schema changes = migration file
+    15. **NEVER ignore accessibility** — semantic HTML first, ARIA second
+    16. **NEVER duplicate types** — share via packages/shared-types
+    17. **NEVER duplicate validation** — share via packages/shared-validators
+    18. **NEVER put business logic in controllers** — controllers validate + delegate to services
+    19. **NEVER skip tests for auth flows** — auth is critical path, 100% coverage
+    20. **NEVER deploy without rollback plan** — document how to undo every change
 
     ## Phase Transition Protocol
     After completing each phase:
