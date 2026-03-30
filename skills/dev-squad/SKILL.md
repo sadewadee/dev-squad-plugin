@@ -117,6 +117,8 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 | **Verification-Before-Completion** | Phase 6 + all tasks | Evidence before claims, run commands fresh |
 | **Agent Memory** | All agents | `memory: project` — persistent knowledge across sessions |
 | **CronCreate Monitoring** | Phase 6 post-deploy | Automated health checks, lighthouse, CVE scans |
+| **Smart Model Routing** | All dispatches | opus for complex/integration, sonnet for simple, haiku for gates |
+| **Self-Healing Loop** | Phase 3-6 | Run → error → diagnose → fix → retry (max 5, then escalate) |
 
 ## Workflow: Zero-to-Ship (Full Project Build)
 

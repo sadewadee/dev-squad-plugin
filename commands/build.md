@@ -78,17 +78,21 @@ Task tool with:
       - Makefile with: dev, test, build, lint, migrate, seed, docker-up, docker-down
       - Monitoring stack config (Prometheus + Grafana + Loki)
       - Alerting rules (error rate, latency p95, service down)
-    - PHASE GATE: Judge agent verifies scaffold builds (`docker compose config`, `make dev`)
+    - SELF-HEALING: Run `docker compose config` + `make dev` — if fails, diagnose → fix → retry (max 5)
+    - PHASE GATE: Judge agent verifies scaffold builds
 
     ### Phase 4: IMPLEMENT (Subagent-Driven Development Pattern)
     - Dispatch backend + frontend in parallel (use worktrees for isolation)
     - Follow architect's design document and API contracts
     - TDD enforced — tests written before implementation
+    - SMART MODEL ROUTING: Use opus for auth/integration/cross-package tasks, sonnet for simple CRUD/isolated components
     - Per task, use the two-stage review pattern:
       1. Implementer builds + tests + self-reviews
       2. Dispatch spec-compliance reviewer → check against requirements (loop until pass)
       3. Dispatch code-quality reviewer → check patterns/security (loop until pass)
       4. Only mark task complete after BOTH reviews pass
+    - SELF-HEALING: After each task run tests — if fails, diagnose → fix → retry (max 5, use opus for complex fixes)
+    - After ALL tasks: run full integration test suite, self-healing if needed
 
     Backend MUST implement (no shortcuts):
       - Auth middleware (JWT verify + refresh + RBAC enforcement)
@@ -161,6 +165,7 @@ Task tool with:
 
     ### Phase 6: SHIP (Verification-Before-Completion)
     - Before ANY completion claim: IDENTIFY command → RUN fresh → READ output → VERIFY → ONLY THEN claim
+    - SELF-HEALING: After `docker compose up` check health endpoints — if fails, diagnose → fix → retry (max 5)
     - Dispatch devops for staging deployment:
       - [ ] docker compose up succeeds
       - [ ] All health checks passing
@@ -304,11 +309,23 @@ Task tool with:
 
     ## Your Team
     - architect (opus): System design, PRD generation, tech stack, ADRs, C4 diagrams
-    - backend (sonnet): API development, database operations, business logic, migrations
-    - frontend (sonnet): UI implementation, React/Next.js, state management, responsive design
-    - reviewer (sonnet): Security lead, code review, OWASP enforcement, threat modeling, QA
+    - backend (default sonnet, override to opus for auth/integration): API, database, business logic
+    - frontend (default sonnet, override to opus for cross-package integration): UI, React/Next.js
+    - reviewer (default sonnet, override to opus for security review): Security lead, code review, QA
     - devops (sonnet): Docker, CI/CD, monitoring, deployment, project scaffolding
     - git-ops (sonnet): Git init, branch management, PR workflows, release management
+
+    ## Smart Model Routing
+    Override model per-dispatch based on task complexity:
+    - opus: auth flows, cross-package wiring, security review, self-healing fixes, integration tasks
+    - sonnet: single endpoint CRUD, isolated component, migration, scaffold, git operations
+    - haiku: phase gate judge, spec compliance pass/fail check
+    User can force all-opus via: `export CLAUDE_CODE_SUBAGENT_MODEL=claude-opus-4-6`
+
+    ## Self-Healing Loop
+    When tests/build/deploy fails, DO NOT escalate immediately:
+    1. RUN command → 2. READ full error → 3. DIAGNOSE root cause → 4. FIX → 5. RETRY
+    Max 5 iterations. Use opus for complex fixes. Escalate to user only after 5 failures.
 
     ## Workflow Tracking
     At the start, create a `.dev-squad/workflow-active` file with:

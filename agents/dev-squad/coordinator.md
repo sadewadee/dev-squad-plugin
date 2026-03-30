@@ -359,13 +359,139 @@ Before transitioning between phases, dispatch a cheap judge:
 4. FAIL → fix issues, re-judge (max 3 attempts → escalate to user)
 ```
 
+## Smart Model Routing
+
+Do NOT hardcode all agents to opus. Choose model per-task based on complexity:
+
+### Model Selection Matrix
+
+| Task Complexity | Model | Examples |
+|----------------|-------|---------|
+| **Critical/Integration** | `opus` | Auth flow (JWT+RBAC+refresh), shared-types wiring across apps, cross-package integration, security review, self-healing fix loop, complex state management |
+| **Standard** | `sonnet` | Single endpoint CRUD, isolated component, database migration, git operations, scaffold from template, simple unit tests |
+| **Judgment/Gate** | `haiku` | Phase gate validation, spec compliance check, pass/fail decisions |
+
+### Decision Rules
+
+```
+Is this task security-critical? (auth, crypto, access control)
+  → opus
+
+Does this task touch 3+ files across different packages?
+  → opus
+
+Is this an integration task? (frontend↔backend, shared-types wiring)
+  → opus
+
+Is this a self-healing fix attempt? (error → diagnose → fix → verify)
+  → opus
+
+Is this a simple pass/fail gate check?
+  → haiku
+
+Everything else?
+  → sonnet (default, fast, cost-efficient)
+```
+
+### Per-Dispatch Override
+
+When dispatching via Task tool, override model as needed:
+```
+Task tool:
+- subagent_type: "backend"
+- model: "opus"           ← override for complex task
+- description: "Implement auth middleware"
+- prompt: ...
+```
+
+Or let user set a global override via environment variable:
+```bash
+export CLAUDE_CODE_SUBAGENT_MODEL=claude-opus-4-6  # force all to opus
+```
+
+### Cost Estimation Per Build
+
+| Strategy | Estimated Cost | Quality |
+|----------|---------------|---------|
+| All sonnet | ~$5-10 | 35-40% success |
+| Smart routing (default) | ~$15-25 | 65-75% success |
+| All opus | ~$50-80 | 75-80% success |
+
+Smart routing gives ~90% of all-opus quality at ~30% of the cost.
+
+## Self-Healing Loop
+
+When a phase or task produces errors, do NOT immediately escalate. Run the self-healing loop:
+
+```
+SELF-HEALING LOOP (max 5 iterations):
+
+1. RUN: Execute test/build/deploy command
+2. CHECK: Exit code + full output
+3. If SUCCESS → done, continue workflow
+4. If FAILURE:
+   a. DIAGNOSE: Read the FULL error output (do not skim)
+   b. CLASSIFY:
+      - Dependency error (npm install, missing package) → fix package.json, retry
+      - Type error (TypeScript, Go compile) → fix type, retry
+      - Test failure → read failing test, fix implementation, retry
+      - Runtime error → trace to root cause, fix, retry
+      - Environment error (port conflict, missing env var) → fix config, retry
+   c. FIX: Apply targeted fix (use opus for complex fixes)
+   d. VERIFY: Run the SAME command again
+   e. INCREMENT iteration counter
+
+5. If 5 iterations exhausted:
+   - Log all 5 attempts with errors and fixes tried
+   - Escalate to user with:
+     - What was attempted
+     - What errors persist
+     - Suggested manual intervention
+```
+
+### When Self-Healing Activates
+
+| Trigger | Healing Target | Model |
+|---------|---------------|-------|
+| `npm test` fails after implementation | Fix failing tests | opus |
+| `docker compose build` fails | Fix Dockerfile/compose | sonnet |
+| `tsc --noEmit` type errors | Fix TypeScript types | sonnet |
+| `make dev` startup error | Fix config/env | sonnet |
+| Integration test fails (frontend↔backend) | Fix API contract mismatch | opus |
+| Phase gate judge returns FAIL | Fix phase deliverables | opus |
+
+### Self-Healing in Zero-to-Ship
+
+Apply self-healing at these checkpoints:
+
+```
+Phase 3 (SCAFFOLD):
+  After scaffold complete → run `docker compose config` + `make dev`
+  If fails → self-healing loop (usually Dockerfile or compose syntax)
+
+Phase 4 (IMPLEMENT):
+  After each task → run `npm test` / `go test`
+  If fails → self-healing loop (most common: type errors, import paths)
+
+  After ALL implementation → run full integration test
+  If fails → self-healing loop with opus (cross-package wiring issues)
+
+Phase 5 (REVIEW):
+  After reviewer flags P0-P1 → dispatch fix → self-healing loop
+  Repeat until reviewer approves or 5 attempts exhausted
+
+Phase 6 (SHIP):
+  After `docker compose up` → check health endpoints
+  If fails → self-healing loop (usually port/env/config issues)
+```
+
 ## Agent Dispatch Protocol
 
 ### Dispatch via Task Tool (Mode B)
 ```
 Task tool:
 - subagent_type: "{agent-id}"
-- model: (inherit from config or override)
+- model: (smart routing — see Model Selection Matrix above)
 - description: Brief 3-5 word summary
 - prompt: Detailed instructions with full context
 - isolation: "worktree" (for parallel implementation work)
