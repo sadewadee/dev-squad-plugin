@@ -18,6 +18,44 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 - `/dev-squad status` - Check swarm progress (active agents, phases, blockers)
 - `/dev-squad help` - Show available commands
 
+## Orchestration Modes
+
+dev-squad supports two orchestration modes. The coordinator auto-detects which to use.
+
+### Mode A: Agent Teams (Recommended)
+
+Requires the experimental flag. Enables real parallel execution with shared task list.
+
+**Setup:**
+```json
+// Add to ~/.claude/settings.json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+**Visual agent tracking (optional):**
+```json
+// Add to ~/.claude.json
+{
+  "teammateMode": "auto"
+}
+```
+- `"auto"` — auto-detects tmux/iTerm2
+- `"tmux"` — each agent in separate tmux pane
+- `"in-process"` — all in single terminal (Shift+Down to cycle)
+
+**Share task list across sessions (optional):**
+```bash
+export CLAUDE_CODE_TASK_LIST_ID=dev-squad-project
+```
+
+### Mode B: Subagent Fan-Out (Default Fallback)
+
+Works without any setup. Coordinator dispatches agents sequentially via Task tool.
+
 ## Team Configuration
 
 ```json
@@ -63,6 +101,22 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 - Profiling & bottleneck identification
 - Performance regression detection
 - Index strategy review
+
+## v3.0 Orchestration Patterns
+
+These patterns are adopted from proven plugins (superpowers, code-review, double-shot-latte) and applied throughout all workflows:
+
+| Pattern | Where Applied | What It Does |
+|---------|--------------|--------------|
+| **Two-Stage Review** | Phase 4 (per task) | Spec compliance → Code quality, loop until both pass |
+| **Phase Gate Judge** | Between all phases | Cheap haiku agent validates deliverables before transition |
+| **Confidence Scoring** | Phase 5 review | Score 0-100 per finding, filter < 80 as non-actionable |
+| **Multi-Angle Review** | Phase 5 review | 4 parallel review passes: security, performance, spec, architecture |
+| **Systematic Debugging** | All agents | 4-phase: investigate → analyze → hypothesize → implement |
+| **Plan Review Loop** | Phase 2 design | Dispatch reviewer for plan, max 3 iterations |
+| **Verification-Before-Completion** | Phase 6 + all tasks | Evidence before claims, run commands fresh |
+| **Agent Memory** | All agents | `memory: project` — persistent knowledge across sessions |
+| **CronCreate Monitoring** | Phase 6 post-deploy | Automated health checks, lighthouse, CVE scans |
 
 ## Workflow: Zero-to-Ship (Full Project Build)
 

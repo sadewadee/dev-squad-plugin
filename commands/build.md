@@ -23,19 +23,30 @@ Task tool with:
     ## Project Description
     <user's description here>
 
+    ## Orchestration Mode
+    First, detect your orchestration mode:
+    ```bash
+    echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
+    ```
+    - If "1" → Use TEAMS MODE (TeamCreate, message/broadcast, shared task list)
+    - If not set → Use SUBAGENT MODE (Task tool, SendMessage, TodoWrite)
+
     ## Workflow: Zero-to-Ship (6 Phases)
 
     You MUST execute all 6 phases in order. Do NOT skip phases.
 
-    ### Phase 1: DISCOVER
+    ### Phase 1: DISCOVER (Brainstorming Pattern)
     - Dispatch architect with brainstorming skill
+    - Architect MUST: explore context → ask clarifying questions (one at a time, multiple choice preferred) → propose 2-3 approaches with trade-offs → present design
     - Search GitHub (grep-github MCP) for similar projects
     - Research tech options via Context7 MCP
     - Generate a PRD (Product Requirements Document) using the architect's PRD template
     - PRD MUST include: auth requirements, API scope, data model, non-functional requirements
+    - Run spec review loop: dispatch reviewer subagent to check PRD completeness (max 3 iterations)
     - >>> CHECKPOINT: Present PRD to user for approval before continuing <<<
+    - PHASE GATE: Dispatch haiku judge agent to verify Phase 1 deliverables before transitioning
 
-    ### Phase 2: DESIGN
+    ### Phase 2: DESIGN (Writing-Plans Pattern)
     - Dispatch architect for full architecture design
     - Create Architecture Design Document with C4 diagrams (mermaid-mcp)
     - Define API contracts (OpenAPI spec with versioning /api/v1/)
@@ -48,6 +59,9 @@ Task tool with:
       - Caching strategy (what, where, TTL)
       - Rate limiting strategy (per-endpoint limits)
       - Observability plan (structured logging, metrics, traces)
+    - Write implementation plan with bite-sized tasks (2-5 min each, ONE action per task)
+    - Run plan review loop: dispatch plan-reviewer subagent (max 3 iterations)
+    - PHASE GATE: Judge agent verifies Phase 2 deliverables
 
     ### Phase 3: SCAFFOLD (Monorepo)
     - Dispatch devops → create MONOREPO structure (see Monorepo Standard below)
@@ -64,11 +78,17 @@ Task tool with:
       - Makefile with: dev, test, build, lint, migrate, seed, docker-up, docker-down
       - Monitoring stack config (Prometheus + Grafana + Loki)
       - Alerting rules (error rate, latency p95, service down)
+    - PHASE GATE: Judge agent verifies scaffold builds (`docker compose config`, `make dev`)
 
-    ### Phase 4: IMPLEMENT (Production-Grade)
-    - Dispatch backend + frontend in parallel (use worktrees)
+    ### Phase 4: IMPLEMENT (Subagent-Driven Development Pattern)
+    - Dispatch backend + frontend in parallel (use worktrees for isolation)
     - Follow architect's design document and API contracts
     - TDD enforced — tests written before implementation
+    - Per task, use the two-stage review pattern:
+      1. Implementer builds + tests + self-reviews
+      2. Dispatch spec-compliance reviewer → check against requirements (loop until pass)
+      3. Dispatch code-quality reviewer → check patterns/security (loop until pass)
+      4. Only mark task complete after BOTH reviews pass
 
     Backend MUST implement (no shortcuts):
       - Auth middleware (JWT verify + refresh + RBAC enforcement)
@@ -101,8 +121,14 @@ Task tool with:
       - No console.log in production code
       - i18n-ready: no hardcoded user-facing strings
 
-    ### Phase 5: REVIEW (Security + Quality Gate)
-    - Dispatch reviewer for full review — ALL items below are MANDATORY:
+    ### Phase 5: REVIEW (Multi-Angle Parallel Review)
+    - Launch 4 parallel review passes (dispatch as parallel agents or in teams mode):
+      Pass 1: SECURITY → OWASP Top 10, auth, injection, XSS, CSRF, secrets
+      Pass 2: PERFORMANCE → N+1 queries, indexes, pagination, bundle size
+      Pass 3: SPEC COMPLIANCE → PRD requirements met line-by-line
+      Pass 4: ARCHITECTURE → ADR conformance, SOLID, shared packages used
+    - Each finding scored 0-100 confidence. Only confidence >= 80 is actionable.
+    - ALL items below are MANDATORY:
 
     Security (reviewer MUST verify each):
       - [ ] Threat model completed for all features
@@ -133,7 +159,8 @@ Task tool with:
       - [ ] Health check endpoints working
       - [ ] All P0-P1 findings FIXED before proceeding
 
-    ### Phase 6: SHIP
+    ### Phase 6: SHIP (Verification-Before-Completion)
+    - Before ANY completion claim: IDENTIFY command → RUN fresh → READ output → VERIFY → ONLY THEN claim
     - Dispatch devops for staging deployment:
       - [ ] docker compose up succeeds
       - [ ] All health checks passing

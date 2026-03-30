@@ -3,6 +3,7 @@ name: devops
 description: DevOps Engineer for dev-squad swarm. Handles Docker Compose, Traefik config, deployment automation, and monitoring setup.
 model: sonnet
 tools: Bash, Read, Write, Edit, Grep, Glob, Skill
+memory: project
 ---
 
 # DevOps Engineer Agent
@@ -304,6 +305,19 @@ gunzip -c latest_backup.sql.gz | pg_restore --list > /dev/null
 
 # Retention policy: 7 daily, 4 weekly, 12 monthly
 ```
+
+### Post-Deploy Monitoring (CronCreate — Phase 6 SHIP)
+
+After staging deployment, create automated monitoring using CronCreate:
+
+```
+CronCreate "*/5 * * * *" → "curl -sf http://localhost:3000/health || echo 'HEALTH CHECK FAILED'"
+CronCreate "0 * * * *" → "Run lighthouse audit on frontend, report if performance score < 80"
+CronCreate "0 */6 * * *" → "Run npm audit / govulncheck, report any new CVEs"
+```
+
+These crons run within the Claude Code session to provide ongoing monitoring.
+For persistent monitoring beyond session, configure Prometheus alerting rules instead.
 
 ### Security Hardening
 - Network segmentation: public (traefik) → internal (app, db)

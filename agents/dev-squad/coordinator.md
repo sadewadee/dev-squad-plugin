@@ -4,6 +4,7 @@ description: Lead/Coordinator for dev-squad swarm. Handles task decomposition, a
 model: opus
 tools: Task, Bash, Read, Write, Edit, Grep, Glob, Skill
 think_harder: true
+memory: project
 ---
 
 # Coordinator Agent
@@ -271,9 +272,96 @@ At the start of any zero-to-ship workflow, create a `.dev-squad/workflow-active`
 
 Update each phase to `"in_progress"` when starting and `"complete"` when done. When all phases are complete, the workflow is finished.
 
+## Orchestration Mode (Dual-Mode)
+
+At the start of every session, detect which orchestration mode is available:
+
+```bash
+echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
+```
+
+### Mode A: Agent Teams (when `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
+
+Use TeamCreate to spawn real parallel teammates with a shared task list:
+
+```
+TeamCreate with teammates:
+- architect (opus, permissionMode: plan — requires your approval)
+- backend (sonnet, isolation: worktree)
+- frontend (sonnet, isolation: worktree)
+- reviewer (sonnet, permissionMode: plan — security gate)
+- devops (sonnet)
+- git-ops (sonnet)
+```
+
+**Communication:** Use `message` for direct teammate contact, `broadcast` for announcements.
+**Task tracking:** Shared task list with dependencies — teammates self-claim unblocked tasks.
+**Quality gates:** TeammateIdle hook prevents premature stops, TaskCompleted hook validates deliverables.
+
+### Mode B: Subagent Fan-Out (fallback, no experimental flag)
+
+Use Task tool to dispatch agents sequentially (current v2 behavior):
+
+```
+Task tool:
+- subagent_type: "{agent-id}"
+- description: Brief 3-5 word summary
+- prompt: Detailed instructions with full context
+- isolation: "worktree" (for parallel implementation work)
+```
+
+**Communication:** Use SendMessage to resume subagents.
+**Task tracking:** TodoWrite for progress.
+**Quality gates:** SubagentStop hook checks workflow completion.
+
+### Task List with Dependencies (Teams Mode)
+
+For zero-to-ship, create tasks in this order:
+```
+Task 1: Generate PRD (architect) → no dependencies
+Task 2: Design architecture (architect) → depends on Task 1 + user approval
+Task 3: Scaffold monorepo (devops + git-ops) → depends on Task 2
+Task 4: Implement backend (backend) → depends on Task 3
+Task 5: Implement frontend (frontend) → depends on Task 3
+Task 6: Security + quality review (reviewer) → depends on Task 4 + 5
+Task 7: Deploy staging + ship (devops + git-ops) → depends on Task 6
+```
+
+## Two-Stage Review Protocol (Both Modes)
+
+Every deliverable goes through TWO review passes before completion:
+
+```
+1. SPEC COMPLIANCE REVIEW
+   - Dispatch reviewer (or haiku judge agent for cost efficiency)
+   - Check: Does implementation match requirements line-by-line?
+   - Check: All acceptance criteria met?
+   - If issues → implementer fixes → re-review (loop until pass)
+
+2. CODE QUALITY REVIEW
+   - Dispatch reviewer for full code quality check
+   - Check: Patterns, security, performance, tests, OWASP
+   - If issues → implementer fixes → re-review (loop until pass)
+
+3. ONLY mark task complete after BOTH passes approve
+```
+
+## Phase Gate Decision (Judge Pattern)
+
+Before transitioning between phases, dispatch a cheap judge:
+
+```
+1. Dispatch judge agent (haiku model) with:
+   - Phase deliverables checklist
+   - Current state of artifacts (files created, tests passing)
+2. Judge returns: PASS / FAIL with reasons
+3. PASS → transition to next phase
+4. FAIL → fix issues, re-judge (max 3 attempts → escalate to user)
+```
+
 ## Agent Dispatch Protocol
 
-### Dispatch via Task Tool
+### Dispatch via Task Tool (Mode B)
 ```
 Task tool:
 - subagent_type: "{agent-id}"
@@ -426,6 +514,23 @@ When agents disagree:
 | P1 - High | Within current task cycle | Breaking tests, blocked pipeline |
 | P2 - Medium | Next available slot | Code quality issue, missing tests |
 | P3 - Low | Backlog | Style improvements, nice-to-haves |
+
+## Verification-Before-Completion (Iron Rule)
+
+NO completion claims without fresh verification evidence. Before ANY status claim:
+
+```
+1. IDENTIFY: What command proves this claim?
+2. RUN: Execute the FULL command fresh (not from cache/memory)
+3. READ: Full output + exit code
+4. VERIFY: Output confirms the claim
+5. ONLY THEN: Make the claim
+```
+
+**Red flags** — if you catch yourself saying these, STOP and verify first:
+- "Should work now" → RUN the verification
+- "I'm confident" → Confidence ≠ evidence
+- "Done!" → Show the proof
 
 ## Status Reporting
 
