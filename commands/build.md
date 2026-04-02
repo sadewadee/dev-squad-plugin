@@ -15,7 +15,7 @@ Use the Task tool to launch the coordinator:
 
 ```
 Task tool with:
-- subagent_type: "coordinator"
+- subagent_type: "dev-squad:coordinator"
 - description: "Zero-to-Ship: <short summary>"
 - prompt: |
     You are the coordinator for the dev-squad swarm running a ZERO-TO-SHIP build.
@@ -307,13 +307,18 @@ Task tool with:
     3. Announce: "[Phase N: NAME] COMPLETE -- transitioning to [Phase N+1: NAME]"
     4. Only stop for user input at the Phase 1 CHECKPOINT (PRD approval)
 
-    ## Your Team
-    - architect (opus): System design, PRD generation, tech stack, ADRs, C4 diagrams
-    - backend (default sonnet, override to opus for auth/integration): API, database, business logic
-    - frontend (default sonnet, override to opus for cross-package integration): UI, React/Next.js
-    - reviewer (default sonnet, override to opus for security review): Security lead, code review, QA
-    - devops (sonnet): Docker, CI/CD, monitoring, deployment, project scaffolding
-    - git-ops (sonnet): Git init, branch management, PR workflows, release management
+    ## Your Team (MUST use fully-qualified names when dispatching)
+    
+    CRITICAL: Always use "dev-squad:{name}" as subagent_type. Plain names will NOT work.
+    
+    | Agent | subagent_type | Model |
+    |-------|--------------|-------|
+    | Architect | `dev-squad:architect` | opus |
+    | Backend | `dev-squad:backend` | sonnet (opus for auth/integration) |
+    | Frontend | `dev-squad:frontend` | sonnet (opus for cross-package) |
+    | Reviewer | `dev-squad:reviewer` | sonnet (opus for security review) |
+    | DevOps | `dev-squad:devops` | sonnet |
+    | Git-Ops | `dev-squad:git-ops` | sonnet |
 
     ## Smart Model Routing
     Override model per-dispatch based on task complexity:

@@ -286,12 +286,12 @@ Use TeamCreate to spawn real parallel teammates with a shared task list:
 
 ```
 TeamCreate with teammates:
-- architect (opus, permissionMode: plan — requires your approval)
-- backend (sonnet, isolation: worktree)
-- frontend (sonnet, isolation: worktree)
-- reviewer (sonnet, permissionMode: plan — security gate)
-- devops (sonnet)
-- git-ops (sonnet)
+- dev-squad:architect (opus, permissionMode: plan — requires your approval)
+- dev-squad:backend (sonnet, isolation: worktree)
+- dev-squad:frontend (sonnet, isolation: worktree)
+- dev-squad:reviewer (sonnet, permissionMode: plan — security gate)
+- dev-squad:devops (sonnet)
+- dev-squad:git-ops (sonnet)
 ```
 
 **Communication:** Use `message` for direct teammate contact, `broadcast` for announcements.
@@ -398,7 +398,7 @@ Everything else?
 When dispatching via Task tool, override model as needed:
 ```
 Task tool:
-- subagent_type: "backend"
+- subagent_type: "dev-squad:backend"
 - model: "opus"           ← override for complex task
 - description: "Implement auth middleware"
 - prompt: ...
@@ -487,10 +487,28 @@ Phase 6 (SHIP):
 
 ## Agent Dispatch Protocol
 
+### CRITICAL: Agent Names (Fully Qualified)
+
+When dispatching agents, you MUST use the fully-qualified name with the plugin prefix. Plain names like "architect" will NOT resolve.
+
+```
+CORRECT (always use these):
+  subagent_type: "dev-squad:architect"
+  subagent_type: "dev-squad:backend"
+  subagent_type: "dev-squad:frontend"
+  subagent_type: "dev-squad:reviewer"
+  subagent_type: "dev-squad:devops"
+  subagent_type: "dev-squad:git-ops"
+
+WRONG (will not resolve, causes you to do everything yourself):
+  subagent_type: "architect"
+  subagent_type: "backend"
+```
+
 ### Dispatch via Task Tool (Mode B)
 ```
 Task tool:
-- subagent_type: "{agent-id}"
+- subagent_type: "dev-squad:{agent-name}"
 - model: (smart routing — see Model Selection Matrix above)
 - description: Brief 3-5 word summary
 - prompt: Detailed instructions with full context

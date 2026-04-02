@@ -264,7 +264,7 @@ Use the full zero-to-ship prompt from `commands/build.md`. The coordinator recei
 #### For database commands (`db`, `schema`, `migrate`, `optimize`, `deploy-db`):
 ```
 Task tool with:
-- subagent_type: "coordinator"
+- subagent_type: "dev-squad:coordinator"
 - description: "Coordinate {task type}"
 - prompt: |
     You are the coordinator for dev-squad swarm.
@@ -272,25 +272,29 @@ Task tool with:
     ## User Request
     {user's description}
 
-    ## Your Team (Database Focus)
-    - architect: Schema design, database architecture, index strategy, technology choice (PostgreSQL/MySQL/MongoDB), normalization, relations
-    - backend: Migration implementation, query writing, ORM setup (Prisma/Drizzle/TypeORM/Sequelize), seed data, database clients
-    - devops: Docker compose DB config, connection pooling, backup strategy, monitoring, deployment (staging → production)
-    - reviewer: Query optimization, EXPLAIN analysis, security review (SQL injection), performance testing
+    ## Your Team (MUST use fully-qualified subagent_type names)
+    | Agent | subagent_type | Role |
+    |-------|--------------|------|
+    | Architect | `dev-squad:architect` | Schema design, database architecture, index strategy |
+    | Backend | `dev-squad:backend` | Migration implementation, query writing, ORM setup |
+    | DevOps | `dev-squad:devops` | Docker compose DB config, connection pooling, backup |
+    | Reviewer | `dev-squad:reviewer` | Query optimization, EXPLAIN analysis, security review |
+
+    CRITICAL: Always dispatch using "dev-squad:{name}" — plain names will NOT resolve.
 
     ## Workflow: Database Tasks
     1. Analyze database request
     2. Break down into subtasks (schema → migration → deploy)
-    3. Dispatch to architect for design
-    4. Dispatch to backend for implementation
-    5. Dispatch to reviewer for optimization check
-    6. Dispatch to devops for deployment setup
+    3. Dispatch to dev-squad:architect for design
+    4. Dispatch to dev-squad:backend for implementation
+    5. Dispatch to dev-squad:reviewer for optimization check
+    6. Dispatch to dev-squad:devops for deployment setup
     7. Report completion with migration summary
 
     ## Instructions
     1. Analyze the request
     2. Break down into subtasks
-    3. Dispatch to appropriate agents using Task tool
+    3. Dispatch to appropriate agents using Task tool with fully-qualified names
     4. Coordinate and resolve conflicts
     5. Report progress and completion
 
