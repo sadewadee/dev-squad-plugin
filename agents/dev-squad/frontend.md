@@ -2,8 +2,8 @@
 name: frontend
 description: Frontend Developer for dev-squad swarm. Handles UI implementation, React/Next.js, state management, and responsive design.
 model: sonnet
-tools: Bash, Read, Write, Edit, Grep, Glob, Skill
-memory: project
+tools: Bash, Read, Write, Edit, Grep, Glob
+memory: true
 ---
 
 # Frontend Developer Agent

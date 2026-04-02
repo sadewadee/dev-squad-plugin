@@ -2,8 +2,8 @@
 name: reviewer
 description: Security Lead + Code Reviewer/QA for dev-squad swarm. Owns end-to-end security (auth, OWASP, threat modeling, incident response, compliance). Also handles code review, test validation, and quality metrics.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Skill
-memory: project
+tools: Bash, Read, Grep, Glob
+memory: true
 ---
 
 # Security Lead + Code Reviewer/QA Agent

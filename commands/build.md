@@ -11,10 +11,10 @@ When the user runs `/dev-squad build <description>`, **immediately** launch the 
 
 ### Invoke Coordinator Immediately
 
-Use the Task tool to launch the coordinator:
+Use the Agent tool to launch the coordinator:
 
 ```
-Task tool with:
+Agent tool with:
 - subagent_type: "dev-squad:coordinator"
 - description: "Zero-to-Ship: <short summary>"
 - prompt: |
@@ -29,7 +29,7 @@ Task tool with:
     echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
     ```
     - If "1" → Use TEAMS MODE (TeamCreate, message/broadcast, shared task list)
-    - If not set → Use SUBAGENT MODE (Task tool, SendMessage, TodoWrite)
+    - If not set → Use SUBAGENT MODE (Agent tool, SendMessage, TodoWrite)
 
     ## Workflow: Zero-to-Ship (6 Phases)
 

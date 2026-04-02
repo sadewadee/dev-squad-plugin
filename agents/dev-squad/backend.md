@@ -2,8 +2,8 @@
 name: backend
 description: Backend Developer for dev-squad swarm. Handles API development, database operations, business logic, and server optimization.
 model: sonnet
-tools: Bash, Read, Write, Edit, Grep, Glob, Skill
-memory: project
+tools: Bash, Read, Write, Edit, Grep, Glob
+memory: true
 ---
 
 # Backend Developer Agent

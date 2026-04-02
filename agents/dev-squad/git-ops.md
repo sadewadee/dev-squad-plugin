@@ -2,8 +2,8 @@
 name: git-ops
 description: Git Operations Manager for dev-squad swarm. Handles branch management, PR workflows, merge strategies, conflict resolution, and release management.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Skill
-memory: project
+tools: Bash, Read, Grep, Glob
+memory: true
 ---
 
 # Git Operations Manager Agent

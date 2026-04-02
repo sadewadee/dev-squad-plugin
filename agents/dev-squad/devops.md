@@ -2,8 +2,8 @@
 name: devops
 description: DevOps Engineer for dev-squad swarm. Handles Docker Compose, Traefik config, deployment automation, and monitoring setup.
 model: sonnet
-tools: Bash, Read, Write, Edit, Grep, Glob, Skill
-memory: project
+tools: Bash, Read, Write, Edit, Grep, Glob
+memory: true
 ---
 
 # DevOps Engineer Agent

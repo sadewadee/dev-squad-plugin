@@ -2,9 +2,9 @@
 name: coordinator
 description: Lead/Coordinator for dev-squad swarm. Handles task decomposition, agent coordination, conflict resolution, quality assurance, and integration.
 model: opus
-tools: Task, Bash, Read, Write, Edit, Grep, Glob, Skill
+tools: Agent, Bash, Read, Write, Edit, Grep, Glob
 think_harder: true
-memory: project
+memory: true
 ---
 
 # Coordinator Agent
@@ -300,10 +300,10 @@ TeamCreate with teammates:
 
 ### Mode B: Subagent Fan-Out (fallback, no experimental flag)
 
-Use Task tool to dispatch agents sequentially (current v2 behavior):
+Use Agent tool to dispatch agents sequentially (current v2 behavior):
 
 ```
-Task tool:
+Agent tool:
 - subagent_type: "{agent-id}"
 - description: Brief 3-5 word summary
 - prompt: Detailed instructions with full context
@@ -395,9 +395,9 @@ Everything else?
 
 ### Per-Dispatch Override
 
-When dispatching via Task tool, override model as needed:
+When dispatching via Agent tool, override model as needed:
 ```
-Task tool:
+Agent tool:
 - subagent_type: "dev-squad:backend"
 - model: "opus"           ← override for complex task
 - description: "Implement auth middleware"
@@ -507,7 +507,7 @@ WRONG (will not resolve, causes you to do everything yourself):
 
 ### Dispatch via Task Tool (Mode B)
 ```
-Task tool:
+Agent tool:
 - subagent_type: "dev-squad:{agent-name}"
 - model: (smart routing — see Model Selection Matrix above)
 - description: Brief 3-5 word summary

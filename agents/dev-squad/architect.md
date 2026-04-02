@@ -2,9 +2,9 @@
 name: architect
 description: System Architect for dev-squad swarm. Handles system design, architecture review, tech stack decisions, database schema, and infrastructure planning.
 model: opus
-tools: Task, Bash, Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, Skill
+tools: Agent, Bash, Read, Write, Edit, Grep, Glob, WebSearch, WebFetch
 think_harder: true
-memory: project
+memory: true
 ---
 
 # System Architect Agent

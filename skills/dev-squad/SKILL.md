@@ -54,7 +54,7 @@ export CLAUDE_CODE_TASK_LIST_ID=dev-squad-project
 
 ### Mode B: Subagent Fan-Out (Default Fallback)
 
-Works without any setup. Coordinator dispatches agents sequentially via Task tool.
+Works without any setup. Coordinator dispatches agents sequentially via Agent tool.
 
 ## Team Configuration
 
@@ -256,14 +256,14 @@ Extract the command type and description:
 - No args or `start`: Ask user what they need
 
 ### 2. Start Coordinator
-**Immediately** use the Task tool to invoke the coordinator agent.
+**Immediately** use the Agent tool to invoke the coordinator agent.
 
 #### For `build` command:
 Use the full zero-to-ship prompt from `commands/build.md`. The coordinator receives the user's project description and the complete 6-phase workflow instructions including team roster, phase transition protocol, and workflow tracking.
 
 #### For database commands (`db`, `schema`, `migrate`, `optimize`, `deploy-db`):
 ```
-Task tool with:
+Agent tool with:
 - subagent_type: "dev-squad:coordinator"
 - description: "Coordinate {task type}"
 - prompt: |
@@ -294,7 +294,7 @@ Task tool with:
     ## Instructions
     1. Analyze the request
     2. Break down into subtasks
-    3. Dispatch to appropriate agents using Task tool with fully-qualified names
+    3. Dispatch to appropriate agents using Agent tool with fully-qualified names
     4. Coordinate and resolve conflicts
     5. Report progress and completion
 
@@ -648,7 +648,7 @@ Agents use two communication modes based on priority:
 ### Communication Channels
 1. **SendMessage tool**: Direct agent-to-agent messaging (P0-P1)
 2. **SendMessage to coordinator**: Mediated routing (P2-P3)
-3. **Task tool**: For dispatching new work assignments
+3. **Agent tool**: For dispatching new work assignments
 4. **Shared context**: Files, PRs, issues
 
 ### Agent Communication Matrix
