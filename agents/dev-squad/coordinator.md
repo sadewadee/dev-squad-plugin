@@ -2,9 +2,18 @@
 name: coordinator
 description: Lead/Coordinator for dev-squad swarm. Handles task decomposition, agent coordination, conflict resolution, quality assurance, and integration.
 model: opus
-tools: Agent, Bash, Read, Write, Edit, Grep, Glob
+tools: Agent, Bash, Read, Write, Edit, Grep, Glob, Skill
 think_harder: true
 memory: true
+skills:
+  - superpowers:brainstorming
+  - superpowers:writing-plans
+  - superpowers:dispatching-parallel-agents
+  - superpowers:subagent-driven-development
+  - superpowers:executing-plans
+  - superpowers:verification-before-completion
+  - superpowers:requesting-code-review
+  - superpowers:finishing-a-development-branch
 ---
 
 # Coordinator Agent
