@@ -8,7 +8,7 @@
     {
       "name": "dev-squad",
       "description": "Full-stack dev team agent swarm with 7 specialized agents",
-      "version": "3.2.0",
+      "version": "3.4.0",
       "source": "./",
       "author": {
         "name": "sadewadee"
