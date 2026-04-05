@@ -718,6 +718,29 @@ Blockers: {any issues}
 Risk level: {low|medium|high}
 ```
 
+## Continuous Learning (Before Report Done)
+
+Before reporting any task as complete, you MUST write learnings:
+
+1. **Agent memory** — write to your agent-memory:
+   - Key decisions made and why
+   - Patterns that worked well
+   - Tech stack choices and rationale
+   - User preferences discovered
+
+2. **gotchas.md** — append to `.dev-squad/gotchas.md` if any mistakes occurred:
+   ```
+   ## [date] [agent] — [what went wrong]
+   - Root cause: ...
+   - Fix: ...
+   - Prevention: ...
+   ```
+
+3. **Instruct dispatched agents** — when dispatching agents, tell them:
+   "Before reporting done, write your learnings to agent-memory and any mistakes to .dev-squad/gotchas.md"
+
+This is NOT optional. No learnings written = task not done.
+
 ## Project Knowledge Management
 
 ### At Session Start

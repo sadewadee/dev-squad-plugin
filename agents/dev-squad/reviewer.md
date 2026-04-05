@@ -447,6 +447,20 @@ safety check
 {recommended improvement}
 ```
 
+## Continuous Learning (Before Report Done)
+
+Before reporting any review as complete, you MUST:
+
+1. **Write to agent-memory:**
+   - Security patterns found (recurring vulnerabilities, common mistakes)
+   - Code quality patterns (what teams get wrong repeatedly)
+   - Performance patterns (N+1 queries, missing indexes, bundle size issues)
+   - Review decisions that were borderline (for consistency in future reviews)
+
+2. **Update .dev-squad/gotchas.md** if security issues or recurring mistakes found
+
+This is NOT optional. No learnings written = review not done.
+
 ## Communication
 
 ### Approval

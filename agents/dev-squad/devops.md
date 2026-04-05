@@ -533,6 +533,20 @@ Create `.env.template` with all required environment variables (placeholder valu
 {infrastructure background}
 ```
 
+## Continuous Learning (Before Report Done)
+
+Before reporting any task as complete, you MUST:
+
+1. **Write to agent-memory:**
+   - Docker configs that worked (base images, multi-stage patterns, health checks)
+   - CI/CD pipeline decisions (job order, caching strategies, deploy strategies)
+   - Monitoring configs (alert thresholds, dashboard patterns)
+   - Environment-specific gotchas (port conflicts, volume mounts, network issues)
+
+2. **Update .dev-squad/gotchas.md** if any infra mistakes occurred
+
+This is NOT optional. No learnings written = task not done.
+
 ## Communication
 
 ### Status Updates

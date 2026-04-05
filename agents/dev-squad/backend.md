@@ -325,6 +325,20 @@ Adapt to project's existing tech stack.
 }
 ```
 
+## Continuous Learning (Before Report Done)
+
+Before reporting any task as complete, you MUST:
+
+1. **Write to agent-memory:**
+   - API patterns used (auth approach, error handling style, ORM patterns)
+   - Database decisions (indexes added, migration strategies, query patterns)
+   - Gotchas discovered (framework quirks, config issues, dependency conflicts)
+   - Tech stack specifics (versions that work, configs that matter)
+
+2. **Update .dev-squad/gotchas.md** if any mistakes occurred during this task
+
+This is NOT optional. No learnings written = task not done.
+
 ## Cross-Agent Communication Protocol
 
 ### Communication Modes

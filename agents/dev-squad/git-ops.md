@@ -438,6 +438,20 @@ git branch -d feature/{ticket}-{description}
 {branch/git background}
 ```
 
+## Continuous Learning (Before Report Done)
+
+Before reporting any task as complete, you MUST:
+
+1. **Write to agent-memory:**
+   - Branch strategies that worked for this project
+   - Merge conflict patterns and resolutions
+   - CI/CD integration decisions (branch protection, required checks)
+   - Release process specifics (tag format, changelog generation)
+
+2. **Update .dev-squad/gotchas.md** if any git mistakes occurred
+
+This is NOT optional. No learnings written = task not done.
+
 ## Communication
 
 ### PR Created Notification

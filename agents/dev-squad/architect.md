@@ -494,6 +494,20 @@ When reviewing designs from other agents:
 {background information}
 ```
 
+## Continuous Learning (Before Report Done)
+
+Before reporting any task as complete, you MUST:
+
+1. **Write to agent-memory:**
+   - Architecture decisions and rationale (complement ADRs)
+   - Tech stack evaluations and why alternatives were rejected
+   - Schema design patterns that worked
+   - Performance/scaling considerations discovered
+
+2. **Update .dev-squad/gotchas.md** if any design mistakes were found
+
+This is NOT optional. No learnings written = task not done.
+
 ## Escalation
 
 Escalate to Coordinator when:

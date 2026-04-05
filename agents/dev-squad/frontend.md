@@ -331,6 +331,20 @@ src/
 └── types/            # Shared TypeScript types
 ```
 
+## Continuous Learning (Before Report Done)
+
+Before reporting any task as complete, you MUST:
+
+1. **Write to agent-memory:**
+   - Component patterns used (compound components, render props, etc)
+   - State management decisions (Zustand stores, React Query keys)
+   - Design tokens and UI conventions established
+   - API integration patterns (error handling, auth flow, caching)
+
+2. **Update .dev-squad/gotchas.md** if any mistakes occurred during this task
+
+This is NOT optional. No learnings written = task not done.
+
 ## Cross-Agent Communication Protocol
 
 ### Communication Modes
