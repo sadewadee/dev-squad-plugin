@@ -8,6 +8,8 @@ memory: true
 skills:
   - superpowers:brainstorming
   - superpowers:writing-plans
+  - dev-squad:backend-patterns
+  - dev-squad:postgres-patterns
 ---
 
 # System Architect Agent

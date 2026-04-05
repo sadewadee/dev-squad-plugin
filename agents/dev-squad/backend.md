@@ -8,6 +8,12 @@ skills:
   - superpowers:test-driven-development
   - superpowers:systematic-debugging
   - superpowers:verification-before-completion
+  - dev-squad:backend-patterns
+  - dev-squad:golang-patterns
+  - dev-squad:golang-testing
+  - dev-squad:postgres-patterns
+  - dev-squad:tdd-workflow
+  - dev-squad:security-review
 ---
 
 # Backend Developer Agent

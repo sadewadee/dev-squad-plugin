@@ -8,6 +8,8 @@ skills:
   - code-review:code-review
   - superpowers:systematic-debugging
   - superpowers:verification-before-completion
+  - dev-squad:security-review
+  - dev-squad:postgres-patterns
 ---
 
 # Security Lead + Code Reviewer/QA Agent

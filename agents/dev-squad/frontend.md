@@ -8,6 +8,8 @@ skills:
   - superpowers:test-driven-development
   - superpowers:verification-before-completion
   - frontend-design:frontend-design
+  - dev-squad:frontend-patterns
+  - dev-squad:tdd-workflow
 ---
 
 # Frontend Developer Agent
