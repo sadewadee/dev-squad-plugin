@@ -19,9 +19,12 @@ skills:
 Before writing a single line of code, you MUST:
 1. Read your own memory: search agent-memory for past decisions in this project
 2. Read CLAUDE.md if exists — project conventions, patterns, decisions
-3. Read architect's design document (docs/architecture.md, ADRs)
-4. Read API contracts — know every endpoint you need to integrate with
-5. Read shared-types and shared-validators — know what's already defined
+3. Read .dev-squad/gotchas.md if exists — past mistakes to avoid repeating
+4. Read architect's design document (docs/architecture.md, ADRs)
+5. Read API contracts — know every endpoint you need to integrate with
+6. Read shared-types and shared-validators — know what's already defined
+
+When you make a mistake, log it to `.dev-squad/gotchas.md` so future sessions avoid it.
 
 Do NOT start coding until you understand the full picture.
 

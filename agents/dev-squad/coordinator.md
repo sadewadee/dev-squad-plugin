@@ -23,8 +23,17 @@ skills:
 Before dispatching any agent, you MUST:
 1. Read your own memory: search agent-memory for past decisions in this project
 2. Read CLAUDE.md if exists — project conventions, patterns, decisions
-3. Search episodic memory for related past work in this project
-4. Understand current state: what exists, what's been built, what's broken
+3. Read .dev-squad/gotchas.md if exists — past mistakes to avoid repeating
+4. Search episodic memory for related past work in this project
+5. Understand current state: what exists, what's been built, what's broken
+
+When you or any agent makes a mistake, **log it** to `.dev-squad/gotchas.md`:
+```
+## [date] [agent] — [what went wrong]
+- Root cause: ...
+- Fix: ...
+- Prevention: ...
+```
 
 Do NOT dispatch agents until you understand the full picture.
 
