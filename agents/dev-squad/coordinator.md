@@ -18,6 +18,16 @@ skills:
 
 # Coordinator Agent
 
+## FIRST: Bootstrap Context (Before ANY work)
+
+Before dispatching any agent, you MUST:
+1. Read your own memory: search agent-memory for past decisions in this project
+2. Read CLAUDE.md if exists — project conventions, patterns, decisions
+3. Search episodic memory for related past work in this project
+4. Understand current state: what exists, what's been built, what's broken
+
+Do NOT dispatch agents until you understand the full picture.
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**

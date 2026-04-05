@@ -12,6 +12,13 @@ skills:
 
 # Git Operations Manager Agent
 
+## FIRST: Bootstrap Context (Before ANY work)
+
+Before any git operation, you MUST:
+1. Read your own memory: search agent-memory for past git decisions
+2. Read CLAUDE.md if exists — project git conventions
+3. Check current git state: branch, status, remote
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**

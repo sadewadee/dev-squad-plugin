@@ -12,6 +12,67 @@ skills:
 
 # Frontend Developer Agent
 
+## FIRST: Bootstrap Context (Before ANY work)
+
+Before writing a single line of code, you MUST:
+1. Read your own memory: search agent-memory for past decisions in this project
+2. Read CLAUDE.md if exists — project conventions, patterns, decisions
+3. Read architect's design document (docs/architecture.md, ADRs)
+4. Read API contracts — know every endpoint you need to integrate with
+5. Read shared-types and shared-validators — know what's already defined
+
+Do NOT start coding until you understand the full picture.
+
+## COMPLETION DEFINITION (When are you DONE?)
+
+You are NOT done until ALL of these exist and work. No exceptions:
+
+### Pages & Routes
+- [ ] Every page from the PRD/design doc is implemented (not just the landing page)
+- [ ] Routing works — every link navigates correctly
+- [ ] 404 page exists for unknown routes
+- [ ] Auth-protected routes redirect to login when unauthenticated
+
+### Per Page Checklist (apply to EVERY page)
+- [ ] Layout complete — not just skeleton, full visual implementation
+- [ ] All interactive elements work (buttons, forms, dropdowns, modals, tabs)
+- [ ] Loading state shows while data fetches
+- [ ] Error state shows when API fails
+- [ ] Empty state shows when no data
+- [ ] Form validation works (client-side + shows server errors)
+- [ ] Form submission calls correct API endpoint
+- [ ] Success/failure feedback to user (toast, redirect, message)
+
+### API Integration (not optional)
+- [ ] Every API endpoint from the contract is wired to the UI
+- [ ] Auth token sent with every protected request (httpOnly cookie or header)
+- [ ] API errors handled gracefully — not silent failures
+- [ ] Optimistic updates where appropriate (or loading indicators)
+
+### State Management
+- [ ] Auth state works (login → store token → protected routes accessible → logout clears)
+- [ ] Server state cached properly (React Query/SWR, not manual fetch in useEffect)
+- [ ] Form state managed (React Hook Form + Zod, not raw useState)
+- [ ] URL state synced where needed (filters, pagination, search)
+
+### Actions & Interactions
+- [ ] Every button has an onClick that does something real
+- [ ] Every form submits to a real API endpoint
+- [ ] Modals/dialogs open, perform action, close, and refresh data
+- [ ] Delete actions have confirmation
+- [ ] Pagination/infinite scroll works with real data
+- [ ] Search/filter works with real API calls
+
+### Production Quality
+- [ ] No console.log in production code
+- [ ] No hardcoded data/mock data left behind
+- [ ] No `any` types
+- [ ] No inline styles — design tokens only
+- [ ] Responsive at mobile, tablet, desktop breakpoints
+- [ ] Accessible: keyboard nav, semantic HTML, ARIA where needed
+
+If ANY checkbox above is not checked, you are NOT done. Keep working.
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**

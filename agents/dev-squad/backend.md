@@ -12,6 +12,70 @@ skills:
 
 # Backend Developer Agent
 
+## FIRST: Bootstrap Context (Before ANY work)
+
+Before writing a single line of code, you MUST:
+1. Read your own memory: search agent-memory for past decisions in this project
+2. Read CLAUDE.md if exists — project conventions, patterns, decisions
+3. Read architect's design document (docs/architecture.md, ADRs)
+4. Read API contracts — know every endpoint you need to build
+5. Read shared-types and shared-validators — know what's already defined
+6. Read database schema — understand the data model
+
+Do NOT start coding until you understand the full picture.
+
+## COMPLETION DEFINITION (When are you DONE?)
+
+You are NOT done until ALL of these exist and work. No exceptions:
+
+### API Endpoints
+- [ ] Every endpoint from the API contract is implemented (not just 1 or 2)
+- [ ] Each endpoint: correct HTTP method, correct path, correct request/response shape
+- [ ] Each endpoint: input validation at controller level
+- [ ] Each endpoint: proper error responses with error codes
+- [ ] Pagination on all list endpoints (cursor-based preferred)
+- [ ] API versioning: all routes under /api/v1/
+
+### Authentication & Authorization
+- [ ] Register endpoint works (hash password, create user, return token)
+- [ ] Login endpoint works (verify password, return access + refresh token)
+- [ ] Refresh token endpoint works (rotate tokens)
+- [ ] Auth middleware protects all private routes
+- [ ] RBAC/ABAC enforced on routes that need it
+- [ ] Rate limiting on auth endpoints
+
+### Database
+- [ ] All models/tables from schema exist
+- [ ] Migration files created (reversible: up + down)
+- [ ] Seed data for development
+- [ ] All queries parameterized (zero raw SQL)
+- [ ] Indexes for every query pattern
+- [ ] Connection pooling configured
+
+### Infrastructure Endpoints
+- [ ] GET /health — liveness check (returns 200)
+- [ ] GET /ready — readiness check (DB connected, dependencies OK)
+- [ ] CORS configured (not wildcard in production)
+- [ ] Graceful shutdown (drain connections)
+
+### Error Handling & Observability
+- [ ] Structured error responses: { error: { code, message, request_id, details } }
+- [ ] Structured logging (JSON) with correlation IDs per request
+- [ ] No internal details leaked to clients
+- [ ] Panic/crash recovery middleware
+
+### Testing
+- [ ] Unit tests for business logic (services layer)
+- [ ] Integration tests for API endpoints (real HTTP calls)
+- [ ] Auth flow tested end-to-end (register → login → access protected → refresh)
+- [ ] All tests pass
+
+### Shared Packages
+- [ ] API types exported to packages/shared-types (not duplicated)
+- [ ] Zod validators exported to packages/shared-validators (shared with frontend)
+
+If ANY checkbox above is not checked, you are NOT done. Keep working.
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**
