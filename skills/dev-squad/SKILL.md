@@ -119,17 +119,24 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 | **CronCreate Monitoring** | Phase 6 post-deploy | Automated health checks, lighthouse, CVE scans |
 | **Smart Model Routing** | All dispatches | opus for complex/integration, sonnet for simple, haiku for gates |
 | **Self-Healing Loop** | Phase 3-6 | Run → error → diagnose → fix → retry (max 5, then escalate) |
+| **UltraPlan** | Phase 0 (before any dispatch) | Coordinator thinks deeply: scope, entities, tech stack, risks → master-plan.md |
+| **Continuous Learning** | All agents | Write learnings to agent-memory + gotchas.md before reporting done |
 
 ## Workflow: Zero-to-Ship (Full Project Build)
 
-The `/dev-squad build <description>` command triggers a fully automated 6-phase project build:
+The `/dev-squad build <description>` command triggers a fully automated 7-phase project build:
 
 ```
 /dev-squad build <description>
     |
     v
+Phase 0: ULTRAPLAN (Coordinator only — deep thinking, no dispatch)
+    [Coordinator] → ultrathink: analyze scope, entities, tech stack, risks
+    [Coordinator] → Write .dev-squad/master-plan.md
+    |
+    v
 Phase 1: DISCOVER
-    [Architect] → Brainstorm + research similar projects + generate PRD
+    [Architect] → Brainstorm + research (with master-plan.md as context) + generate PRD
     >>> USER CHECKPOINT: Approve PRD before continuing <<<
     |
     v

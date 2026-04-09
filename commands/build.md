@@ -31,12 +31,72 @@ Agent tool with:
     - If "1" → Use TEAMS MODE (TeamCreate, message/broadcast, shared task list)
     - If not set → Use SUBAGENT MODE (Agent tool, SendMessage, TodoWrite)
 
-    ## Workflow: Zero-to-Ship (6 Phases)
+    ## Workflow: Zero-to-Ship (7 Phases)
 
-    You MUST execute all 6 phases in order. Do NOT skip phases.
+    You MUST execute all 7 phases in order. Do NOT skip phases.
+
+    ### Phase 0: ULTRAPLAN (Deep Thinking — Coordinator Only)
+    
+    BEFORE dispatching ANY agent, YOU (coordinator) must think deeply about this project.
+    Do NOT rush to dispatch. Think first, plan first, then execute.
+    
+    Use ultrathink. Take your time. This phase determines the quality of everything that follows.
+    
+    **Step 1: Deep Analysis** — Answer these questions in writing:
+    - What is the TRUE scope? (MVP? Full product? Prototype?)
+    - How many entities/models are needed? List them all.
+    - What are the relationships between entities?
+    - What auth model fits? (Simple JWT? JWT+RBAC? Multi-tenant? OAuth?)
+    - What is the optimal tech stack? WHY? (Don't default — reason about it)
+    - What are the 3 biggest risks? (Complexity? Integration? Performance? Security?)
+    - What is the user's REAL intent? (Sometimes "todo app" means "project management tool")
+    
+    **Step 2: Architecture Pre-Decision** — Decide BEFORE architect starts:
+    - Monolith or microservices? (Almost always monolith for new projects)
+    - SQL or NoSQL? Which database specifically?
+    - SSR or SPA? Next.js App Router or Pages?
+    - State management approach? (Server state vs client state ratio)
+    - Real-time needed? (WebSocket, SSE, polling?)
+    - File uploads needed? (Local, S3, CDN?)
+    - Background jobs needed? (Queue, cron, event-driven?)
+    
+    **Step 3: Write Master Plan** — Create `.dev-squad/master-plan.md`:
+    ```markdown
+    # Master Plan: {project name}
+    
+    ## Scope
+    {MVP scope, explicitly what's IN and OUT}
+    
+    ## Entities
+    {list every entity with key fields}
+    
+    ## Tech Stack Decision
+    {stack chosen + WHY, not just what}
+    
+    ## Auth Model
+    {auth approach + reasoning}
+    
+    ## Risk Assessment
+    | Risk | Likelihood | Mitigation |
+    |------|-----------|------------|
+    
+    ## Agent Dispatch Plan
+    {which agents, what order, what each gets}
+    
+    ## Phase Estimates
+    {rough sizing per phase}
+    ```
+    
+    **Step 4: Validate** — Re-read your master plan. Ask yourself:
+    - Is this overengineered for the scope?
+    - Am I defaulting to patterns I know vs what fits?
+    - Could this be simpler?
+    - Did I miss any entity or relationship?
+    
+    Only AFTER master-plan.md is written, proceed to Phase 1.
 
     ### Phase 1: DISCOVER (Brainstorming Pattern)
-    - Dispatch architect with brainstorming skill
+    - Dispatch architect with brainstorming skill — INCLUDE master-plan.md as context
     - Architect MUST: explore context → ask clarifying questions (one at a time, multiple choice preferred) → propose 2-3 approaches with trade-offs → present design
     - Search GitHub (grep-github MCP) for similar projects
     - Research tech options via Context7 MCP
@@ -340,6 +400,7 @@ Agent tool with:
       "description": "<project description>",
       "started_at": "<timestamp>",
       "phases": {
+        "ultraplan": "pending",
         "discover": "pending",
         "design": "pending",
         "scaffold": "pending",
@@ -353,8 +414,9 @@ Agent tool with:
 
     ## Instructions
     1. Create the workflow tracking file
-    2. Execute all 6 phases in order
-    3. Only pause for user input at Phase 1 CHECKPOINT
-    4. Use Skills and MCP tools autonomously throughout
-    5. Report final completion with summary of everything built
+    2. Execute Phase 0 ULTRAPLAN first — think deeply, write master-plan.md
+    3. Execute Phases 1-6 in order
+    4. Only pause for user input at Phase 1 CHECKPOINT
+    5. Use Skills and MCP tools autonomously throughout
+    6. Report final completion with summary of everything built
 ```

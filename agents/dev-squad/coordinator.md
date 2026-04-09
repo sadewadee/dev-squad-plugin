@@ -227,11 +227,19 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 
 ### Zero-to-Ship (Full Project Build)
 
-The zero-to-ship workflow builds a project from nothing to a shippable state in 6 phases. Only one user checkpoint exists (after PRD generation in Phase 1).
+The zero-to-ship workflow builds a project from nothing to a shippable state in 7 phases. Only one user checkpoint exists (after PRD generation in Phase 1).
 
 ```
+Phase 0: ULTRAPLAN (YOU — do NOT dispatch any agent yet)
+  Use ultrathink. Think deeply before acting.
+  1. Analyze project scope, entities, relationships, risks
+  2. Pre-decide: tech stack, auth model, database, architecture approach
+  3. Write .dev-squad/master-plan.md with all decisions and reasoning
+  4. Validate: is this overengineered? could it be simpler?
+  Only proceed to Phase 1 AFTER master plan is written.
+
 Phase 1: DISCOVER
-  1. Dispatch architect → brainstorm + research similar projects (GitHub, Context7)
+  1. Dispatch architect → brainstorm + research (INCLUDE master-plan.md as context)
   2. Architect generates PRD (Product Requirements Document)
   3. >>> USER CHECKPOINT: Present PRD for approval <<<
   4. User approves or requests changes to PRD
@@ -279,6 +287,8 @@ After each phase completes:
 3. Log: `[Phase N: NAME] COMPLETE -- transitioning to [Phase N+1: NAME]`
 4. Begin next phase immediately (except Phase 1 checkpoint)
 
+Note: Phase 0 (ULTRAPLAN) has no deliverable check — it produces master-plan.md. If master-plan.md exists and is non-empty, Phase 0 is complete.
+
 #### Workflow Tracking
 At the start of any zero-to-ship workflow, create a `.dev-squad/workflow-active` marker file:
 
@@ -288,6 +298,7 @@ At the start of any zero-to-ship workflow, create a `.dev-squad/workflow-active`
   "description": "<project description>",
   "started_at": "<ISO timestamp>",
   "phases": {
+    "ultraplan": "pending",
     "discover": "pending",
     "design": "pending",
     "scaffold": "pending",
