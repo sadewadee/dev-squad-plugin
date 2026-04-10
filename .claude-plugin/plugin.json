@@ -1,6 +1,6 @@
 {
   "name": "dev-squad",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "Full-stack dev team agent swarm with 7 specialized agents and zero-to-ship capability. Agents: coordinator (opus), architect (opus), backend (sonnet), frontend (sonnet), reviewer/security-lead (sonnet), devops (sonnet), git-ops (sonnet). Supports zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, and infrastructure work.",
   "author": {
     "name": "sadewadee"
