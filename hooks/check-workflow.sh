@@ -1,25 +1,13 @@
 #!/usr/bin/env bash
 # check-workflow.sh
 # SubagentStop + Stop hook: checks if zero-to-ship workflow is active and incomplete.
-#
-# IMPORTANT: Only blocks ONCE per session to prevent infinite loop.
-# If agent needs user input, it must be allowed to stop.
-#
-# Exit codes:
-#   0 = no active workflow, workflow complete, or already reminded (let stop)
-#   2 = workflow active, first reminder (block stop once)
+# NON-BLOCKING: only injects reminder as context, never blocks stop.
+# Blocking caused infinite loops when agent needed user input.
 
 WORKFLOW_FILE=".dev-squad/workflow-active"
-REMINDER_FLAG=".dev-squad/.hook-reminded"
 
 # If no workflow file exists, nothing to do
 if [ ! -f "$WORKFLOW_FILE" ]; then
-  exit 0
-fi
-
-# If we already reminded this session, let the agent stop
-# This prevents infinite block loop when agent needs user input
-if [ -f "$REMINDER_FLAG" ]; then
   exit 0
 fi
 
@@ -39,11 +27,9 @@ for phase in ultraplan discover design scaffold implement review ship; do
 done
 
 if [ "$ALL_COMPLETE" = true ]; then
-  rm -f "$REMINDER_FLAG" 2>/dev/null
   exit 0
 fi
 
-# First reminder — block once, set flag
-touch "$REMINDER_FLAG"
-echo "WORKFLOW REMINDER: Zero-to-ship workflow is still active. Phase '$CURRENT_PHASE' has status '$CURRENT_STATUS'. Continue to the next phase or explain why you need to stop." >&2
-exit 2
+# Non-blocking reminder (exit 0, not exit 2)
+echo "{\"additionalContext\": \"Workflow reminder: Phase '$CURRENT_PHASE' has status '$CURRENT_STATUS'. Continue when ready.\"}"
+exit 0
