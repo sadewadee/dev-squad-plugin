@@ -4,6 +4,9 @@
 
 WORKFLOW_FILE=".dev-squad/workflow-active"
 
+# Reset reminder flag on new subagent start (fresh chance to remind)
+rm -f ".dev-squad/.hook-reminded" 2>/dev/null
+
 if [ -f "$WORKFLOW_FILE" ]; then
   echo "=== DEV-SQUAD WORKFLOW STATE ==="
   cat "$WORKFLOW_FILE"
