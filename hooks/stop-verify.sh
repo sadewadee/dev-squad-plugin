@@ -12,6 +12,16 @@ if [ "$STOP_HOOK_ACTIVE" = "True" ]; then
   exit 0
 fi
 
+# Skip if no project files detected (not in a project directory)
+if [ ! -f "tsconfig.json" ] && [ ! -f "package.json" ] && [ ! -f "go.mod" ] && [ ! -f "pyproject.toml" ] && [ ! -f "setup.py" ] && [ ! -f "Cargo.toml" ]; then
+  exit 0
+fi
+
+# Skip if no dev-squad workflow active
+if [ ! -f ".dev-squad/workflow-active" ]; then
+  exit 0
+fi
+
 ERRORS=""
 
 # Detect project type and run verification
