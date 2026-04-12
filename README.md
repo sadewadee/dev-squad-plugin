@@ -192,7 +192,7 @@ dev-squad-plugin/
 
 ## Guardrails
 
-- Maximum 12 parallel agents (3-5 preferred for focused work)
+- Maximum 21 parallel agents (3-5 preferred for focused work)
 - Review required before every merge -- no exceptions
 - Tests required before every PR -- no exceptions
 - Security check required for auth/data/API changes

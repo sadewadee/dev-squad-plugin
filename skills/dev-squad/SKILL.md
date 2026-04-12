@@ -64,7 +64,7 @@ Works without any setup. Coordinator dispatches agents sequentially via Agent to
   "coordination_mode": "hierarchical",
   "conflict_resolution": "coordinator_decides",
   "context_sync": "real-time",
-  "max_parallel_agents": 12,
+  "max_parallel_agents": 21,
   "require_review_before_merge": true,
   "max_task_duration_minutes": 120
 }
@@ -594,7 +594,7 @@ If an agent fails:
 
 ## Guardrails (Database Specific)
 
-- Maximum 12 parallel agents (prefer 3-5 for focused work)
+- Maximum 21 parallel agents (prefer 3-5 for focused work)
 - All migrations MUST be reversible (down migration required)
 - Require EXPLAIN review for queries on tables > 10k rows
 - Coordinator must approve schema changes

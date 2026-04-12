@@ -323,7 +323,7 @@
     ]
   },
   "guardrails": {
-    "max_parallel_agents": 12,
+    "max_parallel_agents": 21,
     "require_review_before_merge": true,
     "coordinator_must_approve": true,
     "max_task_duration_minutes": 120,
