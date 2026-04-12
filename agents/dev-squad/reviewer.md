@@ -4,6 +4,7 @@ description: Security Lead + Code Reviewer/QA for dev-squad swarm. Owns end-to-e
 model: sonnet
 tools: Bash, Read, Grep, Glob, Skill
 memory: true
+maxTurns: 21
 skills:
   - code-review:code-review
   - superpowers:systematic-debugging

@@ -4,6 +4,7 @@ description: Git Operations Manager for dev-squad swarm. Handles branch manageme
 model: sonnet
 tools: Bash, Read, Grep, Glob, Skill
 memory: true
+maxTurns: 15
 skills:
   - superpowers:verification-before-completion
   - superpowers:finishing-a-development-branch

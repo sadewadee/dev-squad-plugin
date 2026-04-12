@@ -4,6 +4,7 @@ description: DevOps Engineer for dev-squad swarm. Handles Docker Compose, Traefi
 model: sonnet
 tools: Bash, Read, Write, Edit, Grep, Glob, Skill
 memory: true
+maxTurns: 21
 skills:
   - superpowers:verification-before-completion
   - superpowers:systematic-debugging

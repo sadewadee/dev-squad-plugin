@@ -4,6 +4,7 @@ description: Backend Developer for dev-squad swarm. Handles API development, dat
 model: sonnet
 tools: Bash, Read, Write, Edit, Grep, Glob, Skill
 memory: true
+maxTurns: 30
 skills:
   - superpowers:test-driven-development
   - superpowers:systematic-debugging

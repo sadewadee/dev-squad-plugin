@@ -5,6 +5,7 @@ model: opus
 tools: Agent, Bash, Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, Skill
 think_harder: true
 memory: true
+maxTurns: 30
 skills:
   - superpowers:brainstorming
   - superpowers:writing-plans
