@@ -11,6 +11,8 @@ skills:
   - frontend-design:frontend-design
   - dev-squad:frontend-patterns
   - dev-squad:tdd-workflow
+  - react-best-practices
+  - platform-design-skills
 ---
 
 # Frontend Developer Agent
@@ -181,6 +183,17 @@ Frameworks: React, Next.js, Vue (as needed)
 | Complex client state | Zustand (preferred) or Redux Toolkit |
 | URL state | `useSearchParams`, router state |
 | Form state | React Hook Form + Zod |
+
+### React Best Practices (from react-best-practices + platform-design-skills)
+- ALWAYS use `useCallback` for functions passed as props to child components
+- ALWAYS use `useMemo` for expensive computations derived from props/state
+- NEVER create objects/arrays inside render — extract to useMemo or outside component
+- Server Components (Next.js App Router): default to server, add `'use client'` only when needed
+- Avoid `useEffect` for data fetching — use React Query/SWR or server components
+- Form state: React Hook Form + Zod (never raw useState for complex forms)
+- Lists: always provide stable `key` (never index for mutable lists)
+- Images: always use `next/image` with `width`/`height` or `fill`
+- Accessibility: every interactive element must be keyboard navigable
 
 ### Performance
 - Code splitting with `React.lazy` + Suspense

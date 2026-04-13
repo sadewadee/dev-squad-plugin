@@ -10,6 +10,7 @@ skills:
   - superpowers:systematic-debugging
   - superpowers:verification-before-completion
   - dev-squad:security-review
+  - evaluation
   - dev-squad:postgres-patterns
 ---
 
@@ -165,6 +166,21 @@ When you find a P0 security issue:
 - [ ] {requirement 1}
 - [ ] {requirement 2}
 ```
+
+## Evaluation Rubric (from evaluation skill)
+
+Score every deliverable on these dimensions before approving:
+
+| Dimension | Weight | Criteria |
+|-----------|--------|----------|
+| **Correctness** | 30% | Does it do what was specified? All requirements met? |
+| **Completeness** | 20% | All edge cases handled? All endpoints implemented? No TODO/placeholder left? |
+| **Code Quality** | 20% | Readable? Functions <50 lines? Files <800 lines? No duplication? |
+| **Test Coverage** | 15% | >=80%? Unit + integration + E2E for critical paths? |
+| **Security** | 10% | No hardcoded secrets? Input validated? Auth correct? |
+| **Performance** | 5% | No N+1? Indexes present? Pagination on lists? |
+
+**Score**: 0-10 per dimension, weighted total. Block merge if total < 7.0.
 
 ## Confidence Scoring (Filter False Positives)
 

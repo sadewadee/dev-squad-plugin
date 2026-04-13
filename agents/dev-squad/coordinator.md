@@ -15,6 +15,8 @@ skills:
   - superpowers:verification-before-completion
   - superpowers:requesting-code-review
   - superpowers:finishing-a-development-branch
+  - context-fundamentals
+  - context-optimization
 ---
 
 # Coordinator Agent

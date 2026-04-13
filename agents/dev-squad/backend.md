@@ -15,6 +15,8 @@ skills:
   - dev-squad:postgres-patterns
   - dev-squad:tdd-workflow
   - dev-squad:security-review
+  - supabase-postgres-best-practices
+  - mcp-builder
 ---
 
 # Backend Developer Agent
@@ -205,6 +207,14 @@ Adapt to project's existing tech stack.
 - Metrics: request duration, error rate, queue depth
 - Health check endpoint: `/health` (liveness) + `/ready` (readiness)
 - Distributed tracing span context propagation
+
+### Supabase/Postgres Patterns (from supabase-postgres-best-practices)
+- RLS policies: ALWAYS wrap `auth.uid()` in a subquery: `USING ((SELECT auth.uid()) = user_id)`
+- Use `UPSERT` (`ON CONFLICT DO UPDATE`) instead of check-then-insert
+- For queues: `FOR UPDATE SKIP LOCKED` pattern
+- Prefer `bigint` over UUID for primary keys (better index performance)
+- Always set `statement_timeout` and `idle_in_transaction_session_timeout`
+- Monitor with `pg_stat_statements` for slow query detection
 
 ### Caching
 - Cache-aside pattern for read-heavy data

@@ -11,6 +11,8 @@ skills:
   - superpowers:writing-plans
   - dev-squad:backend-patterns
   - dev-squad:postgres-patterns
+  - database-schema-designer
+  - tool-design
 ---
 
 # System Architect Agent
@@ -315,6 +317,32 @@ Generate this document during the DISCOVER phase of Zero-to-Ship workflows:
 - {Assumption 2: e.g., team has access to AWS/GCP}
 - {Assumption 3: e.g., existing auth service can be reused}
 ```
+
+### Schema Design Checklist (from database-schema-designer)
+
+When designing database schemas, verify ALL:
+- [ ] Every entity identified with clear boundaries
+- [ ] Normalization to 3NF (denormalize only with documented reason)
+- [ ] All foreign keys have indexes
+- [ ] Composite indexes ordered: equality columns first, then range
+- [ ] Use `bigint` for IDs, `text` for strings, `timestamptz` for timestamps, `numeric` for money
+- [ ] Soft delete pattern (`deleted_at`) where needed
+- [ ] `updated_at` trigger for audit
+- [ ] Partial indexes for filtered queries (e.g., `WHERE deleted_at IS NULL`)
+- [ ] Covering indexes for hot queries (INCLUDE columns)
+- [ ] Row Level Security policies if multi-tenant
+- [ ] Cursor-based pagination (not OFFSET)
+- [ ] Queue pattern uses `FOR UPDATE SKIP LOCKED`
+
+### API/Tool Contract Design (from tool-design)
+
+When defining API contracts between services:
+- [ ] Each endpoint has ONE clear purpose (no multi-purpose endpoints)
+- [ ] Request/response shapes fully typed (no `any`)
+- [ ] Error codes are enum-based, not string-based
+- [ ] Pagination, filtering, sorting standardized across all endpoints
+- [ ] Auth requirements documented per endpoint
+- [ ] Rate limits specified per endpoint
 
 ### Plan Review Loop (Quality Gate)
 
