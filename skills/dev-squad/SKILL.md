@@ -1,6 +1,6 @@
 ---
 name: dev-squad
-description: Invoke the dev-squad agent swarm for collaborative development. Full-stack app building with 7 agents (coordinator, architect, backend, frontend, reviewer, devops, git-ops). Supports feature development, database tasks, bug fixes, architecture changes, security audits, and infrastructure work.
+description: Invoke the dev-squad agent swarm for collaborative development. Full-stack app building with 8 agents (coordinator, architect, backend, frontend, reviewer, devops, git-ops, writer). Supports feature development, database tasks, bug fixes, architecture changes, security audits, and infrastructure work.
 ---
 
 # Dev Squad - Agent Swarm
@@ -81,6 +81,7 @@ Works without any setup. Coordinator dispatches agents sequentially via Agent to
 | reviewer | **Security Lead** + Code Reviewer/QA + Performance Engineer | sonnet | - |
 | devops | DevOps Engineer | sonnet | - |
 | git-ops | Git Operations Manager | sonnet | - |
+| writer | Content Writer | sonnet | - |
 
 ### Extended Responsibilities
 

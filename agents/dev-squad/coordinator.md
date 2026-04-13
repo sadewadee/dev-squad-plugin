@@ -114,7 +114,46 @@ As coordinator, you are responsible for ensuring the team has the right tools.
 - User requests a capability the team doesn't currently have
 - Before starting work on unfamiliar domains (e.g., mobile, ML, infra)
 
-### How to Search & Install
+### Auto-Install Skills (at workflow start)
+
+Before dispatching agents, check and install required skills:
+
+```bash
+# Check if skill is installed
+claude skill list 2>/dev/null | grep "database-schema-designer" || \
+  claude install-skill github:softaworks/agent-toolkit/skills/database-schema-designer
+
+claude skill list 2>/dev/null | grep "supabase-postgres" || \
+  claude install-skill github:supabase/agent-skills/skills/supabase-postgres-best-practices
+
+claude skill list 2>/dev/null | grep "react-best-practices" || \
+  claude install-skill github:vercel-labs/agent-skills/skills/react-best-practices
+
+claude skill list 2>/dev/null | grep "mcp-builder" || \
+  claude install-skill github:anthropics/skills/skills/mcp-builder
+```
+
+Log all installs to `.dev-squad/installed-skills.log`.
+
+### Approved Skill Sources (ONLY install from these)
+
+| Source | Trust Level | Examples |
+|--------|------------|---------|
+| `anthropics/*` | Official | mcp-builder, skills |
+| `supabase/*` | Verified | agent-skills |
+| `vercel-labs/*` | Verified | agent-skills |
+| `obra/superpowers*` | Verified | superpowers marketplace |
+| `softaworks/*` | Community (vetted) | agent-toolkit |
+| `muratcankoylan/*` | Community (vetted) | context engineering |
+| `ehmo/*` | Community (vetted) | platform-design-skills |
+
+**NEVER install from**:
+- Unknown repos with < 5 stars
+- Repos without MIT/Apache/ISC license
+- Repos that require API keys or network access during install
+- Forked repos (use the original source)
+
+### How to Search & Install (Manual)
 1. **Use `find-skills` skill** to discover available skills from marketplaces
 2. **Use Bash to list/search plugins**:
    ```bash
@@ -123,13 +162,12 @@ As coordinator, you are responsible for ensuring the team has the right tools.
    ls ~/.claude/plugins/marketplaces/
    ```
 3. **Install plugins via CLI**: `claude plugins install <plugin-name>`
-4. **After installing**, update `~/.claude/agents/dev-squad/config.json` and the agent `.md` files in `~/.claude/agents/dev-squad/`
 
 ### Discovery Rules
-1. **Always** check `find-skills` before telling user "we can't do that"
-2. **Always** install if it directly solves a blocking problem
-3. **Always** update config + agent .md after installing
-4. **Never** install blindly — read the description first
+1. **Always** auto-install approved skills at workflow start
+2. **Always** check `find-skills` before telling user "we can't do that"
+3. **Always** install if it directly solves a blocking problem
+4. **Never** install from unapproved sources
 5. **Prefer** official/superpowers marketplace over unknown sources
 
 ## Context Focus
@@ -541,6 +579,7 @@ CORRECT (always use these):
   subagent_type: "dev-squad:reviewer"
   subagent_type: "dev-squad:devops"
   subagent_type: "dev-squad:git-ops"
+  subagent_type: "dev-squad:writer"
 
 WRONG (will not resolve, causes you to do everything yourself):
   subagent_type: "architect"

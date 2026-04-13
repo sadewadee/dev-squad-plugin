@@ -31,6 +31,79 @@ When you make a mistake, log it to `.dev-squad/gotchas.md` so future sessions av
 
 Do NOT start coding until you understand the full picture.
 
+## DESIGN REFERENCE WORKFLOW (Before Coding ANY UI)
+
+**NEVER code with default shadcn/tailwind out of the box.** Always establish visual identity first.
+
+### Step 1: Capture Reference
+If user provided a reference URL or design:
+```
+1. Use playwright to screenshot the reference site
+2. Use superpowers-chrome to inspect: colors, fonts, spacing, layout
+3. If Google Stitch MCP available → use it for design generation
+```
+
+If NO reference provided:
+```
+1. Ask coordinator: "What is the visual style for this project?"
+2. Search for competitors/similar products via WebSearch
+3. Screenshot 2-3 reference sites for inspiration
+4. Extract common design patterns
+```
+
+### Step 2: Extract Design Tokens FIRST
+Before writing any component, create `src/styles/design-tokens.ts`:
+```typescript
+export const tokens = {
+  colors: {
+    primary: '#....',      // FROM reference, not default blue
+    secondary: '#....',
+    accent: '#....',
+    background: '#....',
+    foreground: '#....',
+    muted: '#....',
+    destructive: '#....',
+  },
+  fonts: {
+    heading: '....',       // Named font, not system default
+    body: '....',
+    mono: '....',
+  },
+  spacing: { ... },
+  borderRadius: { ... },
+  shadows: { ... },
+}
+```
+
+### Step 3: Configure Tailwind/CSS from Tokens
+Update `tailwind.config.ts` to use YOUR tokens, not defaults.
+
+### Anti-Slop Rules (MANDATORY)
+These produce generic "AI-made" looking sites — NEVER do them:
+
+| Anti-Pattern | Why It's Bad | Do This Instead |
+|-------------|-------------|-----------------|
+| Default shadcn colors without customization | Looks like every other AI app | Extract colors from reference/brand |
+| Gradient backgrounds everywhere | AI cliché #1 | Solid colors, subtle gradients only where intentional |
+| Generic card grid layout for everything | Lazy, no visual hierarchy | Vary layout: hero, asymmetric, editorial, dashboard |
+| "Welcome to [App Name]" hero | Meaningless, wastes prime space | Value proposition headline (writer agent provides) |
+| Stock illustrations / generic SVGs | Screams template | Custom icons, actual product screenshots, or no images |
+| Centered everything | No visual flow | Left-align body text, use grid asymmetry |
+| Default Inter/system font | No personality | Choose 1-2 fonts that match the product's character |
+| Same card component repeated 6x | Visual monotony | Vary card sizes, feature one prominently |
+| Purple-to-blue gradient hero | AI slop signature | Choose brand-specific colors |
+
+### Design Quality Checklist
+Before submitting any page:
+- [ ] Custom color palette applied (not shadcn default)
+- [ ] Named fonts loaded (not just system stack)
+- [ ] Visual hierarchy clear (one primary focus per section)
+- [ ] Whitespace intentional (not cramped, not empty)
+- [ ] Responsive tested at 375px, 768px, 1280px
+- [ ] Dark mode works if applicable
+- [ ] Animations subtle and purposeful (not gratuitous)
+- [ ] Content from writer agent used (not placeholder)
+
 ## COMPLETION DEFINITION (When are you DONE?)
 
 You are NOT done until ALL of these exist and work. No exceptions:

@@ -142,7 +142,12 @@ Agent tool with:
     - PHASE GATE: Judge agent verifies scaffold builds
 
     ### Phase 4: IMPLEMENT (Subagent-Driven Development Pattern)
+    - Dispatch writer FIRST → create all page copy, microcopy, legal pages, SEO metadata
+      Writer outputs content as TypeScript constants in content/ directory
+      Frontend uses writer's content — no placeholder text allowed
     - Dispatch backend + frontend in parallel (use worktrees for isolation)
+    - Frontend MUST: capture design reference → extract tokens → apply BEFORE coding components
+    - Frontend MUST: use writer's content constants — NOT hardcode text in JSX
     - Follow architect's design document and API contracts
     - TDD enforced — tests written before implementation
     - SMART MODEL ROUTING: Use opus for auth/integration/cross-package tasks, sonnet for simple CRUD/isolated components
@@ -379,6 +384,7 @@ Agent tool with:
     | Reviewer | `dev-squad:reviewer` | sonnet (opus for security review) |
     | DevOps | `dev-squad:devops` | sonnet |
     | Git-Ops | `dev-squad:git-ops` | sonnet |
+    | Writer | `dev-squad:writer` | sonnet |
 
     ## Smart Model Routing
     Override model per-dispatch based on task complexity:
