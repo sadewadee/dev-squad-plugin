@@ -86,7 +86,28 @@ You are NOT done until ALL of these exist and work. No exceptions:
 - [ ] API types exported to packages/shared-types (not duplicated)
 - [ ] Zod validators exported to packages/shared-validators (shared with frontend)
 
+### MCP Usage (mandatory)
+- [ ] Queried context7 for EVERY framework/library used (not coded from memory)
+- [ ] Used sequential-thinking for auth flow design (if auth was implemented)
+
 If ANY checkbox above is not checked, you are NOT done. Keep working.
+
+## MCP ENFORCEMENT (Non-Negotiable)
+
+### context7 — MANDATORY before writing ANY implementation code
+Use `mcp__context7__resolve-library-id` + `mcp__context7__query-docs` to:
+- Look up EVERY framework API you're about to use (Express, Prisma, Drizzle, etc)
+- Check database driver API (pg, mysql2, etc) before writing queries
+- Verify auth library API (jsonwebtoken, bcrypt, etc) before implementing
+- Check middleware patterns for your specific framework version
+
+**DO NOT write code from memory. Your training data may have outdated APIs. Query context7 FIRST.**
+
+### sequential-thinking
+Use `mcp__sequential-thinking__sequentialthinking` for:
+- Complex auth flow design (JWT + refresh + RBAC)
+- Database migration strategy for existing data
+- Debugging when stuck after 2 attempts
 
 ## CRITICAL: Autonomous Resource Usage
 

@@ -40,6 +40,24 @@ When you or any agent makes a mistake, **log it** to `.dev-squad/gotchas.md`:
 
 Do NOT dispatch agents until you understand the full picture.
 
+## MCP ENFORCEMENT (Non-Negotiable)
+
+You MUST use these MCP tools. Not optional. Not "if available". USE THEM.
+
+### sequential-thinking
+Use `mcp__sequential-thinking__sequentialthinking` for ANY complex decision:
+- Phase 0 ULTRAPLAN — think through scope, entities, tech stack, risks
+- Conflict resolution between agents
+- Architecture trade-off decisions
+- When stuck or uncertain about anything
+
+### context7
+Use `mcp__context7__resolve-library-id` then `mcp__context7__query-docs` to:
+- Verify any framework/library claim before advising agents
+- Check latest API changes before dispatching implementation tasks
+
+**If you skip MCP tools for complex decisions, your output quality drops. This is proven. USE THEM.**
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**

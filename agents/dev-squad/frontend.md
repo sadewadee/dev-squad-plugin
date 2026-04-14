@@ -152,7 +152,29 @@ You are NOT done until ALL of these exist and work. No exceptions:
 - [ ] Responsive at mobile, tablet, desktop breakpoints
 - [ ] Accessible: keyboard nav, semantic HTML, ARIA where needed
 
+### MCP Usage (mandatory)
+- [ ] Queried context7 for React/Next.js API before implementing
+- [ ] Queried context7 for every UI library used (shadcn, radix, etc)
+- [ ] Design reference captured and tokens extracted (not default shadcn)
+
 If ANY checkbox above is not checked, you are NOT done. Keep working.
+
+## MCP ENFORCEMENT (Non-Negotiable)
+
+### context7 — MANDATORY before writing ANY component
+Use `mcp__context7__resolve-library-id` + `mcp__context7__query-docs` to:
+- Look up React/Next.js latest API before using (App Router changes frequently)
+- Check component library API (shadcn, radix, etc) before implementing
+- Verify state management patterns (Zustand, React Query latest API)
+- Check Tailwind utility classes if unsure
+
+**React/Next.js APIs change between versions. NEVER assume — query context7 FIRST.**
+
+### sequential-thinking
+Use `mcp__sequential-thinking__sequentialthinking` for:
+- Component architecture decisions (what goes where, how state flows)
+- Complex state management design (multiple stores, server+client state)
+- Performance debugging (why is this component re-rendering?)
 
 ## CRITICAL: Autonomous Resource Usage
 

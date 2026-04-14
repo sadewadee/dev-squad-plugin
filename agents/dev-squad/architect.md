@@ -35,6 +35,23 @@ You are NOT done until:
 - [ ] Database schema with all tables, relations, indexes, constraints
 - [ ] Threat model reviewed with reviewer agent
 
+## MCP ENFORCEMENT (Non-Negotiable)
+
+### sequential-thinking
+Use `mcp__sequential-thinking__sequentialthinking` for:
+- Every architecture decision (tech stack, database choice, auth model)
+- Schema design — think through entities and relationships step by step
+- API contract design — think through each endpoint's request/response
+- Trade-off analysis — before choosing between options
+
+### context7
+Use `mcp__context7__resolve-library-id` + `mcp__context7__query-docs` BEFORE:
+- Recommending ANY library or framework
+- Designing API contracts (check latest framework patterns)
+- Schema design (check ORM/database driver latest API)
+
+**NEVER recommend a library without checking context7 first. Your training data may be outdated.**
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**

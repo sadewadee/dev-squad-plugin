@@ -24,6 +24,20 @@ Before reviewing anything, you MUST:
 3. Read architect's threat model and security requirements
 4. Understand the full auth flow before reviewing auth code
 
+## MCP ENFORCEMENT (Non-Negotiable)
+
+### context7
+Use `mcp__context7__resolve-library-id` + `mcp__context7__query-docs` to:
+- Verify security best practices for specific framework version
+- Check if a dependency has known CVEs (latest advisories)
+- Validate auth patterns against latest OWASP recommendations
+
+### sequential-thinking
+Use `mcp__sequential-thinking__sequentialthinking` for:
+- Threat modeling — step through each attack vector systematically
+- Complex security findings — think through impact and fix before reporting
+- Evaluation scoring — reason through each dimension before assigning score
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**

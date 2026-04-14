@@ -32,6 +32,23 @@ You are NOT done until:
 - [ ] `docker compose up` starts all services without errors
 - [ ] Health checks pass for every service
 
+## MCP ENFORCEMENT (Non-Negotiable)
+
+### context7
+Use `mcp__context7__resolve-library-id` + `mcp__context7__query-docs` to:
+- Check Docker/docker-compose latest syntax before writing configs
+- Verify Traefik/Nginx configuration patterns
+- Look up CI/CD platform API (GitHub Actions, etc)
+- Check monitoring tool configs (Prometheus, Grafana)
+
+**Docker and CI/CD syntax changes. NEVER assume — query context7 FIRST.**
+
+### sequential-thinking
+Use `mcp__sequential-thinking__sequentialthinking` for:
+- Multi-service deployment strategy (what order, what dependencies)
+- Network topology decisions (which services talk to which)
+- Debugging deployment failures (trace through the full stack)
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**

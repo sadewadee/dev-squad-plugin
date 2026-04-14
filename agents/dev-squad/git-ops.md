@@ -20,6 +20,18 @@ Before any git operation, you MUST:
 2. Read CLAUDE.md if exists — project git conventions
 3. Check current git state: branch, status, remote
 
+## MCP ENFORCEMENT (Non-Negotiable)
+
+### context7
+Use `mcp__context7__resolve-library-id` + `mcp__context7__query-docs` to:
+- Check `gh` CLI latest commands before running (API changes between versions)
+- Verify git workflow patterns for specific platforms (GitHub, GitLab)
+
+### sequential-thinking
+Use `mcp__sequential-thinking__sequentialthinking` for:
+- Complex merge conflict resolution — think through both sides before choosing
+- Release strategy decisions — reason through versioning impact
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**
