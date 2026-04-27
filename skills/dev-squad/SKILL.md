@@ -9,7 +9,8 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 
 **Command Format:**
 - `/dev-squad` or `/dev-squad start` - Start coordinator for new task
-- `/dev-squad build <description>` - Zero-to-ship: build a full project from description through 6 automated phases
+- `/dev-squad build <description>` - Zero-to-ship: build a full project through 8 automated PDCA phases (Plan → Do → Check → Act)
+- `/dev-squad retrospective [scope]` - Run a PDCA Act-phase retrospective on completed work (feature, sprint, post-incident)
 - `/dev-squad db <description>` - Start database workflow (schema, migrations, optimization)
 - `/dev-squad schema <description>` - Schema design workflow
 - `/dev-squad migrate <description>` - Database migration workflow
@@ -351,25 +352,24 @@ MCP tools fetch real-time data from external services. Call them directly — no
 
 | When | Use MCP Tool | Why |
 |------|-------------|-----|
-| Need library/framework docs | `mcp__context7__resolve-library-id` then `mcp__context7__query-docs` | Get up-to-date API docs |
-| Need real-world code examples | `mcp__grep-github__searchGitHub` or `mcp__grep__searchGitHub` | Find production patterns on GitHub |
-| Creating architecture diagrams | `mcp__mermaid-mcp__validate_and_render_mermaid_diagram` | Render ERD, sequence, flow diagrams |
-| Checking compile/type errors | `mcp__ide__getDiagnostics` | Language server diagnostics |
-| Searching past conversations | `mcp__plugin_episodic-memory_episodic-memory__search` | Find previous decisions/solutions |
-| Reading past conversation detail | `mcp__plugin_episodic-memory_episodic-memory__read` | Deep context recovery |
-| Controlling Chrome browser | `mcp__plugin_superpowers-chrome_chrome__use_browser` | Direct browser interaction |
-| Playwright browser automation | `mcp__plugin_playwright_playwright__browser_*` | Navigate, click, type, screenshot |
+| Need library/framework docs | `context7` | Get up-to-date API docs |
+| Need real-world code examples | `grep-github` | Find production patterns on GitHub |
+| Creating architecture diagrams | `mermaid-mcp` | Render ERD, sequence, flow diagrams |
+| Checking compile/type errors | `ide diagnostics` | Language server diagnostics |
+| Searching/reading past conversations | `episodic-memory` | Find previous decisions/solutions, deep context recovery |
+| Controlling Chrome browser | `chrome-devtools` | Direct browser interaction |
+| Playwright browser automation | `playwright` | Navigate, click, type, screenshot |
 
 ### Decision Flowchart
 ```
 Need guidance on HOW to do something? → Use SKILL
 Need external DATA to do something?   → Use MCP
 Need to VERIFY something works?       → Use SKILL (verification) + MCP (diagnostics)
-Need to LOOK UP documentation?        → Use MCP (context7)
-Need to SEARCH for patterns?          → Use MCP (grep-github)
-Need to CREATE a diagram?             → Use MCP (mermaid-mcp)
+Need to LOOK UP documentation?        → Use MCP (`context7`)
+Need to SEARCH for patterns?          → Use MCP (`grep-github`)
+Need to CREATE a diagram?             → Use MCP (`mermaid-mcp`)
 Need to PLAN or STRUCTURE work?       → Use SKILL
-Need to TEST in browser?              → Use SKILL (playwright-skill) to get patterns, MCP (playwright) to execute
+Need to TEST in browser?              → Use SKILL (playwright-skill) to get patterns, MCP (`playwright`) to execute
 ```
 
 ## Agent-Specific Tool Matrix
@@ -378,7 +378,7 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 
 | Phase | Tool Type | Specific Tool |
 |-------|-----------|---------------|
-| Session start | MCP | `episodic-memory__search` — recover project context |
+| Session start | MCP | `episodic-memory` — recover project context |
 | Task analysis | Skill | `brainstorming` — explore requirements |
 | Task planning | Skill | `writing-plans` — create implementation plan |
 | Parallel dispatch | Skill | `dispatching-parallel-agents` — parallel execution |
@@ -397,10 +397,10 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 |-------|-----------|---------------|
 | Before decisions | Skill | `brainstorming` — explore design options |
 | Writing specs | Skill | `writing-plans` — structured specs |
-| Library research | MCP | `context7` — resolve-library-id then query-docs |
+| Library research | MCP | `context7` — library/framework documentation lookup |
 | Pattern research | MCP | `grep-github` — find production examples |
 | Creating diagrams | MCP | `mermaid-mcp` — ERD, C4, sequence diagrams |
-| Past decisions | MCP | `episodic-memory__search` — recover past ADRs |
+| Past decisions | MCP | `episodic-memory` — recover past ADRs |
 | Project knowledge | Skill | `claude-md-management:revise-claude-md` |
 
 ### Backend (sonnet) — Skills for discipline, MCP for docs
@@ -411,12 +411,12 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | Bug investigation | Skill | `systematic-debugging` — root cause analysis |
 | Framework docs | MCP | `context7` — ORM/framework documentation |
 | Code patterns | MCP | `grep-github` — migration/query examples |
-| Compile errors | MCP | `ide__getDiagnostics` — type/compile checks |
+| Compile errors | MCP | `ide diagnostics` — type/compile checks |
 | Code cleanup | Skill | `simplify` — simplify before submit |
 | Before submit | Skill | `verification-before-completion` — run all tests |
 | Review feedback | Skill | `receiving-code-review` — handle review comments |
 | Build errors | Skill | `issuetracker` — detect compilation issues |
-| Past solutions | MCP | `episodic-memory__search` — find previous fixes |
+| Past solutions | MCP | `episodic-memory` — find previous fixes |
 
 ### Frontend (sonnet) — Skills for design+discipline, MCP for browser+docs
 
@@ -427,12 +427,12 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | React/Next.js docs | MCP | `context7` — latest framework docs |
 | Component patterns | MCP | `grep-github` — find real component examples |
 | Browser testing | Skill | `playwright-skill` — write E2E test scripts |
-| Browser execution | MCP | `playwright__browser_*` — navigate, click, screenshot |
-| Chrome debugging | MCP | `superpowers-chrome__use_browser` — DevTools control |
+| Browser execution | MCP | `playwright` — navigate, click, screenshot |
+| Chrome debugging | MCP | `chrome-devtools` — DevTools control |
 | Code cleanup | Skill | `simplify` — simplify before submit |
 | Before submit | Skill | `verification-before-completion` — run tests+build |
 | Review feedback | Skill | `receiving-code-review` — handle suggestions |
-| Past UI patterns | MCP | `episodic-memory__search` — find previous designs |
+| Past UI patterns | MCP | `episodic-memory` — find previous designs |
 
 ### Reviewer (sonnet) — Security Lead + QA: Skills for process, MCP for verification
 
@@ -444,10 +444,10 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | **Security patterns** | MCP | `grep-github` — find secure implementation examples |
 | Bug root cause | Skill | `systematic-debugging` — investigation |
 | Code refinement | Skill | `simplify` — simplify reviewed code |
-| Compile check | MCP | `ide__getDiagnostics` — type/compile errors |
+| Compile check | MCP | `ide diagnostics` — type/compile errors |
 | Before approval | Skill | `verification-before-completion` — verify tests pass |
 | Bug tracking | Skill | `issuetracker` — create/review issues |
-| Past review decisions | MCP | `episodic-memory__search` — find previous reviews |
+| Past review decisions | MCP | `episodic-memory` — find previous reviews |
 | **Incident response** | Direct `SendMessage` | Alert affected agent + CC coordinator for P0 |
 
 ### DevOps (sonnet) — Skills for verification, MCP for docs+patterns
@@ -459,7 +459,7 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | Docker/K8s/Traefik docs | MCP | `context7` — latest configuration docs |
 | Config patterns | MCP | `grep-github` — production-ready examples |
 | Before deploy | Skill | `verification-before-completion` — validate all configs |
-| Past infra decisions | MCP | `episodic-memory__search` — recover previous configs |
+| Past infra decisions | MCP | `episodic-memory` — recover previous configs |
 
 ### Git-Ops (sonnet) — Skills for workflow, MCP for patterns
 
@@ -469,7 +469,7 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | Branch complete | Skill | `finishing-a-development-branch` — merge/PR workflow |
 | Feature isolation | Skill | `using-git-worktrees` — create worktrees |
 | Git workflow patterns | MCP | `grep-github` — find best practices |
-| Past git decisions | MCP | `episodic-memory__search` — recover previous workflows |
+| Past git decisions | MCP | `episodic-memory` — recover previous workflows |
 
 ## Example Session: Database Tasks
 
@@ -486,13 +486,13 @@ User: /dev-squad schema Create user management system with profiles, roles, and 
 
 [Coordinator dispatches to Architect]
 > architect: Designing user management schema...
-> architect: Using mcp__mermaid-mcp for ERD diagram
+> architect: Using mermaid-mcp for ERD diagram
 > architect: Tables: users, profiles, roles, permissions, user_roles
 > architect: Indexes: email (unique), role_id, foreign keys
 
 [Architect completes, Coordinator dispatches to Backend]
 > backend: Creating Prisma migration...
-> backend: Using mcp__context7__query-docs for Prisma syntax
+> backend: Using context7 for Prisma syntax
 > backend: Migration: 20240210_create_user_management.sql
 > backend: Seeds: default roles (admin, user), permissions
 

@@ -31,9 +31,12 @@ Agent tool with:
     - If "1" → Use TEAMS MODE (TeamCreate, message/broadcast, shared task list)
     - If not set → Use SUBAGENT MODE (Agent tool, SendMessage, TodoWrite)
 
-    ## Workflow: Zero-to-Ship (7 Phases)
+    ## Workflow: Zero-to-Ship (8 Phases — PDCA Cycle)
 
-    You MUST execute all 7 phases in order. Do NOT skip phases.
+    You MUST execute all 8 phases in order. Do NOT skip phases.
+
+    Phases 0-2 are PLAN. Phases 3-4-6 are DO. Phase 5 is CHECK. Phase 7 is ACT.
+    Skipping Phase 7 (LEARN) breaks the cycle — the next build won't benefit from this build's lessons.
 
     ### Phase 0: ULTRAPLAN (Deep Thinking — Coordinator Only)
     
@@ -243,8 +246,57 @@ Agent tool with:
     - Dispatch git-ops for PR creation with full description
     - Dispatch reviewer for final sign-off
     - Update CLAUDE.md with project conventions
-    - Mark .dev-squad/workflow-active as complete
-    - Completion report to user
+    - Proceed to Phase 7 (do NOT mark workflow complete yet)
+
+    ### Phase 7: LEARN (PDCA Act — Retrospective)
+
+    The build is shipped, but the cycle is not complete. PDCA without Act is just Plan-Do-Check.
+    YOU (coordinator) MUST run a retrospective before marking the workflow complete.
+
+    **Inputs to gather:**
+    - PRD success metrics from Phase 1 (`docs/prd.md` "Goals & Success Criteria" table)
+    - Phase 5 metrics report from reviewer (actual vs target)
+    - All `.dev-squad/gotchas.md` entries written during this build
+    - Count of rework loops triggered per task (from your TodoWrite history)
+    - Total model usage / cost per agent (rough estimate)
+
+    **Step 1: Dispatch reviewer for retrospective report**
+
+    Reviewer produces `.dev-squad/retrospective.md`:
+    ```markdown
+    # Retrospective: {project name}
+
+    ## What worked (append to playbook)
+    - {pattern that produced clean results} — reusable in: {feature dev | new project | bug fix}
+    - {decision that paid off} — context: {when this applies}
+
+    ## What didn't work (fix-it backlog)
+    - {pattern that caused rework} — what to do differently next time: {specific change}
+    - {missed metric} — gap: {Δ from target} — proposed fix: {action}
+
+    ## Metric gaps (from Phase 5 report)
+    | Metric | Target | Actual | Δ | Action |
+    |--------|--------|--------|---|--------|
+    | {only rows where Δ < 0 — the misses} |
+
+    ## Process observations
+    - Self-healing loop fired N times — root causes: {list}
+    - Two-stage review caught X issues that initial implementer missed
+    - Phases that ran longer than estimated: {list with reasons}
+    ```
+
+    **Step 2: Update artifacts based on retrospective**
+
+    - Append "What worked" entries to `.dev-squad/playbook.md` (create if not exist)
+    - Append "What didn't work" entries as fix-it tickets in `docs/next-iteration.md`
+    - Update project `CLAUDE.md` with conventions discovered during this build (e.g., "always use cursor pagination", "auth flow uses httpOnly cookies")
+    - Write lessons to agent-memory + episodic memory for future projects
+
+    **Step 3: Mark complete**
+
+    - Update `.dev-squad/workflow-active` phase status: `"learn": "complete"`
+    - Final completion report to user including: what was built, retrospective summary, link to playbook entries added
+    - ONLY NOW the workflow is done.
 
     ## Monorepo Standard Structure
     All projects MUST use this monorepo layout:
@@ -412,7 +464,8 @@ Agent tool with:
         "scaffold": "pending",
         "implement": "pending",
         "review": "pending",
-        "ship": "pending"
+        "ship": "pending",
+        "learn": "pending"
       }
     }
     ```
@@ -421,7 +474,7 @@ Agent tool with:
     ## Instructions
     1. Create the workflow tracking file
     2. Execute Phase 0 ULTRAPLAN first — think deeply, write master-plan.md
-    3. Execute Phases 1-6 in order
+    3. Execute Phases 1-7 in order (Phase 7 LEARN is mandatory — PDCA Act)
     4. Only pause for user input at Phase 1 CHECKPOINT
     5. Use Skills and MCP tools autonomously throughout
     6. Report final completion with summary of everything built

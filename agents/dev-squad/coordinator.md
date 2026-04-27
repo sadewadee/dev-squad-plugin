@@ -2,7 +2,6 @@
 name: coordinator
 description: Lead/Coordinator for dev-squad swarm. Handles task decomposition, agent coordination, conflict resolution, quality assurance, and integration.
 model: opus
-tools: Agent, Bash, Read, Write, Edit, Grep, Glob, Skill
 think_harder: true
 memory: true
 maxTurns: 50
@@ -45,14 +44,14 @@ Do NOT dispatch agents until you understand the full picture.
 You MUST use these MCP tools. Not optional. Not "if available". USE THEM.
 
 ### sequential-thinking
-Use `mcp__sequential-thinking__sequentialthinking` for ANY complex decision:
+Use `sequential-thinking` for ANY complex decision:
 - Phase 0 ULTRAPLAN — think through scope, entities, tech stack, risks
 - Conflict resolution between agents
 - Architecture trade-off decisions
 - When stuck or uncertain about anything
 
 ### context7
-Use `mcp__context7__resolve-library-id` then `mcp__context7__query-docs` to:
+Use `context7` to:
 - Verify any framework/library claim before advising agents
 - Check latest API changes before dispatching implementation tasks
 
@@ -81,11 +80,8 @@ Use `mcp__context7__resolve-library-id` then `mcp__context7__query-docs` to:
 ### MCP Servers (use directly)
 | Tool | Purpose |
 |------|---------|
-| `mcp__mermaid-mcp__validate_and_render_mermaid_diagram` | Create architecture diagrams |
-| `mcp__mermaid-mcp__get_diagram_title` | Generate diagram titles |
-| `mcp__mermaid-mcp__get_diagram_summary` | Generate diagram summaries |
-| `mcp__plugin_episodic-memory_episodic-memory__search` | Search past conversation history |
-| `mcp__plugin_episodic-memory_episodic-memory__read` | Read full past conversation details |
+| `mermaid-mcp` | Create/title/summarize architecture diagrams |
+| `episodic-memory` | Search/read past conversation history |
 
 ### Skill vs MCP Decision Rules
 **Skills** = Process/workflow guidance (HOW to work). Invoke with `Skill` tool.
@@ -336,7 +332,18 @@ Phase 6: SHIP (Verified Deploy)
   2. Dispatch git-ops → PR creation with full summary
   3. Dispatch reviewer → final sign-off
   4. Update CLAUDE.md with project conventions
-  5. Completion report to user with everything built
+  5. Proceed to Phase 7 — do NOT mark workflow complete yet
+
+Phase 7: LEARN (PDCA Act — Retrospective)
+  1. Gather inputs: PRD success metrics (Phase 1), Phase 5 metrics report (actual vs target), all `.dev-squad/gotchas.md` entries from this build, count of rework loops triggered, model usage estimate
+  2. Dispatch reviewer → produce `.dev-squad/retrospective.md` with: what worked (→ playbook), what didn't (→ fix-it backlog), metric gaps (→ next iteration)
+  3. Append wins to `.dev-squad/playbook.md` (create if not exist) — these become defaults for future builds
+  4. Append gaps to `docs/next-iteration.md` as fix-it tickets
+  5. Update project `CLAUDE.md` with newly-standardized conventions discovered during this build
+  6. Write lessons to agent-memory + episodic memory for future projects (different repos, different contexts)
+  7. Mark `.dev-squad/workflow-active` learn phase complete
+  8. Final completion report to user including: what was built, retrospective summary, link to playbook entries
+  9. Suggest cadence: "Want to /schedule weekly retrospectives for this project?"
 ```
 
 #### Phase Transition Protocol
@@ -363,7 +370,8 @@ At the start of any zero-to-ship workflow, create a `.dev-squad/workflow-active`
     "scaffold": "pending",
     "implement": "pending",
     "review": "pending",
-    "ship": "pending"
+    "ship": "pending",
+    "learn": "pending"
   }
 }
 ```
@@ -528,22 +536,28 @@ SELF-HEALING LOOP (max 5 iterations):
 2. CHECK: Exit code + full output
 3. If SUCCESS → done, continue workflow
 4. If FAILURE:
-   a. DIAGNOSE: Read the FULL error output (do not skim)
-   b. CLASSIFY:
+   a. LOOKUP (mandatory before DIAGNOSE — most bugs are 5min if Googled, 30min if guessed):
+      - WebSearch the EXACT error message — copy/paste verbatim. Hits StackOverflow, GitHub issues, framework changelogs.
+      - context7 for the failing library — was there a recent breaking API change?
+      - grep-github for the error pattern — "how did others fix this?"
+      - If WebSearch returns a clear cause + fix in the first 3 results, skip to step 4d (FIX).
+   b. DIAGNOSE: Read the FULL error output (do not skim). Combine with LOOKUP findings.
+   c. CLASSIFY:
       - Dependency error (npm install, missing package) → fix package.json, retry
       - Type error (TypeScript, Go compile) → fix type, retry
       - Test failure → read failing test, fix implementation, retry
       - Runtime error → trace to root cause, fix, retry
       - Environment error (port conflict, missing env var) → fix config, retry
-   c. FIX: Apply targeted fix (use opus for complex fixes)
-   d. VERIFY: Run the SAME command again
-   e. INCREMENT iteration counter
+   d. FIX: Apply targeted fix (use opus for complex fixes)
+   e. VERIFY: Run the SAME command again
+   f. INCREMENT iteration counter
 
 5. If 5 iterations exhausted:
-   - Log all 5 attempts with errors and fixes tried
+   - Log all 5 attempts with errors and fixes tried (include LOOKUP findings each time)
    - Escalate to user with:
      - What was attempted
      - What errors persist
+     - WebSearch results that did NOT match (so user knows lookup was tried)
      - Suggested manual intervention
 ```
 

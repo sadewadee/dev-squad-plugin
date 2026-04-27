@@ -1,6 +1,8 @@
-# dev-squad v2.0
+# dev-squad
 
-A full-stack development team agent swarm plugin for Claude Code. Seven specialized AI agents collaborate in a hierarchical coordination model to handle zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, and infrastructure work.
+A full-stack development team agent swarm plugin for Claude Code. Eight specialized AI agents collaborate in a hierarchical coordination model to handle zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, and content authoring.
+
+Current version is in `.claude-plugin/plugin.json`.
 
 ## Team Composition
 
@@ -13,6 +15,7 @@ A full-stack development team agent swarm plugin for Claude Code. Seven speciali
 | **reviewer** | Security Lead + Code Reviewer/QA | sonnet | End-to-end security ownership, threat modeling, OWASP enforcement, code review, performance profiling |
 | **devops** | DevOps Engineer | sonnet | Docker/Compose, Traefik, CI/CD, monitoring, secrets management, deployment strategies |
 | **git-ops** | Git Operations Manager | sonnet | Branch management, PR workflows, merge strategies, release management, changelog generation |
+| **writer** | Content Writer | sonnet | Page copy, microcopy, legal pages, SEO metadata, documentation — production-ready content, not placeholders |
 
 ## Supported Workflows
 
@@ -29,7 +32,7 @@ A full-stack development team agent swarm plugin for Claude Code. Seven speciali
 ## Key Features
 
 ### Skill vs MCP Awareness
-Every agent understands when to use Skills (process/workflow guidance) versus MCP tools (external data and actions). Skills are invoked for planning, TDD, code review, and verification workflows. MCP tools are called directly for documentation lookup (Context7), code pattern search (grep-github), diagram creation (mermaid-mcp), and conversation history (episodic-memory).
+Every agent understands when to use Skills (process/workflow guidance) versus MCP tools (external data and actions). Skills are invoked for planning, TDD, code review, and verification workflows. MCP tools are called for documentation lookup (context7), code pattern search (grep-github), diagram creation (mermaid-mcp), and conversation history (episodic-memory). Agents reference MCPs by short natural name — they degrade gracefully when an MCP isn't installed instead of failing on hardcoded tool IDs.
 
 ### Cross-Agent Communication
 Agents use a dual-mode communication protocol:
@@ -166,27 +169,38 @@ This plugin works best with the following plugins and MCP servers installed:
 ```
 dev-squad-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json          # Plugin metadata (v2.0.0)
+│   ├── plugin.json          # Plugin metadata (version, author, repo)
 │   └── marketplace.json     # Marketplace configuration
 ├── commands/
 │   ├── build.md             # /dev-squad build -- zero-to-ship workflow
 │   └── status.md            # /dev-squad status -- swarm progress
 ├── hooks/
-│   ├── hooks.json           # SubagentStop hook configuration
-│   └── check-workflow.sh    # Workflow completion checker script
+│   ├── hooks.json                # All hook event wiring (SessionStart, SubagentStart/Stop, PreToolUse, PostToolUse, etc.)
+│   └── *.sh                      # Hook scripts (auto-update, lint, dangerous-ops guard, workflow state, etc.)
 ├── skills/
-│   └── dev-squad/
-│       └── SKILL.md         # Skill definition and invocation instructions
+│   ├── dev-squad/
+│   │   ├── SKILL.md              # Main skill entrypoint and invocation logic
+│   │   └── config.json           # Team configuration, workflows, guardrails
+│   ├── backend-patterns/         # Backend pattern reference (loaded by backend agent)
+│   ├── frontend-patterns/        # Frontend pattern reference (loaded by frontend agent)
+│   ├── golang-patterns/          # Go idioms and patterns
+│   ├── golang-testing/           # Go test patterns
+│   ├── postgres-patterns/        # PostgreSQL patterns
+│   ├── security-review/          # Security review checklist
+│   └── tdd-workflow/             # TDD workflow definition
 ├── agents/
 │   └── dev-squad/
-│       ├── config.json      # Team configuration, workflows, guardrails
-│       ├── coordinator.md   # Coordinator agent (opus)
-│       ├── architect.md     # System Architect agent (opus)
-│       ├── backend.md       # Backend Developer agent (sonnet)
-│       ├── frontend.md      # Frontend Developer agent (sonnet)
-│       ├── reviewer.md      # Security Lead + Code Reviewer agent (sonnet)
-│       ├── devops.md        # DevOps Engineer agent (sonnet)
-│       └── git-ops.md       # Git Operations Manager agent (sonnet)
+│       ├── coordinator.md        # Coordinator agent (opus)
+│       ├── architect.md          # System Architect agent (opus)
+│       ├── backend.md            # Backend Developer agent (sonnet)
+│       ├── frontend.md           # Frontend Developer agent (sonnet)
+│       ├── reviewer.md           # Security Lead + Code Reviewer agent (sonnet)
+│       ├── devops.md             # DevOps Engineer agent (sonnet)
+│       ├── git-ops.md            # Git Operations Manager agent (sonnet)
+│       └── writer.md             # Content Writer agent (sonnet)
+├── rules/                        # Reference rules (common, golang, typescript)
+├── CHANGELOG.md
+├── CLAUDE.md
 └── README.md
 ```
 

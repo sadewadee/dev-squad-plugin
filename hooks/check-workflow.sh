@@ -16,7 +16,7 @@ CONTENT=$(cat "$WORKFLOW_FILE")
 
 # Check if all phases are complete
 ALL_COMPLETE=true
-for phase in ultraplan discover design scaffold implement review ship; do
+for phase in ultraplan discover design scaffold implement review ship learn; do
   STATUS=$(echo "$CONTENT" | grep -o "\"$phase\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | grep -o '"[^"]*"$' | tr -d '"')
   if [ "$STATUS" != "complete" ] && [ -n "$STATUS" ]; then
     ALL_COMPLETE=false

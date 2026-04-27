@@ -36,11 +36,8 @@
         "claude-md-management:revise-claude-md"
       ],
       "auto_mcp": [
-        "mcp__mermaid-mcp__validate_and_render_mermaid_diagram",
-        "mcp__mermaid-mcp__get_diagram_title",
-        "mcp__mermaid-mcp__get_diagram_summary",
-        "mcp__plugin_episodic-memory_episodic-memory__search",
-        "mcp__plugin_episodic-memory_episodic-memory__read"
+        "mermaid-mcp",
+        "episodic-memory"
       ]
     },
     {
@@ -69,14 +66,10 @@
         "claude-md-management:revise-claude-md"
       ],
       "auto_mcp": [
-        "mcp__context7__resolve-library-id",
-        "mcp__context7__query-docs",
-        "mcp__grep-github__searchGitHub",
-        "mcp__mermaid-mcp__validate_and_render_mermaid_diagram",
-        "mcp__mermaid-mcp__get_diagram_title",
-        "mcp__mermaid-mcp__get_diagram_summary",
-        "mcp__plugin_episodic-memory_episodic-memory__search",
-        "mcp__plugin_episodic-memory_episodic-memory__read"
+        "context7",
+        "grep-github",
+        "mermaid-mcp",
+        "episodic-memory"
       ]
     },
     {
@@ -107,11 +100,10 @@
         "episodic-memory:remembering-conversations"
       ],
       "auto_mcp": [
-        "mcp__context7__resolve-library-id",
-        "mcp__context7__query-docs",
-        "mcp__grep-github__searchGitHub",
-        "mcp__ide__getDiagnostics",
-        "mcp__plugin_episodic-memory_episodic-memory__search"
+        "context7",
+        "grep-github",
+        "ide diagnostics",
+        "episodic-memory"
       ]
     },
     {
@@ -143,20 +135,11 @@
         "episodic-memory:remembering-conversations"
       ],
       "auto_mcp": [
-        "mcp__context7__resolve-library-id",
-        "mcp__context7__query-docs",
-        "mcp__grep-github__searchGitHub",
-        "mcp__plugin_superpowers-chrome_chrome__use_browser",
-        "mcp__plugin_playwright_playwright__browser_navigate",
-        "mcp__plugin_playwright_playwright__browser_snapshot",
-        "mcp__plugin_playwright_playwright__browser_click",
-        "mcp__plugin_playwright_playwright__browser_type",
-        "mcp__plugin_playwright_playwright__browser_take_screenshot",
-        "mcp__plugin_playwright_playwright__browser_evaluate",
-        "mcp__plugin_playwright_playwright__browser_console_messages",
-        "mcp__plugin_playwright_playwright__browser_network_requests",
-        "mcp__plugin_playwright_playwright__browser_run_code",
-        "mcp__plugin_episodic-memory_episodic-memory__search"
+        "context7",
+        "grep-github",
+        "chrome-devtools",
+        "playwright",
+        "episodic-memory"
       ]
     },
     {
@@ -185,11 +168,10 @@
         "episodic-memory:remembering-conversations"
       ],
       "auto_mcp": [
-        "mcp__grep-github__searchGitHub",
-        "mcp__context7__resolve-library-id",
-        "mcp__context7__query-docs",
-        "mcp__ide__getDiagnostics",
-        "mcp__plugin_episodic-memory_episodic-memory__search"
+        "grep-github",
+        "context7",
+        "ide diagnostics",
+        "episodic-memory"
       ]
     },
     {
@@ -218,10 +200,9 @@
         "episodic-memory:remembering-conversations"
       ],
       "auto_mcp": [
-        "mcp__context7__resolve-library-id",
-        "mcp__context7__query-docs",
-        "mcp__grep-github__searchGitHub",
-        "mcp__plugin_episodic-memory_episodic-memory__search"
+        "context7",
+        "grep-github",
+        "episodic-memory"
       ]
     },
     {
@@ -248,8 +229,8 @@
         "episodic-memory:remembering-conversations"
       ],
       "auto_mcp": [
-        "mcp__grep-github__searchGitHub",
-        "mcp__plugin_episodic-memory_episodic-memory__search"
+        "grep-github",
+        "episodic-memory"
       ]
     }
   ],
