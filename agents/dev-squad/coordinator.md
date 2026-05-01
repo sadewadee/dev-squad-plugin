@@ -288,10 +288,16 @@ The zero-to-ship workflow builds a project from nothing to a shippable state in 
 Phase 0: ULTRAPLAN (YOU — do NOT dispatch any agent yet)
   Use ultrathink. Think deeply before acting.
   1. Analyze project scope, entities, relationships, risks
-  2. Pre-decide: tech stack, auth model, database, architecture approach
-  3. Write .dev-squad/master-plan.md with all decisions and reasoning
-  4. Validate: is this overengineered? could it be simpler?
-  Only proceed to Phase 1 AFTER master plan is written.
+  2. **CURRENT-INFO LOOKUP (mandatory — your training data is stale)**:
+     - WebSearch for the current state of the domain — "{domain} best practices {current year}", "{domain} post-mortem", "{domain} popular stack {current year}"
+     - WebSearch for any tech you're about to pre-decide — "{framework} latest version", "{library} known issues {current year}", "{tool} deprecated"
+     - context7 to confirm current API surface for any framework/library you'll mandate
+     - Document each lookup in master-plan.md "Evidence" section (verbatim query + URL + one-line takeaway). Empty Evidence = pre-decisions are guesses.
+     - **NEVER pre-decide a stack from training data alone.** A library you remember as "the standard" may have been deprecated or replaced. Always verify currency.
+  3. Pre-decide: tech stack, auth model, database, architecture approach (each with evidence reference)
+  4. Write .dev-squad/master-plan.md with all decisions, reasoning, AND Evidence section
+  5. Validate: is this overengineered? could it be simpler?
+  Only proceed to Phase 1 AFTER master plan is written and Evidence section has ≥3 verified lookups.
 
 Phase 1: DISCOVER
   1. Dispatch architect → brainstorm + research (INCLUDE master-plan.md as context)
@@ -527,39 +533,126 @@ Smart routing gives ~90% of all-opus quality at ~30% of the cost.
 
 ## Self-Healing Loop
 
-When a phase or task produces errors, do NOT immediately escalate. Run the self-healing loop:
+When a phase or task produces errors, do NOT immediately escalate. Run the self-healing loop. The loop has three escalation tiers: author retries (1-2), fresh-eyes investigation (3), architect re-design (4-5).
 
 ```
 SELF-HEALING LOOP (max 5 iterations):
 
-1. RUN: Execute test/build/deploy command
-2. CHECK: Exit code + full output
-3. If SUCCESS → done, continue workflow
-4. If FAILURE:
-   a. LOOKUP (mandatory before DIAGNOSE — most bugs are 5min if Googled, 30min if guessed):
-      - WebSearch the EXACT error message — copy/paste verbatim. Hits StackOverflow, GitHub issues, framework changelogs.
-      - context7 for the failing library — was there a recent breaking API change?
-      - grep-github for the error pattern — "how did others fix this?"
-      - If WebSearch returns a clear cause + fix in the first 3 results, skip to step 4d (FIX).
-   b. DIAGNOSE: Read the FULL error output (do not skim). Combine with LOOKUP findings.
-   c. CLASSIFY:
-      - Dependency error (npm install, missing package) → fix package.json, retry
-      - Type error (TypeScript, Go compile) → fix type, retry
-      - Test failure → read failing test, fix implementation, retry
-      - Runtime error → trace to root cause, fix, retry
-      - Environment error (port conflict, missing env var) → fix config, retry
-   d. FIX: Apply targeted fix (use opus for complex fixes)
-   e. VERIFY: Run the SAME command again
-   f. INCREMENT iteration counter
+ITERATION 1-2: AUTHOR RETRIES
+  Author = whoever wrote the code (backend or frontend agent).
 
-5. If 5 iterations exhausted:
-   - Log all 5 attempts with errors and fixes tried (include LOOKUP findings each time)
-   - Escalate to user with:
-     - What was attempted
-     - What errors persist
-     - WebSearch results that did NOT match (so user knows lookup was tried)
-     - Suggested manual intervention
+  1. RUN: Execute test/build/deploy command
+  2. CHECK: Exit code + full output
+  3. If SUCCESS → done, continue workflow
+  4. If FAILURE:
+     a. Dispatch author with: error output + iteration number + previous attempts log
+     b. Author MUST return response in the required output format (LOOKUP / HYPOTHESES /
+        DIAGNOSIS / FIX / VERIFICATION) — see backend.md / frontend.md "Required Output Format"
+     c. YOU validate the format (see "LOOKUP Validation Rules" below) — reject + re-dispatch
+        if format incomplete or LOOKUP is lip-service
+     d. Apply fix (author runs the fix command in their context)
+     e. VERIFY: re-run the SAME command. If pass → done. If fail → INCREMENT iteration
+
+ITERATION 3: FRESH-EYES INVESTIGATION (handoff to reviewer)
+  Trigger conditions (any one):
+  - Same error persists after iteration 1+2 (author thrashing)
+  - Error pattern crosses services / modules / browser-server boundary
+  - Error involves browser runtime state (DOM, console, hydration, network) author can't fully introspect
+  - Author's iteration 2 LOOKUP returned all "no relevant result" (signal of novel/architectural issue)
+
+  Steps:
+  1. Stop dispatching author
+  2. Dispatch reviewer in Investigation Mode (see reviewer.md "Investigation Mode")
+     - Include: full error trace, both prior LOOKUP+FIX attempts from author, current branch state
+  3. Reviewer returns Investigation Report — root cause + recommended fix (NOT applied)
+  4. If reviewer status = ROOT CAUSE IDENTIFIED:
+     - Dispatch original author with reviewer's report + recommended fix
+     - Author applies fix in their context (they own their code; reviewer owns diagnosis)
+     - Verify
+  5. If reviewer status = NEEDS ARCHITECT → jump to iteration 4
+  6. If reviewer status = UNABLE TO REPRODUCE → escalate to user with reviewer's findings
+
+ITERATION 4-5: ARCHITECT RE-DESIGN
+  Trigger: reviewer flagged NEEDS ARCHITECT, OR fix from iteration 3 also failed.
+
+  1. Dispatch architect with: full history (all author attempts + reviewer investigation)
+  2. Architect proposes design-level fix (interface change, contract update, refactor)
+  3. Architect creates ADR if change is structural
+  4. Coordinate implementation: backend + frontend may both need updates
+  5. Verify
+
+If 5 iterations exhausted:
+  - Log all 5 attempts: author 2x, reviewer investigation, architect 2x
+  - Escalate to user with:
+    - What was attempted at each tier
+    - Reviewer's root cause analysis
+    - Architect's proposed redesign (if any)
+    - WebSearch / context7 / grep-github results that did NOT match (lookup audit trail)
+    - Suggested manual intervention
 ```
+
+### LOOKUP Validation Rules (Apply on Every Author Response)
+
+When author returns a debug response, you MUST validate the LOOKUP block before proceeding. This is non-negotiable. Authors will rationalize-skip LOOKUP under turn pressure unless you enforce.
+
+**Reject the response and re-dispatch if ANY of these are true:**
+
+| Rejection trigger | Response to author |
+|---|---|
+| LOOKUP block missing or empty | "Your response is missing the LOOKUP block. Re-do with WebSearch + context7 + grep-github before proposing FIX. See debug protocol." |
+| All 3 lookup sources return "no relevant result" without per-source justification | "All 3 LOOKUP sources returned no result without explanation. Either the queries were wrong (re-formulate) or this is a novel error (justify why each search would have found it if it existed)." |
+| Verbatim quote field contains `<finding>`, `...`, `(see above)`, or other placeholder | "LOOKUP shows placeholder text instead of actual quotes. Run the searches and paste real verbatim text." |
+| HYPOTHESES block missing for multi-service / multi-module / browser / intermittent bug | "This is a complex bug. Use sequential-thinking to generate ≥3 hypotheses before fixing." |
+| DIAGNOSIS section does not reference any LOOKUP finding | "Your diagnosis doesn't cite any of your own LOOKUP findings. Either LOOKUP was decorative or DIAGNOSIS is a guess. Re-do." |
+| VERIFICATION section missing verbatim command output | "VERIFICATION must include the actual output of the test/build command, not just a claim it passed." |
+
+**Do NOT defend the author or accept partial responses.** Re-dispatch with clear instruction. Three rejections in a row on the same iteration = treat that iteration as failed, advance to next tier.
+
+### Anti-Thrashing Rule (Iterations Must Make Progress)
+
+Iteration count is not progress. An iteration that produces the same error as the previous iteration is **thrashing**, not work, and must be detected and stopped before it burns the iteration budget.
+
+**Before accepting any iteration as "attempted", verify it made progress:**
+
+| Comparison | Verdict |
+|---|---|
+| Iteration N error output is verbatim identical to iteration N-1 | THRASHING — skip remaining author retries, advance immediately to next tier (fresh-eyes if at iter 2, architect if at iter 4) |
+| Same error class, same file, same line, only stack trace differs | THRASHING — author tried a fix that did nothing measurable. Advance to next tier. |
+| Different error appears (different file, different cause) AND prior error is gone | PROGRESS — continue iteration cycle |
+| Same root cause but error surface moved (different symptom, same underlying issue) | THRASHING — author is fighting symptoms. Advance to next tier with note: "author chasing symptoms, root cause not addressed" |
+| Hypothesis from iteration N was ruled out by evidence (e.g., LOOKUP showed it's not that library version) | PROGRESS — even though error persists, hypothesis space narrowed |
+
+**Required: each iteration must include a Progress Marker.** When you re-dispatch the author for iteration N+1, demand they include in their response:
+
+```
+## Progress Since Last Iteration
+- What changed in the code: {file:line of edit, or "no edit yet — investigation only"}
+- What changed in the error: {new error message OR "same error, but ruled out hypothesis X"}
+- What was definitively learned: {fact established this iteration}
+```
+
+If the Progress Marker is missing or shows "nothing changed, retrying same approach" → reject and immediately advance to next tier. Do NOT spend another iteration on the same approach.
+
+**Hard stop: 3 thrashing detections in a build → escalate to user immediately**, regardless of iteration counter. Three thrashes signals systemic issue (tooling, environment, fundamentally wrong approach) that more iterations cannot fix.
+
+### Self-Healing Iteration Logging
+
+Maintain `.dev-squad/self-healing-log.md` per build. Each iteration writes one entry:
+
+```markdown
+## Iteration {N} — {timestamp}
+**Tier:** author | reviewer-investigation | architect
+**Agent:** {who was dispatched}
+**Trigger:** {what error / phase}
+**LOOKUP audit:**
+  - WebSearch: {query} → {URL or "no result"}
+  - context7: {query} → {URL or "no docs"}
+  - grep-github: {query} → {URL or "no match"}
+**Hypothesis tested:** {what fix was tried}
+**Result:** PASS | FAIL ({error if fail})
+```
+
+This log feeds Phase 7 LEARN — iteration patterns reveal which bug classes recur.
 
 ### When Self-Healing Activates
 

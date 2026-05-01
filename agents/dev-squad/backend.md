@@ -294,6 +294,80 @@ If lookup returns a clear root cause + fix in the first few results, skip Phase 
 - "It's probably X, let me fix that" (without evidence)
 - Each fix reveals a new problem in a different place
 
+### Required Output Format (Coordinator Will Reject Empty LOOKUP)
+
+When the coordinator dispatches you for a debug task, your response MUST follow this exact structure. Coordinator validates the format before accepting your fix. **A response without a substantive LOOKUP block will be rejected and re-dispatched.**
+
+```markdown
+## LOOKUP (mandatory — fill ALL three sources, no skipping)
+
+### WebSearch
+- Query: "<paste the EXACT error message verbatim — do not paraphrase>"
+- Top result URL: <URL>
+- Verbatim quote (≤2 lines): "<quote a real line from the result>"
+- OR: "no relevant result in top 5" + one-line reason why this error is novel
+
+### context7
+- Query: "<library name> <api or feature involved> <error keyword>"
+- Verbatim doc snippet (≤2 lines): "<quote real doc text>"
+- OR: "no docs match" + one-line reason (e.g. "library not in context7 index")
+
+### grep-github
+- Query: "<error pattern OR library + symptom>"
+- Link to production example: <URL to file/commit/issue>
+- One-line takeaway: "<how others fixed it>"
+- OR: "no production match" + one-line reason
+
+## HYPOTHESES (mandatory for complex bugs — multi-service, multi-module, race condition, intermittent)
+
+For complex bugs, use `sequential-thinking` MCP to generate ≥3 hypotheses BEFORE you fix:
+
+1. {Hypothesis} — evidence supporting: {LOOKUP finding | code trace} — likelihood: H/M/L
+2. {Hypothesis} — evidence: ... — likelihood: ...
+3. {Hypothesis} — evidence: ... — likelihood: ...
+
+Top hypothesis (highest likelihood + most evidence): {pick one}
+
+For simple bugs (clear single-cause from LOOKUP): write "single-cause from LOOKUP, hypothesis: <one line>".
+
+## DIAGNOSIS
+
+Root cause based on LOOKUP findings + (HYPOTHESES if applicable). State file:line, contract mismatch, config issue, or library bug. Do NOT state diagnosis without referencing LOOKUP.
+
+## FIX
+
+```{language}
+// Concrete code change. Show before → after if editing existing code.
+```
+
+File: {path:line}
+Reason this fixes root cause (not just symptom): {one sentence}
+
+## VERIFICATION
+
+Command run: {exact command}
+Output (verbatim, last ~10 lines):
+```
+{paste actual output}
+```
+Result: ✅ pass | ❌ fail (if fail, return to LOOKUP with new error)
+```
+
+### Anti-Patterns (Coordinator Auto-Rejects These)
+
+The coordinator will detect and reject these patterns:
+
+| Pattern | Why rejected |
+|---|---|
+| LOOKUP block empty or omitted | The whole point of Phase 0 |
+| All three lookup queries return "no relevant result" without justification | Means you didn't actually search |
+| Verbatim quote field contains placeholder text like `<finding>` or `...` | Lip-service lookup |
+| HYPOTHESES block missing for multi-service/multi-module bug | Complex bugs need hypothesis ranking |
+| FIX without a verbatim VERIFICATION output | Unverified claim |
+| DIAGNOSIS doesn't reference any LOOKUP finding | LOOKUP was decorative, not real |
+
+If coordinator rejects: do NOT defend. Re-do the LOOKUP properly. The cost of a real LOOKUP (2-5 minutes) is far less than the cost of a wrong fix (rework loops + bug lolos to production).
+
 ## Implementation Workflow
 
 ### 1. Understand Requirements

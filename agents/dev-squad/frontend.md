@@ -370,6 +370,90 @@ If lookup returns a clear root cause + fix, skip Phase 1 and go to Phase 4 fix. 
 - "Skip the test, I'll manually verify"
 - Each fix reveals a new problem in a different place
 
+### Required Output Format (Coordinator Will Reject Empty LOOKUP)
+
+When the coordinator dispatches you for a debug task, your response MUST follow this exact structure. Coordinator validates the format before accepting your fix. **A response without a substantive LOOKUP block will be rejected and re-dispatched.**
+
+```markdown
+## LOOKUP (mandatory — fill ALL sources, no skipping)
+
+### WebSearch
+- Query: "<paste the EXACT error message verbatim — including stack frame line>"
+- Top result URL: <URL>
+- Verbatim quote (≤2 lines): "<quote a real line from the result>"
+- OR: "no relevant result in top 5" + one-line reason why this error is novel
+
+### context7
+- Query: "<framework name> <feature involved> <error keyword>" (e.g. "Next.js App Router hydration mismatch")
+- Verbatim doc snippet (≤2 lines): "<quote real doc text>"
+- OR: "no docs match" + one-line reason
+
+### grep-github
+- Query: "<error pattern OR component pattern>"
+- Link to production example: <URL>
+- One-line takeaway: "<how others fixed it>"
+- OR: "no production match" + one-line reason
+
+### Browser inspection (mandatory if bug is reproducible in browser)
+- Tool used: `playwright` (browser_console_messages / browser_network_requests / browser_snapshot) OR `chrome-devtools`
+- Console output (verbatim): "<paste actual console messages>"
+- Network observations: "<failing requests, status codes, payload mismatches>"
+- DOM state at failure: "<what's actually rendered vs expected>"
+
+If the bug is NOT browser-reproducible (e.g. build error), write "n/a — build-time error" and skip this section.
+
+## HYPOTHESES (mandatory for complex bugs — multi-component, hydration, state-management, performance, intermittent)
+
+For complex bugs, use `sequential-thinking` MCP to generate ≥3 hypotheses BEFORE you fix:
+
+1. {Hypothesis} — evidence: {LOOKUP finding | DOM state | console error} — likelihood: H/M/L
+2. {Hypothesis} — evidence: ... — likelihood: ...
+3. {Hypothesis} — evidence: ... — likelihood: ...
+
+Top hypothesis (highest likelihood + most evidence): {pick one}
+
+For simple bugs (clear single-cause from LOOKUP): write "single-cause from LOOKUP, hypothesis: <one line>".
+
+## DIAGNOSIS
+
+Root cause based on LOOKUP + browser inspection + (HYPOTHESES if applicable). State component:line, hook misuse, hydration boundary, missing dependency, etc. Do NOT state diagnosis without referencing concrete evidence.
+
+## FIX
+
+```tsx
+// Concrete code change. Show before → after if editing existing code.
+```
+
+File: {path:line}
+Reason this fixes root cause (not just symptom): {one sentence}
+
+## VERIFICATION
+
+Command run: {exact command — e.g. `npm test`, `npm run build`, or playwright re-navigation}
+Output (verbatim, last ~10 lines):
+```
+{paste actual output}
+```
+Browser re-check (if applicable): "<console clean? network 200s? DOM correct?>"
+Result: ✅ pass | ❌ fail (if fail, return to LOOKUP with new error)
+```
+
+### Anti-Patterns (Coordinator Auto-Rejects These)
+
+The coordinator will detect and reject these patterns:
+
+| Pattern | Why rejected |
+|---|---|
+| LOOKUP block empty or omitted | The whole point of Phase 0 |
+| Browser inspection skipped on a browser-reproducible bug | "It's probably re-render" without DOM evidence is a guess |
+| All lookup queries return "no relevant result" without justification | Means you didn't actually search |
+| Verbatim quote field contains placeholder text like `<finding>` or `...` | Lip-service lookup |
+| HYPOTHESES block missing for hydration / state / multi-component bug | Complex bugs need hypothesis ranking |
+| FIX without a verbatim VERIFICATION output | Unverified claim |
+| DIAGNOSIS doesn't reference any LOOKUP or browser evidence | Decorative LOOKUP, not real |
+
+If coordinator rejects: do NOT defend. Re-do the LOOKUP properly. React DevTools profiler beats "it's probably re-rendering" every time.
+
 ## Implementation Workflow
 
 ### 1. Understand Requirements

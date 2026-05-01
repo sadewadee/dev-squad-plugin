@@ -407,16 +407,23 @@ After writing any implementation plan or spec:
 When working on a Zero-to-Ship DISCOVER phase:
 
 1. **Brainstorm**: Use `superpowers:brainstorming` skill to explore the project space
-2. **Market research (WebSearch — mandatory)**: Look up competitors, real-world adoption patterns, recent post-mortems in the domain. WebSearch queries belong in the PRD's Evidence Sources table.
+2. **Market research (WebSearch — mandatory, recency-checked)**:
+   - Competitors and adoption patterns: "{domain} popular tools {current year}"
+   - Recent post-mortems and outages: "{domain} post-mortem", "{tech} outage"
+   - Current best practices: "{pattern} best practices {current year}" — explicitly include the year to filter stale results
+   - Recent breaking changes: "{framework} breaking changes {current year}", "{library} deprecated"
+   - All queries belong in the PRD's Evidence Sources table with verbatim findings.
 3. **Code research (grep-github)**: Find similar projects and production patterns
-4. **Library/API research (context7)**: Query for relevant framework/library documentation. If context7 has no docs for a library, **fall back to WebSearch** — never trust training data alone.
-5. **Fill PRD**: Complete the PRD template above with findings. Evidence Sources table MUST have ≥3 rows. Goals & Success Criteria MUST have numeric targets.
-6. **Present**: Return the completed PRD to the coordinator for user checkpoint approval
+4. **Library/API research (context7)**: Query for relevant framework/library documentation. If context7 has no docs OR returns docs older than 6 months for a fast-moving library, **fall back to WebSearch** — never trust training data alone. Training data cutoff lags reality by months.
+5. **Currency cross-check**: For every library you recommend, run a final WebSearch: "{library} GitHub releases" or "{library} npm latest". Confirm the version you're recommending hasn't been superseded by a major version with breaking changes.
+6. **Fill PRD**: Complete the PRD template above with findings. Evidence Sources table MUST have ≥3 rows. Goals & Success Criteria MUST have numeric targets.
+7. **Present**: Return the completed PRD to the coordinator for user checkpoint approval
 
 **Rejection criteria** (your PRD will be sent back if):
 - Evidence Sources table empty or has fewer than 3 rows
 - Any "Goals & Success Criteria" row has a non-numeric target
 - Any library recommendation lacks a corresponding context7 or WebSearch entry in Evidence Sources
+- Any recommendation cites only training-data knowledge without a current-year WebSearch verification
 
 ### Tech Stack Recommendation
 ```markdown
@@ -435,10 +442,13 @@ When working on a Zero-to-Ship DISCOVER phase:
 | Operational Cost | 10% | {score}/10 | {score}/10 | {score}/10 |
 | Licensing | 5% | {score}/10 | {score}/10 | {score}/10 |
 
-## Evidence
-- Context7 docs: {findings}
-- GitHub patterns: {real-world usage}
-- Benchmarks: {performance data}
+## Evidence (mandatory — recommendation rejected without these)
+- WebSearch (recency check): "{tech} latest stable version {current year}", "{tech} known issues {current year}", "{tech} deprecated"
+  - Findings: {verbatim quote + URL}
+- Context7 docs: {findings, version-specific notes, breaking changes}
+- GitHub patterns: {real-world production usage, link to repos}
+- Benchmarks: {performance data with source link}
+- Post-mortems / outage reports: {WebSearch "{tech} outage" / "{tech} post-mortem" — what failed in production at scale}
 
 ## Risks and Mitigations
 {Potential issues and how to address them}
