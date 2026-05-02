@@ -1,0 +1,228 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dev-Squad Workflow Definition",
+  "description": "Canonical schema for dev-squad workflow JSONs. Coordinator reads these as runtime dispatch contract. Edit JSON, not derived markdown.",
+  "type": "object",
+  "required": ["workflow_id", "schema_version", "version", "name", "phases"],
+  "additionalProperties": false,
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "description": "Unique identifier (e.g. 'zero-to-ship', 'feature-development')",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version this file conforms to. Bump major if breaking.",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Workflow version, tracks changes to phase definitions",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "trigger_command": {
+      "type": "string",
+      "description": "Slash command that initiates this workflow (e.g. '/dev-squad build')"
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/phase" }
+    }
+  },
+  "definitions": {
+    "phase": {
+      "type": "object",
+      "required": ["id", "name", "lead_agent", "outputs"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Phase id used in .dev-squad/workflow-active JSON",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "number": {
+          "type": "string",
+          "description": "Display number (e.g. '1', '3.5', '5.6')"
+        },
+        "name": { "type": "string" },
+        "lead_agent": {
+          "type": "string",
+          "description": "Fully-qualified agent name (e.g. 'dev-squad:coordinator') or 'self' if coordinator-internal"
+        },
+        "parallel_agents": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Agents dispatched in parallel with lead_agent"
+        },
+        "trigger": {
+          "type": "string",
+          "description": "Boolean expression for when this phase runs (e.g. 'scaffold.complete && feature.has_ui')"
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/artifact_ref" }
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/artifact_ref" }
+        },
+        "blocking_gate": {
+          "$ref": "#/definitions/blocking_gate"
+        },
+        "skip_conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/skip_condition" }
+        },
+        "verification_command": {
+          "type": "string",
+          "description": "Bash one-liner that returns 0 when phase complete"
+        },
+        "estimated_complexity": {
+          "enum": ["low", "medium", "high"]
+        },
+        "rate_limit_tier": {
+          "enum": ["haiku", "sonnet", "opus"],
+          "description": "Anthropic subscription rate-limit budget tier"
+        },
+        "external_skills": {
+          "$ref": "#/definitions/external_skills"
+        },
+        "references": {
+          "$ref": "#/definitions/references"
+        }
+      }
+    },
+    "artifact_ref": {
+      "type": "object",
+      "required": ["artifact"],
+      "additionalProperties": false,
+      "properties": {
+        "artifact": {
+          "type": "string",
+          "description": "Path relative to project root (e.g. '.dev-squad/architecture.md')"
+        },
+        "from": {
+          "type": "string",
+          "description": "Producing agent (for inputs only)"
+        },
+        "to": {
+          "type": "string",
+          "description": "Consuming agent (for outputs only)"
+        },
+        "required": { "type": "boolean", "default": true },
+        "blocking": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, downstream phase cannot start without this artifact"
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "blocking_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "downstream_phase": {
+          "type": "string",
+          "description": "Phase id that is blocked"
+        },
+        "downstream_agent": {
+          "type": "string",
+          "description": "Agent that is blocked"
+        },
+        "check": {
+          "type": "string",
+          "description": "Human-readable description of the gate"
+        },
+        "verification_command": {
+          "type": "string",
+          "description": "Bash command coordinator runs to verify gate satisfied"
+        }
+      }
+    },
+    "skip_condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "flag": {
+          "type": "string",
+          "description": "CLI flag that triggers skip (e.g. '--mvp-mode')"
+        },
+        "condition": {
+          "type": "string",
+          "description": "Boolean expression evaluated to determine skip (e.g. 'feature.has_ui == false')"
+        },
+        "action": {
+          "enum": ["skip", "slim"],
+          "description": "skip = bypass entirely; slim = produce reduced deliverable"
+        },
+        "fallback": {
+          "type": "string",
+          "description": "What is produced when 'slim' (used with action: slim)"
+        }
+      }
+    },
+    "external_skills": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preferred": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/skill_ref" },
+          "description": "External skills agents prefer to invoke if installed"
+        },
+        "fallback": {
+          "type": "string",
+          "description": "What agent does if no preferred skills installed (e.g. 'manual via frontend-design')"
+        }
+      }
+    },
+    "skill_ref": {
+      "type": "object",
+      "required": ["skill"],
+      "additionalProperties": false,
+      "properties": {
+        "skill": {
+          "type": "string",
+          "description": "Skill name as invocable (e.g. 'ui-ux-pro-max', 'superpowers:brainstorming')"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why this skill is preferred for this phase"
+        },
+        "graceful_degrade": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, agent continues without skill if not installed"
+        },
+        "invoked_by": {
+          "type": "string",
+          "description": "Which agent invokes this skill in the phase"
+        }
+      }
+    },
+    "references": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "prompt_source": {
+          "type": "string",
+          "description": "Path to descriptive prompt (e.g. 'commands/build.md#phase-35-design')"
+        },
+        "agent_prompt": {
+          "type": "string",
+          "description": "Path to agent's full prompt file"
+        },
+        "docs": {
+          "type": "string",
+          "description": "Path to human-readable docs (e.g. 'docs/workflow-mapping.md')"
+        }
+      }
+    }
+  }
+}

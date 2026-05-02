@@ -1,0 +1,325 @@
+{
+  "workflow_id": "zero-to-ship",
+  "schema_version": "1.0",
+  "version": "4.9.0",
+  "name": "Zero-to-Ship",
+  "description": "Full project build from zero to shippable state. 9 phases with 1 user checkpoint (PRD approval after Phase 1). PDCA cycle: Plan (Phases 0-2) -> Do (Phases 3-4) -> Check (Phase 5) -> Act (Phases 6-8).",
+  "trigger_command": "/dev-squad build",
+  "phases": [
+    {
+      "id": "ultraplan",
+      "number": "0",
+      "name": "ULTRAPLAN",
+      "lead_agent": "self",
+      "trigger": "workflow_start",
+      "inputs": [
+        { "artifact": "user_description", "from": "user", "required": true }
+      ],
+      "outputs": [
+        { "artifact": ".dev-squad/master-plan.md", "to": "architect", "blocking": true, "description": "Stack pre-decisions + Evidence section with >=3 verified WebSearch/context7 lookups" }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "discover",
+        "check": "master-plan.md exists with non-empty Evidence section (>=3 lookups)",
+        "verification_command": "test -f .dev-squad/master-plan.md && grep -c '^- ' .dev-squad/master-plan.md | awk '$1>=3'"
+      },
+      "estimated_complexity": "high",
+      "rate_limit_tier": "opus",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:brainstorming", "rationale": "Explores scope/risks before pre-decisions", "graceful_degrade": true, "invoked_by": "coordinator" },
+          { "skill": "superpowers:writing-plans", "rationale": "Structures master-plan.md", "graceful_degrade": true, "invoked_by": "coordinator" },
+          { "skill": "gsd-new-project", "rationale": "Bootstraps PROJECT.md/REQUIREMENTS.md/ROADMAP.md/STATE.md if GSD installed", "graceful_degrade": true, "invoked_by": "coordinator" }
+        ],
+        "fallback": "Manual via WebSearch + context7 + sequential-thinking MCP"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/coordinator.md"
+      }
+    },
+    {
+      "id": "discover",
+      "number": "1",
+      "name": "DISCOVER",
+      "lead_agent": "dev-squad:architect",
+      "trigger": "ultraplan.complete",
+      "inputs": [
+        { "artifact": ".dev-squad/master-plan.md", "from": "coordinator", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "docs/prd.md", "to": "architect", "blocking": true, "description": "PRD with Evidence Sources (>=3 rows) + numeric Goals & Success Criteria" }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "design",
+        "check": "PRD approved by user; Evidence Sources >=3; numeric targets present",
+        "verification_command": "test -f docs/prd.md && grep -q 'Evidence Sources' docs/prd.md"
+      },
+      "estimated_complexity": "high",
+      "rate_limit_tier": "opus",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:brainstorming", "rationale": "Explore problem space", "graceful_degrade": true, "invoked_by": "architect" },
+          { "skill": "gsd-discuss-phase", "rationale": "Spec-driven discussion before plan", "graceful_degrade": true, "invoked_by": "architect" }
+        ],
+        "fallback": "Manual via WebSearch (current-year market research) + context7 + grep-github"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/architect.md"
+      }
+    },
+    {
+      "id": "design",
+      "number": "2",
+      "name": "DESIGN (Architecture)",
+      "lead_agent": "dev-squad:architect",
+      "parallel_agents": ["dev-squad:reviewer"],
+      "trigger": "discover.complete && user.approved_prd",
+      "inputs": [
+        { "artifact": "docs/prd.md", "from": "architect", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "docs/architecture.md", "to": "frontend,backend,designer,devops", "blocking": true, "description": "Full architecture: C4 diagrams, data model, API contracts, ADRs" },
+        { "artifact": "docs/threat-model.md", "to": "reviewer", "blocking": false, "description": "Threat model from reviewer's parallel review" }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "scaffold",
+        "check": "architecture.md complete with C4 + API contracts + ADRs; threat model reviewed",
+        "verification_command": "test -f docs/architecture.md"
+      },
+      "estimated_complexity": "high",
+      "rate_limit_tier": "opus",
+      "external_skills": {
+        "preferred": [
+          { "skill": "gsd-plan-phase", "rationale": "Spec-driven planning with plan-checker loop", "graceful_degrade": true, "invoked_by": "architect" },
+          { "skill": "mermaid-mcp", "rationale": "C4 diagrams", "graceful_degrade": true, "invoked_by": "architect" }
+        ],
+        "fallback": "Manual via context7 + sequential-thinking + plain markdown for diagrams"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/architect.md"
+      }
+    },
+    {
+      "id": "scaffold",
+      "number": "3",
+      "name": "SCAFFOLD",
+      "lead_agent": "dev-squad:devops",
+      "parallel_agents": ["dev-squad:git-ops", "dev-squad:auditor"],
+      "trigger": "design.complete",
+      "inputs": [
+        { "artifact": "docs/architecture.md", "from": "architect", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "apps/", "to": "backend,frontend", "blocking": true, "description": "Monorepo: apps/ + packages/ + infra/" },
+        { "artifact": ".dev-squad/scaffold-summary.md", "to": "designer,backend,frontend", "blocking": false }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "ui_design",
+        "check": "Monorepo structure exists; docker compose builds; make dev starts",
+        "verification_command": "test -d apps && test -d packages && docker compose config --quiet"
+      },
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [],
+        "fallback": "Direct scaffolding via devops + git-ops agent prompts"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/devops.md"
+      }
+    },
+    {
+      "id": "ui_design",
+      "number": "3.5",
+      "name": "DESIGN (UI/UX)",
+      "lead_agent": "dev-squad:designer",
+      "trigger": "scaffold.complete && feature.has_ui",
+      "inputs": [
+        { "artifact": "docs/prd.md", "from": "architect", "required": true },
+        { "artifact": "docs/architecture.md", "from": "architect", "required": true }
+      ],
+      "outputs": [
+        { "artifact": ".dev-squad/design/design-tokens.md", "to": "frontend", "blocking": true, "description": "Color, typography, spacing, motion, shadow, radius - concrete values" },
+        { "artifact": ".dev-squad/design/visual-spec.md", "to": "frontend", "blocking": true, "description": ">=3 reference URLs + screenshots, brand vibe, project-specific anti-pattern list" },
+        { "artifact": ".dev-squad/design/component-inventory.md", "to": "frontend", "blocking": true, "description": "Every component x variants x states (loading/error/empty included)" },
+        { "artifact": ".dev-squad/design/responsive-spec.md", "to": "frontend", "blocking": true, "description": "Mermaid wireframes per page x mobile/tablet/desktop" }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "implement",
+        "downstream_agent": "dev-squad:frontend",
+        "check": "All 4 design artifacts exist with concrete values (not TBD)",
+        "verification_command": "test -f .dev-squad/design/design-tokens.md && test -f .dev-squad/design/visual-spec.md && test -f .dev-squad/design/component-inventory.md && test -f .dev-squad/design/responsive-spec.md"
+      },
+      "skip_conditions": [
+        { "flag": "--mvp-mode", "action": "slim", "fallback": "Slim deliverable: design-tokens.md + slim visual-spec.md (1 ref + anti-pattern list); skip component-inventory + responsive-spec" },
+        { "condition": "feature.has_ui == false", "action": "skip", "fallback": "Backend-only feature; designer not dispatched" }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "ui-ux-pro-max", "rationale": "Design intelligence: 161 product types, 161 palettes, 99 UX guidelines, 57 font pairings - generates design system that designer translates to 4 dev-squad artifacts", "graceful_degrade": true, "invoked_by": "designer" },
+          { "skill": "frontend-design:frontend-design", "rationale": "Distinctive frontend design generation", "graceful_degrade": true, "invoked_by": "designer" },
+          { "skill": "superpowers-chrome:browsing", "rationale": "Inspect reference sites computed styles", "graceful_degrade": true, "invoked_by": "designer" },
+          { "skill": "playwright-skill:playwright-skill", "rationale": "Screenshot references per breakpoint", "graceful_degrade": true, "invoked_by": "designer" }
+        ],
+        "fallback": "Manual: WebSearch references + sequential-thinking for color/font choices"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/designer.md"
+      }
+    },
+    {
+      "id": "implement",
+      "number": "4",
+      "name": "IMPLEMENT",
+      "lead_agent": "dev-squad:coordinator",
+      "parallel_agents": ["dev-squad:backend", "dev-squad:frontend", "dev-squad:writer"],
+      "trigger": "scaffold.complete && (ui_design.complete || feature.has_ui == false)",
+      "inputs": [
+        { "artifact": "docs/architecture.md", "from": "architect", "required": true },
+        { "artifact": ".dev-squad/design/design-tokens.md", "from": "designer", "required": false, "description": "Required if feature.has_ui" },
+        { "artifact": ".dev-squad/design/visual-spec.md", "from": "designer", "required": false },
+        { "artifact": ".dev-squad/design/component-inventory.md", "from": "designer", "required": false },
+        { "artifact": ".dev-squad/design/responsive-spec.md", "from": "designer", "required": false }
+      ],
+      "outputs": [
+        { "artifact": "apps/backend/", "to": "qa-engineer,reviewer,auditor", "blocking": true },
+        { "artifact": "apps/frontend/", "to": "qa-engineer,reviewer,auditor", "blocking": true },
+        { "artifact": ".dev-squad/implementation-summary.md", "to": "reviewer", "blocking": false }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "verify",
+        "check": "Tests pass; builds clean; design tokens used (no inline arbitrary values); SVG icons (no emoji-as-icon)",
+        "verification_command": "(cd apps/backend && npm test) && (cd apps/frontend && npm test)"
+      },
+      "estimated_complexity": "high",
+      "rate_limit_tier": "opus",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:test-driven-development", "rationale": "TDD enforced: tests before code", "graceful_degrade": true, "invoked_by": "backend,frontend" },
+          { "skill": "superpowers:dispatching-parallel-agents", "rationale": "Parallel backend/frontend dispatch", "graceful_degrade": true, "invoked_by": "coordinator" },
+          { "skill": "gsd-execute-phase", "rationale": "Wave model + atomic commit per task", "graceful_degrade": true, "invoked_by": "coordinator" }
+        ],
+        "fallback": "Sequential dispatch via Agent tool with worktree isolation"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/coordinator.md"
+      }
+    },
+    {
+      "id": "verify",
+      "number": "5",
+      "name": "REVIEW (3-way parallel)",
+      "lead_agent": "dev-squad:coordinator",
+      "parallel_agents": ["dev-squad:reviewer", "dev-squad:qa-engineer", "dev-squad:auditor", "dev-squad:designer"],
+      "trigger": "implement.complete",
+      "inputs": [
+        { "artifact": "apps/", "from": "implementers", "required": true }
+      ],
+      "outputs": [
+        { "artifact": ".dev-squad/functional-verification.md", "to": "coordinator", "blocking": false, "description": "qa-engineer Phase 5.5 + Visual Gate" },
+        { "artifact": ".dev-squad/stability-report.md", "to": "coordinator", "blocking": false, "description": "auditor Phase 5.6 stability buckets A-E" },
+        { "artifact": ".dev-squad/quality-metrics.md", "to": "coordinator", "blocking": false, "description": "auditor Phase 5.7 multi-language metrics" },
+        { "artifact": ".dev-squad/phase5-metrics-report.md", "to": "coordinator", "blocking": true, "description": "reviewer synthesizes all 3 lanes" }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "ship",
+        "check": "All P0/P1 findings resolved across all 3 lanes",
+        "verification_command": "test -f .dev-squad/phase5-metrics-report.md"
+      },
+      "estimated_complexity": "high",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "code-review:code-review", "rationale": "Structured PR review", "graceful_degrade": true, "invoked_by": "reviewer" },
+          { "skill": "playwright-skill:playwright-skill", "rationale": "Browser automation for golden-path verification + Visual Gate", "graceful_degrade": true, "invoked_by": "qa-engineer" },
+          { "skill": "superpowers-chrome:browsing", "rationale": "Console + network log capture", "graceful_degrade": true, "invoked_by": "qa-engineer" },
+          { "skill": "gsd-verify-work", "rationale": "Spec-driven verification + scope drift detection", "graceful_degrade": true, "invoked_by": "auditor" },
+          { "skill": "gsd-audit-milestone", "rationale": "Milestone-level audit pattern", "graceful_degrade": true, "invoked_by": "auditor" },
+          { "skill": "gsd-secure-phase", "rationale": "Security gate spec-driven", "graceful_degrade": true, "invoked_by": "reviewer" }
+        ],
+        "fallback": "Manual via 3 parallel Agent dispatches"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/reviewer.md"
+      }
+    },
+    {
+      "id": "ship",
+      "number": "6",
+      "name": "SHIP",
+      "lead_agent": "dev-squad:devops",
+      "parallel_agents": ["dev-squad:git-ops"],
+      "trigger": "verify.complete",
+      "inputs": [
+        { "artifact": ".dev-squad/phase5-metrics-report.md", "from": "reviewer", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "staging deployment", "to": "user", "blocking": true, "description": "Health checks pass; monitoring active; alerts configured" },
+        { "artifact": "GitHub PR", "to": "user", "blocking": true, "description": "PR created with full summary" }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "learn",
+        "check": "Staging deployed; health checks 200; reviewer final sign-off; PR open",
+        "verification_command": "gh pr list --state open --limit 1"
+      },
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:finishing-a-development-branch", "rationale": "Structured branch finalization", "graceful_degrade": true, "invoked_by": "git-ops" },
+          { "skill": "gsd-pr-branch", "rationale": "Spec-driven PR pattern", "graceful_degrade": true, "invoked_by": "git-ops" },
+          { "skill": "gsd-ship", "rationale": "Atomic ship pattern", "graceful_degrade": true, "invoked_by": "git-ops" }
+        ],
+        "fallback": "Manual via gh CLI + devops agent prompts"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/devops.md"
+      }
+    },
+    {
+      "id": "learn",
+      "number": "7",
+      "name": "LEARN (PDCA Act)",
+      "lead_agent": "dev-squad:reviewer",
+      "trigger": "ship.complete",
+      "inputs": [
+        { "artifact": "docs/prd.md", "from": "architect", "required": true },
+        { "artifact": ".dev-squad/phase5-metrics-report.md", "from": "reviewer", "required": true },
+        { "artifact": ".dev-squad/gotchas.md", "from": "all_agents", "required": false },
+        { "artifact": ".dev-squad/dispatch-log.md", "from": "coordinator", "required": false }
+      ],
+      "outputs": [
+        { "artifact": ".dev-squad/retrospective.md", "to": "user", "blocking": true, "description": "What worked, what didn't, metric gaps" },
+        { "artifact": ".dev-squad/playbook.md", "to": "future_builds", "blocking": false, "description": "Wins to apply by default" },
+        { "artifact": "docs/next-iteration.md", "to": "user", "blocking": false, "description": "Fix-it backlog" }
+      ],
+      "blocking_gate": {
+        "check": "retrospective.md complete; CLAUDE.md updated with new conventions",
+        "verification_command": "test -f .dev-squad/retrospective.md"
+      },
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "episodic-memory:remembering-conversations", "rationale": "Cross-session memory for future projects", "graceful_degrade": true, "invoked_by": "coordinator" },
+          { "skill": "claude-md-management:revise-claude-md", "rationale": "Update project conventions in CLAUDE.md", "graceful_degrade": true, "invoked_by": "coordinator" }
+        ],
+        "fallback": "Manual via reviewer agent prompt"
+      },
+      "references": {
+        "prompt_source": "commands/build.md",
+        "agent_prompt": "agents/dev-squad/coordinator.md"
+      }
+    }
+  ]
+}

@@ -2,6 +2,76 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0] — Workflow mapping schema + companion plugin auto-install
+
+**Why:** Knowledge of "which agent runs in which phase, which artifacts gate next phase, which companion skill should be invoked when" was scattered across 5+ files (coordinator.md, build.md, SKILL.md, individual agents). This caused drift and made it hard for users to install the right companion ecosystem. v4.9.0 introduces a **machine-readable runtime contract** + **declarative companion manifest** + **auto-install bootstrap**.
+
+### Added — Workflow JSON schema (runtime contract)
+
+`.claude-plugin/workflows/` now contains canonical workflow definitions:
+- `_schema.json` — JSON Schema Draft 7 validator
+- `zero-to-ship.json` — full 9-phase build workflow
+- `feature-development.json` — daily feature workflow with diff-scope tier dispatch
+- `bug-fix.json` — reproduce → fix → verify
+- `refactoring.json` — with before/after metrics proof
+
+Each phase declares: lead agent, parallel agents, inputs/outputs (with blocking flag), skip conditions (`--mvp-mode`, no-UI, etc.), verification command, rate-limit tier, and `external_skills.preferred[]` (companion skills to invoke when available).
+
+**Coordinator now reads workflow JSON at workflow start** as dispatch source-of-truth (with fallback to implicit prompt knowledge if JSON missing).
+
+`hooks/validate-workflow-schema.sh` (SessionStart, dev-only) detects drift between JSON and agent prompt files.
+
+### Added — Companion plugin manifest + auto-install
+
+`.claude-plugin/companions.json` declares all recommended companion plugins + MCP servers with install commands, tier (required/recommended), purpose, and which dev-squad agents use each.
+
+**Companions wired:**
+- **ui-ux-pro-max** (recommended) — invoked by designer in Phase 3.5. Translates ui-ux-pro-max design system output into 4 dev-squad artifacts. Without it, designer falls back to manual flow.
+- **gsd** (get-shit-done, recommended) — 10 skills wired across 5 agents:
+  - `gsd-new-project`, `gsd-execute-phase` → coordinator
+  - `gsd-plan-phase`, `gsd-plan-checker` → architect
+  - `gsd-verify-work`, `gsd-audit-milestone` → auditor
+  - `gsd-secure-phase` → reviewer
+  - `gsd-pr-branch`, `gsd-ship` → git-ops
+- **superpowers** (required) — already wired
+
+**Auto-install via `/dev-squad bootstrap`:**
+- Reads manifest, detects missing
+- MCPs auto-installed via `claude mcp add` (per-item user confirm)
+- Plugins: outputs batch `/plugin marketplace add` + `/plugin install` commands for user copy-paste (Claude Code design: plugin install is slash-only)
+- Plugins MCPs covered: context7, sequential-thinking, mermaid-mcp, grep-github
+
+`hooks/check-companions.sh` (SessionStart) detects missing companions and emits non-blocking warning every session.
+
+### Added — Documentation
+
+- `docs/workflow-mapping.md` — human-readable mapping (master tables + mermaid diagrams + skip-condition decision tree)
+- `docs/companion-plugins.md` — full companion plugin guide
+- `.claude-plugin/workflows/README.md` — schema docs + drift policy
+
+### Modified
+
+- All 6 agents (coordinator, architect, designer, auditor, reviewer, git-ops): added companion skills to `skills:` frontmatter
+- coordinator.md: new "Companion Skills (Optional, On-Demand)" section + workflow JSON bootstrap
+- designer.md: Phase 3.5 step 0 (ui-ux-pro-max companion check + invocation + output translation table)
+- skills/dev-squad/SKILL.md: added `/dev-squad bootstrap` command with full logic
+- commands/build.md: header note pointing to canonical workflow JSON
+- README.md: new "Workflow Mapping" + "Companion Plugins" sections
+- hooks/hooks.json: registered validate-workflow-schema + check-companions
+
+### Behavior expectations
+
+- **Backward compatible**: v4.8.0 workflows continue to work without companions; agents fall back to native methodology
+- **No required new installs**: superpowers was already required in v4.8.0; companion plugins are all recommended
+- **Coordinator dispatches more accurately**: workflow JSON eliminates "did coordinator forget to dispatch designer?" failure mode
+- **User trust**: missing companions surfaced at session start (not silently degraded)
+
+### Migration notes
+
+- Existing dev-squad users: no action required. Existing workflows will keep running.
+- For maximum capability: run `/dev-squad bootstrap` once after upgrade.
+- Plugin install commands for missing companions are surfaced; users decide what to install.
+
 ## [4.8.0] — Designer agent + Phase 3.5 anti-AI-slop gate
 
 User reported persistent failure mode: zero-to-ship UI output looks generic — default shadcn slate palette, AI-cliché purple-to-blue gradients, emoji used as icons, responsive skipped, no motion, "modern minimal" boilerplate. Diagnosis: no agent exists to **reject** AI-slop; frontend agent is an implementer, not a designer. v4.8.0 adds the missing role.

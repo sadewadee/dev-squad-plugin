@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0",
+  "description": "Declarative manifest of dev-squad companion plugins + MCP servers. Read by hooks/check-companions.sh (detection) and /dev-squad bootstrap (auto-install).",
+  "companions": {
+    "plugins": [
+      {
+        "id": "superpowers",
+        "name": "Superpowers",
+        "marketplace": "obra/superpowers-marketplace",
+        "plugin_install": "superpowers@superpowers-marketplace",
+        "tier": "required",
+        "purpose": "Methodology skills (brainstorming, TDD, planning, debugging, verification, parallel dispatch)",
+        "used_by": ["all"],
+        "skills_provided": [
+          "superpowers:brainstorming",
+          "superpowers:writing-plans",
+          "superpowers:test-driven-development",
+          "superpowers:systematic-debugging",
+          "superpowers:verification-before-completion",
+          "superpowers:dispatching-parallel-agents",
+          "superpowers:subagent-driven-development",
+          "superpowers:executing-plans",
+          "superpowers:requesting-code-review",
+          "superpowers:finishing-a-development-branch",
+          "superpowers:using-git-worktrees"
+        ]
+      },
+      {
+        "id": "ui-ux-pro-max",
+        "name": "UI-UX Pro Max",
+        "marketplace": "nextlevelbuilder/ui-ux-pro-max-skill",
+        "plugin_install": "ui-ux-pro-max@ui-ux-pro-max-skill",
+        "tier": "recommended",
+        "purpose": "Design intelligence (161 product types, 161 palettes, 99 UX guidelines, 57 font pairings) — designer agent Phase 3.5",
+        "used_by": ["designer"],
+        "skills_provided": ["ui-ux-pro-max"]
+      },
+      {
+        "id": "gsd",
+        "name": "Get Shit Done",
+        "marketplace": "gsd-build/get-shit-done",
+        "plugin_install": "gsd-build-get-shit-done",
+        "alternative_install": "npx get-shit-done-cc@latest",
+        "tier": "recommended",
+        "purpose": "Spec-driven planning + verification gates (schema/scope drift detection, atomic commits)",
+        "used_by": ["coordinator", "architect", "auditor", "reviewer", "git-ops"],
+        "skills_provided": [
+          "gsd-new-project",
+          "gsd-discuss-phase",
+          "gsd-plan-phase",
+          "gsd-plan-checker",
+          "gsd-execute-phase",
+          "gsd-verify-work",
+          "gsd-audit-milestone",
+          "gsd-secure-phase",
+          "gsd-pr-branch",
+          "gsd-ship"
+        ]
+      },
+      {
+        "id": "frontend-design",
+        "name": "Frontend Design",
+        "marketplace": "anthropic/frontend-design",
+        "plugin_install": "frontend-design@frontend-design",
+        "tier": "recommended",
+        "purpose": "Distinctive frontend interfaces (designer fallback if ui-ux-pro-max not installed)",
+        "used_by": ["designer", "frontend"],
+        "skills_provided": ["frontend-design:frontend-design"]
+      },
+      {
+        "id": "code-review",
+        "name": "Code Review",
+        "marketplace": "anthropic/code-review",
+        "plugin_install": "code-review@code-review",
+        "tier": "recommended",
+        "purpose": "Structured PR review skill",
+        "used_by": ["reviewer"],
+        "skills_provided": ["code-review:code-review"]
+      },
+      {
+        "id": "playwright-skill",
+        "name": "Playwright",
+        "marketplace": "anthropic/playwright-skill",
+        "plugin_install": "playwright-skill@playwright-skill",
+        "tier": "recommended",
+        "purpose": "Browser automation for qa-engineer Visual Gate + designer screenshots",
+        "used_by": ["qa-engineer", "designer"],
+        "skills_provided": ["playwright-skill:playwright-skill"]
+      },
+      {
+        "id": "superpowers-chrome",
+        "name": "Superpowers Chrome",
+        "marketplace": "obra/superpowers-chrome",
+        "plugin_install": "superpowers-chrome@superpowers-chrome",
+        "tier": "recommended",
+        "purpose": "Direct Chrome DevTools Protocol — DOM/console/network inspection",
+        "used_by": ["qa-engineer", "designer"],
+        "skills_provided": ["superpowers-chrome:browsing"]
+      },
+      {
+        "id": "episodic-memory",
+        "name": "Episodic Memory",
+        "marketplace": "anthropic/episodic-memory",
+        "plugin_install": "episodic-memory@episodic-memory",
+        "tier": "recommended",
+        "purpose": "Cross-session memory for Phase 7 LEARN + bootstrap context",
+        "used_by": ["coordinator", "all"],
+        "skills_provided": ["episodic-memory:remembering-conversations"]
+      },
+      {
+        "id": "claude-md-management",
+        "name": "Claude MD Management",
+        "marketplace": "anthropic/claude-md-management",
+        "plugin_install": "claude-md-management@claude-md-management",
+        "tier": "recommended",
+        "purpose": "Audit + improve CLAUDE.md files",
+        "used_by": ["coordinator"],
+        "skills_provided": ["claude-md-management:revise-claude-md", "claude-md-management:claude-md-improver"]
+      }
+    ],
+    "mcp_servers": [
+      {
+        "id": "context7",
+        "name": "Context7",
+        "auto_install_command": "claude mcp add context7 -- npx -y @upstash/context7-mcp",
+        "tier": "recommended",
+        "purpose": "Library/framework documentation lookup",
+        "used_by": ["all"],
+        "verified": true
+      },
+      {
+        "id": "sequential-thinking",
+        "name": "Sequential Thinking",
+        "auto_install_command": "claude mcp add sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking",
+        "tier": "recommended",
+        "purpose": "Multi-step structured reasoning for complex decisions",
+        "used_by": ["coordinator", "architect"],
+        "verified": true
+      },
+      {
+        "id": "mermaid-mcp",
+        "name": "Mermaid MCP",
+        "auto_install_command": "claude mcp add mermaid-mcp -- npx -y @rtuin/mcp-mermaid",
+        "tier": "recommended",
+        "purpose": "Architecture C4 diagrams",
+        "used_by": ["architect"],
+        "verified": false,
+        "note": "Package name may vary — verify in current marketplace before install"
+      },
+      {
+        "id": "grep-github",
+        "name": "Grep (GitHub search)",
+        "auto_install_command": "claude mcp add grep-github -- npx -y @247arjun/mcp-grep",
+        "tier": "recommended",
+        "purpose": "Cross-repo code pattern search",
+        "used_by": ["all"],
+        "verified": false,
+        "note": "Alternative: use grep.app web service via WebFetch"
+      }
+    ]
+  }
+}

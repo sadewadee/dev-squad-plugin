@@ -7,6 +7,7 @@ memory: true
 maxTurns: 25
 skills:
   - frontend-design:frontend-design
+  - ui-ux-pro-max
   - superpowers:brainstorming
   - superpowers:verification-before-completion
   - superpowers-chrome:browsing
@@ -109,7 +110,36 @@ Use `sequential-thinking` for:
 
 Phase 3.5 sits between architect's Phase 2 DESIGN and frontend's Phase 4 IMPLEMENT in the zero-to-ship workflow. You execute it after architect ships `docs/architecture.md` and before backend/frontend dispatch.
 
-You produce 4 BLOCKING artifacts in `.dev-squad/design/`:
+### Step 0: Companion Skill Check (BEFORE drafting artifacts)
+
+If `ui-ux-pro-max` skill is installed, invoke it FIRST. It generates a complete design system from 161 product types, 161 color palettes, 99 UX guidelines, and 57 font pairings — superior input quality vs designing from scratch.
+
+```
+1. Detect: try invoking Skill("ui-ux-pro-max") with project description from PRD
+   - If skill not installed, the call fails gracefully -> skip to step 1 (manual flow)
+   - If installed: skill returns design system artifacts (typically MASTER.md + page-specific overrides)
+
+2. Translate ui-ux-pro-max output -> 4 dev-squad artifacts:
+   | ui-ux-pro-max output                    | Maps to                              |
+   |-----------------------------------------|--------------------------------------|
+   | Color palette + typography + spacing    | .dev-squad/design/design-tokens.md   |
+   | Style + anti-patterns + reference vibe  | .dev-squad/design/visual-spec.md     |
+   | Component patterns + variants           | .dev-squad/design/component-inventory.md |
+   | Responsive breakpoints + layout rules   | .dev-squad/design/responsive-spec.md |
+
+3. Augment with project specifics (ui-ux-pro-max gives starting point, not finished spec):
+   - Add WebSearch references with screenshots (3-5 production refs per visual-spec.md)
+   - Add project-specific anti-pattern list (not generic)
+   - Add page-by-page wireframes per architect's route map
+   - Add motion timings + reduced-motion fallback
+   - Verify dark mode policy
+
+4. If ui-ux-pro-max NOT installed: proceed with manual flow (rest of Phase 3.5 below).
+```
+
+**Suppression rule:** Do NOT invoke `ui-ux-pro-max` outside Phase 3.5 (e.g. during Phase 5 design compliance light pass). Auto-activation on UI keywords would conflict with controlled phase dispatch. Phase 3.5 is the single invocation point.
+
+### Step 1+: Produce 4 BLOCKING artifacts in `.dev-squad/design/`
 
 ### Artifact 1: `.dev-squad/design/design-tokens.md`
 

@@ -9,7 +9,8 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 
 **Command Format:**
 - `/dev-squad` or `/dev-squad start` - Start coordinator for new task
-- `/dev-squad build <description>` - Zero-to-ship: build a full project through 8 automated PDCA phases (Plan → Do → Check → Act)
+- `/dev-squad build <description>` - Zero-to-ship: build a full project through 9 automated PDCA phases (Plan → Do → Check → Act)
+- `/dev-squad bootstrap` - Auto-install dev-squad companion plugins + MCP servers (one-shot setup)
 - `/dev-squad retrospective [scope]` - Run a PDCA Act-phase retrospective on completed work (feature, sprint, post-incident)
 - `/dev-squad db <description>` - Start database workflow (schema, migrations, optimization)
 - `/dev-squad schema <description>` - Schema design workflow
@@ -18,6 +19,80 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 - `/dev-squad deploy-db <description>` - Database deployment workflow
 - `/dev-squad status` - Check swarm progress (active agents, phases, blockers)
 - `/dev-squad help` - Show available commands
+
+## /dev-squad bootstrap — Auto-install Companion Ecosystem
+
+When invoked with `bootstrap`, do the following (NOT dispatch to coordinator — handle directly):
+
+### Goal
+Ensure user has all recommended companion plugins + MCP servers installed for full dev-squad capability.
+
+### Steps
+
+1. **Read manifest** at `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/companions.json`
+2. **Detect installed**:
+   - Plugins: list `~/.claude/plugins/` directory entries; cross-check against manifest plugin ids
+   - MCPs: run `claude mcp list 2>/dev/null` and parse output
+3. **Categorize** each companion as: `installed` | `required-missing` | `recommended-missing`
+4. **For required missing**: STOP and tell user this MUST be installed first. Output the install commands.
+5. **For recommended missing MCPs**: untuk tiap MCP, ask user "Install <id>? [Y/n]" and run via Bash:
+   ```
+   claude mcp add <id> -- <args from manifest>
+   ```
+   Per-item user confirmation (don't bulk install).
+6. **For recommended missing plugins**: output a single batch of slash commands user can copy-paste to install all at once:
+   ```
+   /plugin marketplace add <marketplace>
+   /plugin install <plugin_install>
+   ```
+   (Plugin install is slash-command-only by Claude Code design — cannot auto-execute via Bash.)
+7. **Final report**:
+   - Auto-installed (MCPs): list with status
+   - Manual install needed (plugins): list slash commands user must run
+   - Already installed: short summary
+
+### Output format
+
+Concise. Use markdown table for the final report. Don't over-narrate. End with "Run `/dev-squad bootstrap` again after installing plugins to verify."
+
+### Skill source-of-truth
+
+The bootstrap skill reads `.claude-plugin/companions.json`. To add a new companion:
+1. Add entry to `companions.plugins[]` or `companions.mcp_servers[]`
+2. Bump `companions.json` `schema_version` if structure changes
+3. No code changes needed in this SKILL.md
+
+### Example bootstrap output
+
+```markdown
+## Dev-Squad Bootstrap
+
+Detected 9 of 13 companions installed.
+
+### Auto-installed (MCPs)
+| MCP | Status |
+|---|---|
+| context7 | ✅ added |
+| sequential-thinking | ✅ added |
+| mermaid-mcp | ⚠️  user declined |
+| grep-github | ✅ added |
+
+### Manual install needed (plugins)
+Run these in your Claude Code prompt:
+
+\`\`\`
+/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
+/plugin install ui-ux-pro-max@ui-ux-pro-max-skill
+
+/plugin marketplace add gsd-build/get-shit-done
+/plugin install gsd-build-get-shit-done
+\`\`\`
+
+### Already installed
+superpowers, frontend-design, code-review, playwright-skill, episodic-memory, claude-md-management, superpowers-chrome
+
+Run `/dev-squad bootstrap` again after installing plugins to verify.
+```
 
 ## Orchestration Modes
 

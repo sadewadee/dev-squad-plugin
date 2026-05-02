@@ -7,6 +7,8 @@ maxTurns: 30
 skills:
   - superpowers:verification-before-completion
   - superpowers:systematic-debugging
+  - gsd-verify-work
+  - gsd-audit-milestone
   - dev-squad:postgres-patterns
   - dev-squad:golang-patterns
   - dev-squad:golang-testing

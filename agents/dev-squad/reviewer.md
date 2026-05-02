@@ -8,6 +8,7 @@ skills:
   - code-review:code-review
   - superpowers:systematic-debugging
   - superpowers:verification-before-completion
+  - gsd-secure-phase
   - dev-squad:security-review
   - evaluation
   - dev-squad:postgres-patterns

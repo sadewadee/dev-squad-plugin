@@ -8,6 +8,8 @@ maxTurns: 30
 skills:
   - superpowers:brainstorming
   - superpowers:writing-plans
+  - gsd-plan-phase
+  - gsd-plan-checker
   - dev-squad:backend-patterns
   - dev-squad:postgres-patterns
   - database-schema-designer

@@ -8,6 +8,8 @@ skills:
   - superpowers:verification-before-completion
   - superpowers:finishing-a-development-branch
   - superpowers:using-git-worktrees
+  - gsd-pr-branch
+  - gsd-ship
 ---
 
 # Git Operations Manager Agent

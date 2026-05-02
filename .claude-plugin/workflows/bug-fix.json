@@ -1,0 +1,127 @@
+{
+  "workflow_id": "bug-fix",
+  "schema_version": "1.0",
+  "version": "4.9.0",
+  "name": "Bug Fix",
+  "description": "Reproduce -> root cause -> fix -> verify. qa-engineer Investigation Mode for cross-boundary or runtime bugs.",
+  "trigger_command": "/dev-squad fix",
+  "phases": [
+    {
+      "id": "reproduce",
+      "number": "1",
+      "name": "Reproduce + Root Cause",
+      "lead_agent": "dev-squad:qa-engineer",
+      "trigger": "workflow_start",
+      "inputs": [
+        { "artifact": "bug_description", "from": "user", "required": true }
+      ],
+      "outputs": [
+        { "artifact": ".dev-squad/bug-investigation.md", "to": "implementer", "blocking": true, "description": "Reproduction steps + root cause + recommended fix (NOT applied by qa-engineer)" }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "fix",
+        "check": "Root cause identified with evidence (LOOKUP audit trail) OR escalated to architect/user"
+      },
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:systematic-debugging", "rationale": "Hypothesis-driven debug", "graceful_degrade": true, "invoked_by": "qa-engineer" },
+          { "skill": "playwright-skill:playwright-skill", "rationale": "Runtime + browser-state inspection", "graceful_degrade": true, "invoked_by": "qa-engineer" },
+          { "skill": "superpowers-chrome:browsing", "rationale": "Browser-state introspection (DOM, console, network)", "graceful_degrade": true, "invoked_by": "qa-engineer" }
+        ],
+        "fallback": "Manual via systematic debugging methodology"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/coordinator.md#bug-fix",
+        "agent_prompt": "agents/dev-squad/qa-engineer.md"
+      }
+    },
+    {
+      "id": "severity_triage",
+      "number": "2",
+      "name": "Severity Triage",
+      "lead_agent": "dev-squad:coordinator",
+      "trigger": "reproduce.complete",
+      "outputs": [
+        { "artifact": ".dev-squad/severity.json", "to": "coordinator", "blocking": true, "description": "P0 critical -> hotfix path; P1-P3 -> standard path" }
+      ],
+      "estimated_complexity": "low",
+      "rate_limit_tier": "haiku",
+      "references": {
+        "prompt_source": "agents/dev-squad/coordinator.md#escalation-matrix"
+      }
+    },
+    {
+      "id": "fix",
+      "number": "3",
+      "name": "Implement Fix",
+      "lead_agent": "dev-squad:coordinator",
+      "parallel_agents": ["dev-squad:backend", "dev-squad:frontend"],
+      "trigger": "severity_triage.complete",
+      "inputs": [
+        { "artifact": ".dev-squad/bug-investigation.md", "from": "qa-engineer", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "fix commits + regression test", "to": "review", "blocking": true }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:test-driven-development", "rationale": "Regression test before fix", "graceful_degrade": true, "invoked_by": "backend,frontend" }
+        ],
+        "fallback": "Direct fix via implementer agent prompt"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/coordinator.md#bug-fix"
+      }
+    },
+    {
+      "id": "verify",
+      "number": "4",
+      "name": "Verify + Regression Check",
+      "lead_agent": "dev-squad:qa-engineer",
+      "parallel_agents": ["dev-squad:reviewer", "dev-squad:auditor"],
+      "trigger": "fix.complete",
+      "outputs": [
+        { "artifact": "verify report", "to": "git-ops", "blocking": true, "description": "qa-engineer re-verifies; reviewer regression diff check; auditor (if stability/quality area)" }
+      ],
+      "skip_conditions": [
+        { "condition": "severity != 'P0'", "action": "slim", "fallback": "Skip auditor unless DB/perf area touched" }
+      ],
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "playwright-skill:playwright-skill", "rationale": "Re-verify bug is gone in runtime", "graceful_degrade": true, "invoked_by": "qa-engineer" }
+        ],
+        "fallback": "Manual via qa-engineer Phase 5.5 protocol"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/coordinator.md#bug-fix"
+      }
+    },
+    {
+      "id": "ship",
+      "number": "5",
+      "name": "Ship Fix",
+      "lead_agent": "dev-squad:git-ops",
+      "trigger": "verify.complete",
+      "outputs": [
+        { "artifact": "GitHub PR (hotfix branch if P0)", "to": "user", "blocking": true }
+      ],
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "gsd-pr-branch", "rationale": "PR pattern", "graceful_degrade": true, "invoked_by": "git-ops" }
+        ],
+        "fallback": "Manual via gh CLI"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/git-ops.md#hotfix-procedure"
+      }
+    }
+  ]
+}

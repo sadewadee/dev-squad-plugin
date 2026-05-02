@@ -1,0 +1,168 @@
+{
+  "workflow_id": "refactoring",
+  "schema_version": "1.0",
+  "version": "4.9.0",
+  "name": "Refactoring",
+  "description": "Restructure code without behavior change. Auditor before/after metrics prove improvement. Refactor without measurable improvement = wasted effort.",
+  "trigger_command": "/dev-squad refactor",
+  "phases": [
+    {
+      "id": "target_design",
+      "number": "1",
+      "name": "Target Architecture",
+      "lead_agent": "dev-squad:architect",
+      "trigger": "workflow_start",
+      "inputs": [
+        { "artifact": "refactor_description", "from": "user", "required": true }
+      ],
+      "outputs": [
+        { "artifact": ".dev-squad/refactor-target.md", "to": "implementers", "blocking": true, "description": "Target architecture + migration strategy + ADR if structural" }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "opus",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:brainstorming", "rationale": "Explore refactor approaches", "graceful_degrade": true, "invoked_by": "architect" }
+        ],
+        "fallback": "Manual via architect agent prompt"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/coordinator.md#refactoring",
+        "agent_prompt": "agents/dev-squad/architect.md"
+      }
+    },
+    {
+      "id": "baseline_metrics",
+      "number": "2",
+      "name": "Baseline Metrics",
+      "lead_agent": "dev-squad:auditor",
+      "trigger": "target_design.complete",
+      "outputs": [
+        { "artifact": ".dev-squad/refactor-baseline.md", "to": "future_compare", "blocking": true, "description": "BEFORE metrics: cyclomatic, duplication, dead code, type-escape, file/function size" }
+      ],
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [],
+        "fallback": "Direct via auditor Phase 5.7 multi-language tools"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/auditor.md#phase-57-code-quality-metrics"
+      }
+    },
+    {
+      "id": "ui_design",
+      "number": "2.5",
+      "name": "UI Design (conditional)",
+      "lead_agent": "dev-squad:designer",
+      "trigger": "refactor.has_visual_change == true",
+      "outputs": [
+        { "artifact": ".dev-squad/design/refactor-component-update.md", "to": "frontend", "blocking": true, "description": "Updated tokens/inventory/responsive for affected components only" }
+      ],
+      "skip_conditions": [
+        { "condition": "refactor.has_visual_change == false", "action": "skip", "fallback": "Pure code refactor; designer not dispatched" }
+      ],
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "ui-ux-pro-max", "rationale": "Design intelligence for component update", "graceful_degrade": true, "invoked_by": "designer" }
+        ],
+        "fallback": "Manual via designer agent prompt"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/designer.md"
+      }
+    },
+    {
+      "id": "incremental_refactor",
+      "number": "3",
+      "name": "Incremental Refactor",
+      "lead_agent": "dev-squad:coordinator",
+      "parallel_agents": ["dev-squad:backend", "dev-squad:frontend"],
+      "trigger": "baseline_metrics.complete",
+      "outputs": [
+        { "artifact": "refactor commits (small batches)", "to": "smoke_verify", "blocking": true }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:test-driven-development", "rationale": "TDD enforced; tests guarantee no behavior drift", "graceful_degrade": true, "invoked_by": "backend,frontend" }
+        ],
+        "fallback": "Direct via implementer agents"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/coordinator.md#refactoring"
+      }
+    },
+    {
+      "id": "smoke_verify",
+      "number": "4",
+      "name": "Smoke Verify per Batch",
+      "lead_agent": "dev-squad:qa-engineer",
+      "trigger": "incremental_refactor.batch_complete",
+      "outputs": [
+        { "artifact": ".dev-squad/refactor-smoke.md", "to": "coordinator", "blocking": false, "description": "Golden path still works; no regression in interactive flows" }
+      ],
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "playwright-skill:playwright-skill", "rationale": "Functional smoke verify", "graceful_degrade": true, "invoked_by": "qa-engineer" }
+        ],
+        "fallback": "Manual via qa-engineer Phase 5.5 protocol"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/qa-engineer.md"
+      }
+    },
+    {
+      "id": "after_metrics",
+      "number": "5",
+      "name": "After Metrics + Improvement Proof",
+      "lead_agent": "dev-squad:auditor",
+      "trigger": "incremental_refactor.complete",
+      "inputs": [
+        { "artifact": ".dev-squad/refactor-baseline.md", "from": "auditor", "required": true }
+      ],
+      "outputs": [
+        { "artifact": ".dev-squad/refactor-after.md", "to": "user", "blocking": true, "description": "AFTER metrics; delta vs baseline; improvement quantified" }
+      ],
+      "blocking_gate": {
+        "check": "Refactor produced measurable improvement (less duplication, lower complexity, fewer dead exports). Refactor without improvement = wasted effort flagged"
+      },
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [],
+        "fallback": "Direct via auditor Phase 5.7 tools (re-run same tools as baseline)"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/auditor.md#phase-57-code-quality-metrics"
+      }
+    },
+    {
+      "id": "review_ship",
+      "number": "6",
+      "name": "Review + Ship",
+      "lead_agent": "dev-squad:reviewer",
+      "parallel_agents": ["dev-squad:git-ops"],
+      "trigger": "after_metrics.complete",
+      "outputs": [
+        { "artifact": "staged PRs (small chunks)", "to": "user", "blocking": true, "description": "Reviewer: intent preserved; no behavioral drift; design token discipline if UI" }
+      ],
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "code-review:code-review", "rationale": "Static review on diff", "graceful_degrade": true, "invoked_by": "reviewer" }
+        ],
+        "fallback": "Manual via reviewer agent prompt"
+      },
+      "references": {
+        "prompt_source": "agents/dev-squad/coordinator.md#refactoring"
+      }
+    }
+  ]
+}

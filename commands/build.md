@@ -5,6 +5,9 @@ description: Zero-to-Ship workflow. Takes a project description and builds it fr
 
 # /dev-squad build <description>
 
+> **Canonical workflow definition:** `.claude-plugin/workflows/zero-to-ship.json` — coordinator reads this JSON at workflow start as dispatch source-of-truth (phase list, lead agents, parallel agents, blocking gates, skip conditions, external skills). This file is the descriptive prompt; JSON is canonical.
+> Human-readable mapping: [docs/workflow-mapping.md](../docs/workflow-mapping.md). Companion plugins: [docs/companion-plugins.md](../docs/companion-plugins.md).
+
 ## INSTRUCTIONS: When `/dev-squad build` is invoked
 
 When the user runs `/dev-squad build <description>`, **immediately** launch the coordinator agent with the zero-to-ship workflow. Do NOT ask clarifying questions first -- start the workflow and let the DISCOVER phase handle exploration.

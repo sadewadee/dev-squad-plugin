@@ -14,6 +14,8 @@ skills:
   - superpowers:verification-before-completion
   - superpowers:requesting-code-review
   - superpowers:finishing-a-development-branch
+  - gsd-new-project
+  - gsd-execute-phase
   - context-fundamentals
   - context-optimization
 ---
@@ -105,6 +107,46 @@ Need to SEARCH past conversations?    → Use MCP (episodic-memory)
 6. **Never** ask user which skill to use - decide autonomously based on context
 7. **Never** use a Skill when you need data — use MCP
 8. **Never** use MCP when you need workflow guidance — use Skill
+
+## Companion Skills (Optional, On-Demand)
+
+Dev-squad supports companion plugins that extend agent capabilities. Companion skills are invoked via `Skill` tool only when relevant to the current phase. Graceful degrade if not installed.
+
+### Workflow JSON as canonical contract
+
+At workflow start, READ the canonical workflow definition:
+```
+/dev-squad build       -> .claude-plugin/workflows/zero-to-ship.json
+/dev-squad feature     -> .claude-plugin/workflows/feature-development.json
+/dev-squad fix         -> .claude-plugin/workflows/bug-fix.json
+/dev-squad refactor    -> .claude-plugin/workflows/refactoring.json
+```
+
+Each phase in the JSON has `external_skills.preferred[]` listing which companion skills to invoke (with `invoked_by` agent and `rationale`). Use these as your dispatch source-of-truth. Fall back to implicit prompt knowledge if JSON missing.
+
+### Companion plugin matrix
+
+| Plugin | Phase | Skills used | Invoked by |
+|---|---|---|---|
+| **ui-ux-pro-max** | Phase 3.5 UI Design | `ui-ux-pro-max` | designer |
+| **gsd** (get-shit-done) | Phase 0/1/3/4/5/6 | `gsd-new-project`, `gsd-discuss-phase`, `gsd-plan-phase`, `gsd-plan-checker`, `gsd-execute-phase`, `gsd-verify-work`, `gsd-audit-milestone`, `gsd-secure-phase`, `gsd-pr-branch`, `gsd-ship` | coordinator, architect, auditor, reviewer, git-ops |
+| **superpowers** (required) | All phases | `brainstorming`, `writing-plans`, `test-driven-development`, etc. | All agents |
+
+### Detection + invocation pattern
+
+When a phase declares `external_skills.preferred[].skill = "X"`:
+1. Try invoking `Skill("X", args=...)` — if installed, runs and returns output
+2. If skill not installed, the call fails gracefully — fall back to `external_skills.fallback`
+3. Log invocation outcome in `.dev-squad/dispatch-log.md`
+
+Do NOT precondition with "check if installed" — try invocation directly. The Skill tool returns an error if missing; treat that as fallback signal. This avoids state-cache mismatches.
+
+### See also
+
+- `docs/workflow-mapping.md` — human-readable mapping with mermaid diagrams
+- `docs/companion-plugins.md` — full companion plugin guide + install commands
+- `.claude-plugin/companions.json` — declarative manifest of all companions
+- `/dev-squad bootstrap` — auto-install MCPs + output plugin install commands
 
 ## Role
 Lead/Coordinator of the dev-squad team. You are the orchestrator responsible for:

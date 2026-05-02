@@ -55,6 +55,26 @@ The most common failure mode for AI-built UIs is the "AI-slop" pattern: default 
 
 Frontend cannot start UI work until all 4 artifacts exist. Inline arbitrary values (`text-[#abc]`), emoji-as-icon, missing responsive, and missing motion are all explicitly P0/P1 violations enforced by reviewer's static lane (Pass 5: design compliance) and qa-engineer's runtime Visual Gate. An `--mvp-mode` flag exists for rapid prototyping (slim deliverable: tokens + slim visual-spec only).
 
+### Workflow Mapping (Runtime Contract)
+Workflows are defined as **machine-readable JSON** in `.claude-plugin/workflows/` — the coordinator reads these as dispatch source-of-truth at workflow start. Each phase declares: lead agent, parallel agents, inputs/outputs (with blocking flag), skip conditions, verification command, and external companion skills. The `_schema.json` validates structure; `hooks/validate-workflow-schema.sh` detects drift between JSON and agent prompts at session start.
+
+See [docs/workflow-mapping.md](docs/workflow-mapping.md) for the human-readable view (master tables + mermaid diagrams + skip-condition decision tree).
+
+### Companion Plugins (On-Demand)
+Dev-squad reaches maximum capability with optional companion plugins + MCP servers. All companions are **graceful-degrade** — agents fall back to native methodology if not installed.
+
+**Run `/dev-squad bootstrap`** to auto-install MCPs and get plugin install commands.
+
+| Companion | Tier | Used by | Phase |
+|---|---|---|---|
+| **superpowers** | required | all agents | all phases |
+| **ui-ux-pro-max** | recommended | designer | Phase 3.5 UI DESIGN |
+| **gsd** (get-shit-done) | recommended | coordinator, architect, auditor, reviewer, git-ops | Phase 0/1/2/4/5/6 |
+| **frontend-design**, **code-review**, **playwright-skill**, **superpowers-chrome**, **episodic-memory**, **claude-md-management** | recommended | various | various |
+| **MCPs**: context7, sequential-thinking, mermaid-mcp, grep-github | recommended | all | all |
+
+See [docs/companion-plugins.md](docs/companion-plugins.md) for full integration guide and [.claude-plugin/companions.json](.claude-plugin/companions.json) for the declarative manifest.
+
 ### 3-Way Phase 5 Review (static + runtime + automated)
 Phase 5 of zero-to-ship dispatches three agents in parallel: **reviewer** does static code review on the diff, **qa-engineer** boots the app and drives the golden path through a real browser via playwright, and **auditor** runs real analyzer tools (slow query log, connection leak detector, jscpd, golangci-lint, ts-prune, etc.) against the codebase. Each has veto in their domain. Reviewer synthesizes a single Phase 5 Metrics Report from all three lanes for the PDCA Check artifact.
 
