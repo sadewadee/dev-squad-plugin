@@ -1,6 +1,6 @@
 # dev-squad
 
-A full-stack development team agent swarm plugin for Claude Code. **Ten specialized AI agents** collaborate in a hierarchical coordination model to handle zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, runtime/stability/quality auditing, and content authoring.
+A full-stack development team agent swarm plugin for Claude Code. **Eleven specialized AI agents** collaborate in a hierarchical coordination model to handle zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, runtime/stability/quality auditing, and content authoring. The Phase 3.5 DESIGN gate (designer agent) prevents AI-slop UI by forcing design tokens, visual references, and component inventory **before** frontend writes a single line of code.
 
 Current version is in `.claude-plugin/plugin.json`.
 
@@ -10,10 +10,11 @@ Current version is in `.claude-plugin/plugin.json`.
 |-------|------|-------|---------------------|
 | **coordinator** | Lead/Coordinator + Memory Manager | opus | Task decomposition, agent orchestration, conflict resolution, project knowledge management |
 | **architect** | System Architect | opus | System design, tech stack decisions, database schema, ADRs, infrastructure planning |
+| **designer** | UI/UX Designer | sonnet (think_harder) | Phase 3.5 DESIGN gate. Produces 4 BLOCKING artifacts before frontend codes UI: design-tokens.md, visual-spec.md (with ≥3 references + screenshots), component-inventory.md (variants × states), responsive-spec.md (mermaid wireframes per breakpoint). Anti-AI-slop authority — vetoes emoji-as-icon, default shadcn palette, AI-cliché gradients, missing responsive/motion. |
 | **backend** | Backend Developer | sonnet | API development, database operations, business logic, migrations, auth implementation |
-| **frontend** | Frontend Developer | sonnet | UI implementation, React/Next.js, state management, responsive/accessible design |
+| **frontend** | Frontend Developer | sonnet | UI implementation per designer's spec — translates design tokens / component inventory / responsive spec into code. Cannot start UI until all 4 designer artifacts exist. |
 | **reviewer** | Security Lead + Static Code Reviewer | sonnet | End-to-end security, threat modeling, OWASP, static code review on diff, Phase 5 metrics report synthesis |
-| **qa-engineer** | Runtime QA + Investigation Mode | sonnet | Phase 5.5 functional verification (boot app, drive golden path via playwright, audit interactive elements, smoke-test endpoints, browser console gate). Fresh-eyes debugger when self-healing iter 3 triggers. |
+| **qa-engineer** | Runtime QA + Visual Gate + Investigation Mode | sonnet | Phase 5.5 functional verification (boot app, drive golden path via playwright, audit interactive elements, smoke-test endpoints, browser console gate). Visual Gate runs designer's anti-pattern list against shipped UI (emoji-as-icon scan, inline arbitrary value scan, responsive presence at 3 breakpoints, motion presence, default shadcn palette check). Fresh-eyes debugger when self-healing iter 3 triggers. |
 | **auditor** | Stability + Quality Metrics | sonnet | Phase 5.6 stability execution (config drift, DB perf, endpoint hammer, failure injection, API pattern compliance) + Phase 5.7 code quality metrics (multi-language: JS/TS, Go, Python). Installs analyzer tools on demand. |
 | **devops** | DevOps Engineer | sonnet | Docker/Compose, Traefik, CI/CD, monitoring, secrets management, deployment strategies |
 | **git-ops** | Git Operations Manager | sonnet | Branch management, PR workflows, merge strategies, release management, changelog generation |
@@ -21,7 +22,7 @@ Current version is in `.claude-plugin/plugin.json`.
 
 ## Supported Workflows
 
-- **Zero-to-Ship** -- build a full project from a single description through 6 automated phases: DISCOVER, DESIGN, SCAFFOLD, IMPLEMENT, REVIEW, SHIP
+- **Zero-to-Ship** -- build a full project from a single description through 9 automated PDCA phases: ULTRAPLAN, DISCOVER, DESIGN, SCAFFOLD, **UI DESIGN (3.5 — anti-AI-slop gate)**, IMPLEMENT, REVIEW, SHIP, LEARN
 - **Feature Development** -- coordinator orchestrates architect design, parallel backend+frontend implementation, security review, deployment, and PR creation
 - **Bug Fix** -- reviewer does root cause analysis, implementor applies TDD fix, validation, and hotfix path for critical issues
 - **Refactoring** -- architect defines target architecture, incremental refactoring with TDD, staged PRs
@@ -43,6 +44,16 @@ Agents use a dual-mode communication protocol:
 
 ### Security Lead with Veto Power
 The reviewer agent owns security end-to-end. It has veto power on P0-P1 security issues and can directly message any agent for urgent security fixes without coordinator mediation. Every PR goes through OWASP Top 10 checks, dependency auditing, and threat modeling.
+
+### Phase 3.5 DESIGN Gate (Anti-AI-Slop)
+The most common failure mode for AI-built UIs is the "AI-slop" pattern: default shadcn slate palette, purple-to-blue gradient hero, emoji-as-icon, skipped responsive, no motion, generic centered hero + 3-col features grid. The dedicated **designer agent** (sonnet with `think_harder`) runs Phase 3.5 between scaffold and implement, producing 4 BLOCKING artifacts in `.dev-squad/design/`:
+
+1. **`design-tokens.md`** — concrete color palette, typography ladder, spacing scale, radius, motion timings + easings, shadow tokens (no TBD placeholders)
+2. **`visual-spec.md`** — ≥3 reference URLs with playwright-captured screenshots, brand vibe (concrete adjectives, not "modern minimal"), project-specific anti-pattern list
+3. **`component-inventory.md`** — every component × variants × states (loading/error/empty/focus/hover/active/disabled)
+4. **`responsive-spec.md`** — mermaid wireframes per page × mobile/tablet/desktop breakpoints
+
+Frontend cannot start UI work until all 4 artifacts exist. Inline arbitrary values (`text-[#abc]`), emoji-as-icon, missing responsive, and missing motion are all explicitly P0/P1 violations enforced by reviewer's static lane (Pass 5: design compliance) and qa-engineer's runtime Visual Gate. An `--mvp-mode` flag exists for rapid prototyping (slim deliverable: tokens + slim visual-spec only).
 
 ### 3-Way Phase 5 Review (static + runtime + automated)
 Phase 5 of zero-to-ship dispatches three agents in parallel: **reviewer** does static code review on the diff, **qa-engineer** boots the app and drives the golden path through a real browser via playwright, and **auditor** runs real analyzer tools (slow query log, connection leak detector, jscpd, golangci-lint, ts-prune, etc.) against the codebase. Each has veto in their domain. Reviewer synthesizes a single Phase 5 Metrics Report from all three lanes for the PDCA Check artifact.
@@ -108,18 +119,21 @@ Ensure `skills/dev-squad/`, `agents/dev-squad/`, and `hooks/` are placed under y
 
 ### Zero-to-Ship Workflow
 
-The `build` command takes a project description and builds it through 6 automated phases. Only one user checkpoint exists -- after PRD generation in Phase 1.
+The `build` command takes a project description and builds it through 9 automated PDCA phases. Only one user checkpoint exists -- after PRD generation in Phase 1.
 
 ```
 /dev-squad build A real-time collaborative task manager with team workspaces
 
-Phase 1: DISCOVER  --> Architect brainstorms, researches, generates PRD
-                       >>> You approve the PRD <<<
-Phase 2: DESIGN    --> Architect creates full architecture + C4 diagrams + ADRs
-Phase 3: SCAFFOLD  --> DevOps creates project structure, Docker, CI/CD; Git-Ops inits repo
-Phase 4: IMPLEMENT --> Backend + Frontend build in parallel with TDD
-Phase 5: REVIEW    --> Reviewer does full code review + OWASP security audit
-Phase 6: SHIP      --> Staging deploy, PR creation, final sign-off
+Phase 0:   ULTRAPLAN  --> Coordinator deep-thinks scope, entities, tech stack, risks
+Phase 1:   DISCOVER   --> Architect brainstorms, researches, generates PRD
+                          >>> You approve the PRD <<<
+Phase 2:   DESIGN     --> Architect creates full architecture + C4 diagrams + ADRs
+Phase 3:   SCAFFOLD   --> DevOps creates project structure, Docker, CI/CD; Git-Ops inits repo
+Phase 3.5: UI DESIGN  --> Designer produces design-tokens + visual-spec + component-inventory + responsive-spec (BLOCKING)
+Phase 4:   IMPLEMENT  --> Backend + Frontend build in parallel; Frontend reads designer's 4 artifacts before UI
+Phase 5:   REVIEW     --> 3-way parallel: reviewer (static + design lint) + qa-engineer (runtime + Visual Gate) + auditor (stability + quality metrics)
+Phase 6:   SHIP       --> Staging deploy, PR creation, final sign-off
+Phase 7:   LEARN      --> PDCA Act retrospective: playbook + fix-it backlog + CLAUDE.md updates
 ```
 
 ### Examples
@@ -206,10 +220,11 @@ dev-squad-plugin/
 │   └── dev-squad/
 │       ├── coordinator.md        # Coordinator agent (opus)
 │       ├── architect.md          # System Architect agent (opus)
+│       ├── designer.md           # UI/UX Designer agent — Phase 3.5 anti-AI-slop gate (sonnet, think_harder)
 │       ├── backend.md            # Backend Developer agent (sonnet)
-│       ├── frontend.md           # Frontend Developer agent (sonnet)
+│       ├── frontend.md           # Frontend Developer agent — implements designer's spec (sonnet)
 │       ├── reviewer.md           # Security Lead + Static Code Reviewer agent (sonnet)
-│       ├── qa-engineer.md        # Runtime QA + Investigation Mode agent (sonnet)
+│       ├── qa-engineer.md        # Runtime QA + Visual Gate + Investigation Mode agent (sonnet)
 │       ├── auditor.md            # Stability + Quality Metrics agent (sonnet)
 │       ├── devops.md             # DevOps Engineer agent (sonnet)
 │       ├── git-ops.md            # Git Operations Manager agent (sonnet)

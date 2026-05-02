@@ -225,7 +225,7 @@ Findings < 80 are noted but marked as "investigate" — do NOT block merge for l
 
 ## Multi-Angle Review (Phase 5: Zero-to-Ship)
 
-During Phase 5 REVIEW, coordinate 4 parallel review passes:
+During Phase 5 REVIEW, coordinate 5 parallel review passes:
 
 ```
 Pass 1: SECURITY REVIEW
@@ -246,20 +246,31 @@ Pass 3: SPEC COMPLIANCE REVIEW
 Pass 4: ARCHITECTURE REVIEW
   - Patterns match ADR, coupling minimized, SOLID principles
   - Shared packages used correctly, no duplication
+
+Pass 5: DESIGN COMPLIANCE REVIEW (static — runs against UI diff if frontend touched)
+  - Read `.dev-squad/design/design-tokens.md` to know the allowed token set
+  - Grep for inline arbitrary values: `text-[#...]`, `mt-[Npx]`, `bg-[rgb(...)]` — every match = P1 (token discipline violation)
+  - Grep for emoji codepoints in JSX/TSX: `[\u{1F300}-\u{1F9FF}]` — every match = P0 if used as icon (cross-check with designer's icon library spec)
+  - Verify responsive classes exist on layout components — pages with no `md:`, `lg:`, `xl:` Tailwind prefixes (or equivalent CSS @media) on layout = P0 (responsive skipped)
+  - Verify motion classes / framer-motion / view-transitions on components designer specced as animated — missing = P1
+  - Cross-check component usage against `component-inventory.md` — components used outside spec'd variants/states = P2
+  - Score each finding 0-100 confidence
+  - Hand visual/runtime concerns (does it actually look like the reference? does motion feel right?) to qa-engineer's Visual Gate — your lane is static lint only
 ```
 
 Filter all findings: only confidence >= 80 becomes actionable. Report consolidated results to coordinator.
 
 ## Phase 5 Sibling Dispatches (you do not do these)
 
-In Phase 5, coordinator dispatches three agents in parallel:
-- **You (reviewer)** — static security + code review (above)
-- **qa-engineer** — Phase 5.5 FUNCTIONAL VERIFICATION (boot app, drive golden path, audit interactive elements, smoke-test endpoints)
+In Phase 5, coordinator dispatches three agents in parallel (designer optionally added if UI surface is significant):
+- **You (reviewer)** — static security + code review + Pass 5 design compliance lint (above)
+- **qa-engineer** — Phase 5.5 FUNCTIONAL VERIFICATION (boot app, drive golden path, audit interactive elements, smoke-test endpoints) + Visual Gate (anti-AI-slop runtime check against designer's anti-pattern list)
 - **auditor** — Phase 5.6 STABILITY EXECUTION (config drift, DB perf, endpoint hammer, failure injection, API patterns) + Phase 5.7 CODE QUALITY METRICS (multi-language tool runner)
+- **designer** (light pass, only if new UI surface shipped) — verifies design tokens used per `.dev-squad/design/design-tokens.md`, anti-pattern list compliance, motion/responsive presence
 
-Your role at the end of Phase 5 is **synthesizer** — gather your findings + qa-engineer's `.dev-squad/functional-verification.md` + auditor's `.dev-squad/stability-report.md` and `.dev-squad/quality-metrics.md`, then produce the **single Phase 5 Metrics Report below** that coordinator uses for ship decision.
+Your role at the end of Phase 5 is **synthesizer** — gather your findings + qa-engineer's `.dev-squad/functional-verification.md` + auditor's `.dev-squad/stability-report.md` and `.dev-squad/quality-metrics.md` + designer's findings (if dispatched), then produce the **single Phase 5 Metrics Report below** that coordinator uses for ship decision.
 
-You do NOT execute the app. You do NOT run analyzer tools. Stay in static review.
+You do NOT execute the app. You do NOT run analyzer tools. You DO grep for design token violations as part of Pass 5. Stay in static review for visual concerns — runtime visual checks belong to qa-engineer's Visual Gate.
 
 ## Phase 5 Output: Metrics Report (PDCA Check)
 
@@ -498,7 +509,8 @@ safety check
 | Agent | When to Contact | Example |
 |-------|----------------|---------|
 | **Backend** | Security vulnerability found, critical bug, test failure in their code | "SQL injection in `userController.ts:45` — P0 blocker, fix before merge" |
-| **Frontend** | XSS risk, accessibility violation, performance regression | "User input not sanitized in `CommentForm` — XSS vulnerability" |
+| **Frontend** | XSS risk, accessibility violation, performance regression, Pass 5 design token violation | "User input not sanitized in `CommentForm` — XSS vulnerability" / "12 inline arbitrary values in apps/frontend — switch to design tokens" |
+| **Designer** | Pass 5 found design token violation that needs spec clarification (component variant missing, token name mismatch) | "Component used `Toast` with `info` variant but inventory only lists success/warning/error — confirm variant or update spec" |
 | **Architect** | Design doesn't match ADR, scaling concern, architecture drift | "This implementation diverges from ADR-3 — CQRS pattern not followed" |
 | **DevOps** | Secret exposed, container security issue, missing health check | "Docker image runs as root — P1 security issue" |
 | **Git-Ops** | PR too large, commit history messy, branch naming violation | "PR #42 is 800 lines — request split before review continues" |

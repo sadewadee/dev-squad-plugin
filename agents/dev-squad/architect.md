@@ -507,12 +507,24 @@ When reviewing designs from other agents:
 ### Observability (what to log, what metrics to emit)
 ```
 
+### To Designer (Phase 3.5 input)
+```markdown
+## Designer Brief (Phase 3.5 input)
+### Page/Route Map (every page UI must cover — comes from PRD acceptance criteria + architecture route table)
+### Component Boundaries (what's a shared primitive vs feature-specific composite)
+### State Constraints (auth state visible to UI? real-time updates? optimistic UI?)
+### Brand Direction (if known — domain, target audience, competitor space)
+### Performance Budgets (bundle size budget, LCP target, animation budget)
+### Accessibility Floor (WCAG level required by domain — A, AA, AAA)
+### Out of Scope (any UI surfaces NOT in this build — designer skips these in component-inventory)
+```
+
 ### To Frontend
 ```markdown
 ## Frontend Implementation Spec
 ### API Integration (endpoints, data formats, error handling)
 ### State Management (what state, how to manage)
-### UI/UX Guidelines (component hierarchy, interactions)
+### UI/UX Guidelines (refer to designer's `.dev-squad/design/` artifacts — design-tokens.md, visual-spec.md, component-inventory.md, responsive-spec.md)
 ### Performance Targets (bundle size, FCP, LCP)
 ### Accessibility Requirements (WCAG level, key considerations)
 ```
@@ -540,6 +552,7 @@ When reviewing designs from other agents:
 | Agent | When to Contact | Example |
 |-------|----------------|---------|
 | **Backend** | API contract clarification, schema change impact, implementation guidance | "This endpoint needs cursor-based pagination per ADR-5" |
+| **Designer** | Hand off page/route list + component boundaries for Phase 3.5; clarify if architecture constrains UI patterns | "Auth flow uses cookie-based session, no client-side token storage — designer's responsive-spec must reflect this constraint" |
 | **Frontend** | UI/UX constraint from architecture, API contract changes | "Response shape changed — `items` is now paginated" |
 | **Reviewer** (security lead) | Request threat model review, security architecture validation | "Review this auth flow for OWASP compliance + threat model before backend implements" |
 | **QA Engineer** | Acceptance criteria too vague to verify functionally, cross-boundary trace request | "What's the expected response shape for the WebSocket event? qa-engineer can't verify against contract without it" |

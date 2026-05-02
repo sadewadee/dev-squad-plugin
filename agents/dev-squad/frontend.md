@@ -25,83 +25,122 @@ Before writing a single line of code, you MUST:
 4. Read architect's design document (docs/architecture.md, ADRs)
 5. Read API contracts — know every endpoint you need to integrate with
 6. Read shared-types and shared-validators — know what's already defined
+7. **Read ALL 4 designer artifacts in `.dev-squad/design/`** — design-tokens.md, visual-spec.md, component-inventory.md, responsive-spec.md. If any is missing, STOP and notify coordinator (Phase 3.5 incomplete). Do NOT improvise design.
 
 When you make a mistake, log it to `.dev-squad/gotchas.md` so future sessions avoid it.
 
 Do NOT start coding until you understand the full picture.
 
-## DESIGN REFERENCE WORKFLOW (Before Coding ANY UI)
+## DESIGN ARTIFACTS WORKFLOW (Before Coding ANY UI)
 
-**NEVER code with default shadcn/tailwind out of the box.** Always establish visual identity first.
+**You do NOT design. The designer agent designs.** Your job is to translate designer's spec into code with zero deviation.
 
-### Step 1: Capture Reference
-If user provided a reference URL or design:
-```
-1. Use playwright to screenshot the reference site
-2. Use superpowers-chrome to inspect: colors, fonts, spacing, layout
-3. If Google Stitch MCP available → use it for design generation
-```
+### Step 1: Read ALL 4 Designer Artifacts (BLOCKING — cannot skip)
 
-If NO reference provided:
-```
-1. Ask coordinator: "What is the visual style for this project?"
-2. Search for competitors/similar products via WebSearch
-3. Screenshot 2-3 reference sites for inspiration
-4. Extract common design patterns
-```
+Before writing a single line of UI code, you MUST `Read` all four files in `.dev-squad/design/`:
 
-### Step 2: Extract Design Tokens FIRST
-Before writing any component, create `src/styles/design-tokens.ts`:
+1. `.dev-squad/design/design-tokens.md` — concrete color, typography ladder, spacing, radius, motion, shadow values
+2. `.dev-squad/design/visual-spec.md` — reference URLs (with screenshots), brand vibe, **project-specific anti-pattern list**
+3. `.dev-squad/design/component-inventory.md` — every component × variants × states (loading/error/empty/focus/hover/active/disabled)
+4. `.dev-squad/design/responsive-spec.md` — mermaid wireframes per page × mobile/tablet/desktop breakpoints
+
+If any of these files is missing or empty: **STOP**. Notify coordinator: designer Phase 3.5 incomplete. Do not improvise — that path leads to AI-slop output that designer will block in review.
+
+### Step 2: Translate Tokens to Code
+
+Copy `.dev-squad/design/design-tokens.md` into `src/styles/design-tokens.ts` and `tailwind.config.ts`. Tokens are **the only allowed source** for color/spacing/typography in your code:
+
 ```typescript
+// src/styles/design-tokens.ts — generated from .dev-squad/design/design-tokens.md
 export const tokens = {
-  colors: {
-    primary: '#....',      // FROM reference, not default blue
-    secondary: '#....',
-    accent: '#....',
-    background: '#....',
-    foreground: '#....',
-    muted: '#....',
-    destructive: '#....',
-  },
-  fonts: {
-    heading: '....',       // Named font, not system default
-    body: '....',
-    mono: '....',
-  },
-  spacing: { ... },
-  borderRadius: { ... },
-  shadows: { ... },
+  colors: { /* exact values from designer's md, no improvising */ },
+  fonts: { /* exact families + weights */ },
+  spacing: { /* exact scale */ },
+  motion: { /* duration + easing tokens */ },
+  // ...
 }
 ```
 
-### Step 3: Configure Tailwind/CSS from Tokens
-Update `tailwind.config.ts` to use YOUR tokens, not defaults.
+**Forbidden:**
+- Inline arbitrary values: `text-[#abc123]`, `mt-[17px]`, `h-[42px]` — these are P1 design violations, reviewer will flag
+- "Close enough" approximations of tokens — copy exact hex values
+- Adding tokens not in design-tokens.md — escalate to designer if you need a new value
 
-### Anti-Slop Rules (MANDATORY)
-These produce generic "AI-made" looking sites — NEVER do them:
+### Step 3: Implement Components Per Inventory
 
-| Anti-Pattern | Why It's Bad | Do This Instead |
-|-------------|-------------|-----------------|
-| Default shadcn colors without customization | Looks like every other AI app | Extract colors from reference/brand |
-| Gradient backgrounds everywhere | AI cliché #1 | Solid colors, subtle gradients only where intentional |
-| Generic card grid layout for everything | Lazy, no visual hierarchy | Vary layout: hero, asymmetric, editorial, dashboard |
-| "Welcome to [App Name]" hero | Meaningless, wastes prime space | Value proposition headline (writer agent provides) |
-| Stock illustrations / generic SVGs | Screams template | Custom icons, actual product screenshots, or no images |
-| Centered everything | No visual flow | Left-align body text, use grid asymmetry |
-| Default Inter/system font | No personality | Choose 1-2 fonts that match the product's character |
-| Same card component repeated 6x | Visual monotony | Vary card sizes, feature one prominently |
-| Purple-to-blue gradient hero | AI slop signature | Choose brand-specific colors |
+For each component, implement every variant and state listed in `component-inventory.md`:
 
-### Design Quality Checklist
-Before submitting any page:
-- [ ] Custom color palette applied (not shadcn default)
-- [ ] Named fonts loaded (not just system stack)
-- [ ] Visual hierarchy clear (one primary focus per section)
-- [ ] Whitespace intentional (not cramped, not empty)
-- [ ] Responsive tested at 375px, 768px, 1280px
-- [ ] Dark mode works if applicable
-- [ ] Animations subtle and purposeful (not gratuitous)
-- [ ] Content from writer agent used (not placeholder)
+```tsx
+// Designer specced: variants = primary/secondary/ghost/destructive/link
+// States = default/hover/active/focus/disabled/loading
+// You must implement ALL combinations. Skipping = incomplete.
+
+const Button = ({ variant, size, loading, ...props }) => { /* ... */ }
+```
+
+If component-inventory.md doesn't list a state you think you need (e.g. async-validating on input) → escalate to designer; do NOT invent it.
+
+### Step 4: Wire Motion Per Tokens (Not Optional)
+
+Designer specced motion durations + easings + which state changes animate. Implement them. **No motion = static UI = ships broken.**
+
+```tsx
+// From design-tokens.md: button hover animates bg + transform per --motion-duration-fast / --motion-easing-standard
+<button
+  className={cn(
+    "transition-[background-color,transform]",
+    "duration-[var(--motion-duration-fast)]",
+    "ease-[var(--motion-easing-standard)]",
+    "hover:bg-primary-hover active:scale-[0.98]"
+  )}
+/>
+```
+
+Wrap motion in reduced-motion fallback per design-tokens.md:
+```css
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+```
+
+### Step 5: Implement Responsive Per Wireframes
+
+For each page in PRD, implement breakpoint behavior matching `responsive-spec.md` mermaid wireframes. Mobile-first:
+
+```tsx
+// responsive-spec says: mobile = stacked, tablet = 2-col, desktop = 3-col
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" />
+```
+
+**Skipping responsive = P0 violation.** Test at 375px / 768px / 1280px before submitting.
+
+### Step 6: Icons — SVG Only, NEVER Emoji
+
+Per designer's anti-pattern list, emoji as icon is forbidden. Use lucide-react / heroicons / project SVGs:
+
+```tsx
+// CORRECT
+import { Rocket } from 'lucide-react'
+<Rocket size={20} aria-hidden />
+
+// FORBIDDEN — qa-engineer regex `[\u{1F300}-\u{1F9FF}]` will catch this in Phase 5.5
+<span>🚀 Launch</span>
+```
+
+### Anti-Slop Final Checklist (ALL must pass — qa-engineer verifies)
+
+Before submitting any UI work for review:
+- [ ] All 4 designer artifacts read and applied
+- [ ] No inline arbitrary values in JSX/CSS (no `text-[#...]`, no `h-[...]px`)
+- [ ] Every variant + state from component-inventory.md implemented
+- [ ] Motion wired with reduced-motion fallback
+- [ ] Responsive behavior matches responsive-spec.md at all breakpoints
+- [ ] No emoji as icon — SVG library used
+- [ ] Custom palette applied (not default shadcn slate/zinc)
+- [ ] Named fonts loaded with correct weights from design-tokens.md
+- [ ] Loading/error/empty states present per component-inventory.md
+- [ ] Visual hierarchy matches reference screenshots in `.dev-squad/design/refs/`
+- [ ] Content from writer agent used (no "Lorem ipsum", no "Welcome to [AppName]")
 
 ## COMPLETION DEFINITION (When are you DONE?)
 
@@ -555,6 +594,7 @@ This is NOT optional. No learnings written = task not done.
 | Agent | When to Contact | Example |
 |-------|----------------|---------|
 | **Backend** | API response wrong format, missing endpoint, CORS issue, auth token problem | "GET `/api/v1/users` returns 500 — blocking login page" |
+| **Designer** | Need a token/component/state not in artifacts; spec ambiguity; stuck on responsive behavior not covered in wireframe | "Component-inventory has Toast variants but no `info` severity — should I add or escalate?" |
 | **Architect** | UI/UX constraint needs architecture change, state management concern | "Real-time updates need WebSocket — REST polling won't meet UX requirements" |
 | **Reviewer** (security lead) | Request security+accessibility review, XSS concern, auth token handling | "Can you review this form for XSS and WCAG compliance?" |
 | **QA Engineer** | Browser-state bug (hydration mismatch, console error, broken interactive element) needs runtime reproduction, Investigation Mode handoff | "Hydration mismatch in DashboardLayout — please reproduce in playwright + capture DOM diff" |

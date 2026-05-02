@@ -214,19 +214,21 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 1. Search episodic memory for related past work
 2. Brainstorm → decompose requirements
 3. Dispatch architect → design review + ADR if architectural
-4. Create worktrees for parallel work
-5. Dispatch backend + frontend (parallel with worktrees)
-6. Pre-merge review — apply Diff-Scope Dispatch Heuristic (see below):
+4. **If feature has UI**: Dispatch designer → produce design-tokens.md + visual-spec.md + component-inventory.md + responsive-spec.md (BLOCKING for frontend). Skip if backend-only feature OR `--mvp-mode` flag set.
+5. Create worktrees for parallel work
+6. Dispatch backend + frontend (parallel with worktrees) — frontend MUST Read all 4 design artifacts before writing UI
+7. Pre-merge review — apply Diff-Scope Dispatch Heuristic (see below):
    a. Always: dispatch reviewer (security lead) → threat model + security review + static code review
    b. If new endpoint OR new interactive UI OR auth/payment touched:
-      → dispatch qa-engineer → functional verification (boot + drive new flow + audit)
+      → dispatch qa-engineer → functional verification (boot + drive new flow + audit) + visual gate (emoji-as-icon, missing responsive, missing motion)
    c. If DB schema/queries/migration touched OR diff >200 lines:
       → dispatch auditor → DB perf bucket (slow query, index, migration safety) + quality metrics on changed files
-   d. For full feature lengkap (multi-file, multi-concern): full 3-way (reviewer + qa-engineer + auditor)
-   e. Reviewer synthesizes findings into single review verdict
-7. Dispatch devops → staging deployment + config
-8. Dispatch git-ops → PR creation + branch management
-9. Verify → completion report
+   d. If new UI element shipped: dispatch designer (light pass) → verify design tokens used, anti-pattern list respected, responsive present
+   e. For full feature lengkap (multi-file, multi-concern): full 3-way (reviewer + qa-engineer + auditor) + designer light pass if UI
+   f. Reviewer synthesizes findings into single review verdict
+8. Dispatch devops → staging deployment + config
+9. Dispatch git-ops → PR creation + branch management
+10. Verify → completion report
 ```
 
 ### Bug Fix
@@ -244,12 +246,13 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 ```
 1. Dispatch architect → target architecture + migration strategy
 2. Dispatch auditor → BEFORE baseline: code quality metrics (cyclomatic, duplication, dead code, type-escape, file/function size) on the area being refactored
-3. Dispatch implementors → incremental refactor with TDD
-4. Dispatch qa-engineer → functional smoke verify after each refactor batch (golden path still works, no regression in interactive flows)
-5. Dispatch auditor → AFTER metrics: re-run same tools, prove improvement (less duplication, lower complexity, fewer dead exports)
-6. Dispatch reviewer → static review on diff (intent preserved, no behavioral drift)
-7. Dispatch git-ops → staged PRs (small, reviewable chunks)
-8. Completion report with before/after metrics — refactoring without measurable improvement = wasted effort, flag and discuss
+3. **If refactor includes visual change**: dispatch designer → updated design-tokens.md / component-inventory.md / responsive-spec.md for affected components only. Skip if pure code refactor with no visual delta.
+4. Dispatch implementors → incremental refactor with TDD; frontend reads design artifacts if visual change in scope
+5. Dispatch qa-engineer → functional smoke verify after each refactor batch (golden path still works, no regression in interactive flows) + visual regression check if visual change
+6. Dispatch auditor → AFTER metrics: re-run same tools, prove improvement (less duplication, lower complexity, fewer dead exports)
+7. Dispatch reviewer → static review on diff (intent preserved, no behavioral drift, design token discipline if UI)
+8. Dispatch git-ops → staged PRs (small, reviewable chunks)
+9. Completion report with before/after metrics — refactoring without measurable improvement = wasted effort, flag and discuss
 ```
 
 ### Security Audit
@@ -299,12 +302,13 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 3. Dispatch auditor → POST-SCAFFOLD audit (before any feature code):
    - Bucket A: config drift (.env.example vs .env.template consistency, env validator stub present, docker compose config parses, /health endpoint responds, CORS not wildcard in prod config, TLS chain valid for staging)
    - Catch scaffolding mistakes before they compound
-4. Dispatch backend + frontend → initial implementation (parallel)
-5. Dispatch reviewer → initial review + standards enforcement (security baseline, no `any`, error envelope shape)
-6. Dispatch qa-engineer → smoke test the scaffold (boot + /health + /ready + frontend renders root)
-7. Dispatch git-ops → repo setup + branch protection + templates
-8. Update CLAUDE.md with project conventions
-9. Set `.dev-squad/staging-env` flag if isolated staging exists (enables auditor failure injection in future audits)
+4. Dispatch designer → MANDATORY (unless `--mvp-mode`): design-tokens.md + visual-spec.md + component-inventory.md + responsive-spec.md. Frontend cannot start UI without these.
+5. Dispatch backend + frontend → initial implementation (parallel); frontend reads all 4 design artifacts before coding UI
+6. Dispatch reviewer → initial review + standards enforcement (security baseline, no `any`, error envelope shape, design token discipline)
+7. Dispatch qa-engineer → smoke test the scaffold (boot + /health + /ready + frontend renders root) + visual gate (no emoji-as-icon, responsive present, motion wired)
+8. Dispatch git-ops → repo setup + branch protection + templates
+9. Update CLAUDE.md with project conventions
+10. Set `.dev-squad/staging-env` flag if isolated staging exists (enables auditor failure injection in future audits)
 ```
 
 ### Zero-to-Ship (Full Project Build)
@@ -344,12 +348,24 @@ Phase 3: SCAFFOLD (Monorepo)
   3. Verify: `docker compose build` succeeds, `make dev` starts without errors
   4. PREVENT: no single-app flat structure, no duplicated configs
 
+Phase 3.5: DESIGN (BLOCKING — anti-AI-slop gate; skip ONLY if `--mvp-mode` flag set)
+  1. Dispatch designer → produce 4 BLOCKING artifacts in `.dev-squad/design/`:
+     - `design-tokens.md` (color, type ladder, spacing, radius, motion, shadow — concrete values, no TBD)
+     - `visual-spec.md` (≥3 reference URLs + screenshots, brand vibe, project-specific anti-pattern list)
+     - `component-inventory.md` (every component × variants × states — including loading/error/empty)
+     - `responsive-spec.md` (mermaid wireframes per page × mobile/tablet/desktop)
+  2. Designer uses WebSearch + grep-github + playwright (screenshot references) + chrome-devtools (study computed styles of refs) — designing from imagination = AI slop, blocked.
+  3. Designer MUST set anti-pattern list specific to THIS project (not generic). Emoji-as-icon, default shadcn slate, AI-cliche gradients, missing responsive, missing motion all explicit.
+  4. PHASE GATE: Designer self-checks artifacts (concrete values, references with screenshots, project-specific anti-patterns). If incomplete → re-dispatch.
+  5. Frontend in Phase 4 cannot start UI work until all 4 artifacts exist.
+  6. `--mvp-mode` escape: designer produces only design-tokens.md + slim visual-spec.md (1 ref + anti-pattern list); skip component-inventory + responsive-spec. Use ONLY when user explicitly opts in for rapid prototyping.
+
 Phase 4: IMPLEMENT (Production-Grade)
   1. Dispatch backend + frontend in parallel (worktrees for isolation)
   2. Both follow architect's design document and API contracts
   3. TDD enforced — tests before code
   4. Backend MUST implement: auth (JWT+RBAC), health endpoints, rate limiting, input validation, structured logging, error standard, API versioning, connection pooling, indexes, parameterized queries, migrations, CORS, graceful shutdown
-  5. Frontend MUST implement: loading/error/empty states, error boundaries, WCAG 2.1 AA, httpOnly auth, XSS prevention, strict TypeScript, responsive, code splitting, design tokens, Zod validation, no console.log, i18n-ready
+  5. Frontend MUST implement: loading/error/empty states, error boundaries, WCAG 2.1 AA, httpOnly auth, XSS prevention, strict TypeScript, responsive (per `.dev-squad/design/responsive-spec.md`), code splitting, design tokens (from `.dev-squad/design/design-tokens.md` — NO inline arbitrary values), motion (per design-tokens — NOT optional), SVG icons (NO emoji-as-icon — per visual-spec anti-pattern list), Zod validation, no console.log, i18n-ready
   6. Shared packages MUST be used: shared-types for API types, shared-validators for Zod schemas
   7. PREVENT: no `any` types, no raw SQL, no hardcoded URLs, no localStorage tokens, no skipped error handling
 
@@ -403,6 +419,7 @@ At the start of any zero-to-ship workflow, create a `.dev-squad/workflow-active`
     "discover": "pending",
     "design": "pending",
     "scaffold": "pending",
+    "ui_design": "pending",
     "implement": "pending",
     "review": "pending",
     "ship": "pending",
@@ -428,10 +445,11 @@ Use TeamCreate to spawn real parallel teammates with a shared task list:
 ```
 TeamCreate with teammates:
 - dev-squad:architect (opus, permissionMode: plan — requires your approval)
+- dev-squad:designer (sonnet, think_harder — anti-AI-slop authority, BLOCKING gate before frontend UI)
 - dev-squad:backend (sonnet, isolation: worktree)
-- dev-squad:frontend (sonnet, isolation: worktree)
+- dev-squad:frontend (sonnet, isolation: worktree — must read .dev-squad/design/* before UI work)
 - dev-squad:reviewer (sonnet, permissionMode: plan — security gate)
-- dev-squad:qa-engineer (sonnet — runtime functional verification + investigation mode)
+- dev-squad:qa-engineer (sonnet — runtime functional verification + investigation mode + visual gate)
 - dev-squad:auditor (sonnet — stability execution + quality metrics)
 - dev-squad:devops (sonnet)
 - dev-squad:git-ops (sonnet)
@@ -465,10 +483,11 @@ For zero-to-ship, create tasks in this order:
 Task 1: Generate PRD (architect) → no dependencies
 Task 2: Design architecture (architect) → depends on Task 1 + user approval
 Task 3: Scaffold monorepo (devops + git-ops) → depends on Task 2
+Task 3.5: Design tokens + visual spec + component inventory + responsive spec (designer) → depends on Task 2; BLOCKS Task 5
 Task 4: Implement backend (backend) → depends on Task 3
-Task 5: Implement frontend (frontend) → depends on Task 3
+Task 5: Implement frontend (frontend) → depends on Task 3 AND Task 3.5 (BLOCKING — no UI without design artifacts)
 Task 6a: Security + code review (reviewer, static) → depends on Task 4 + 5
-Task 6b: Functional verification (qa-engineer, runtime) → depends on Task 4 + 5
+Task 6b: Functional verification + visual gate (qa-engineer, runtime) → depends on Task 4 + 5
 Task 6c: Stability + quality metrics (auditor, automated tooling) → depends on Task 4 + 5
 Task 6d: Phase 5 metrics report synthesis (reviewer) → depends on Task 6a + 6b + 6c
 Task 7: Deploy staging + ship (devops + git-ops) → depends on Task 6d
@@ -485,7 +504,8 @@ Not every change needs full 3-way review. Dispatching reviewer + qa-engineer + a
 | **Trivial**: typo, comment-only, docs-only, formatting | reviewer (light pass) OR skip review entirely if user opts in | No code semantics changed |
 | **Tiny**: <50 LOC, no new endpoint, no new UI element, no auth/payment/data | reviewer only | Static review sufficient |
 | **New endpoint** (backend) | reviewer + **auditor** (Bucket C: hammer the new endpoint with valid/invalid/malformed/auth-missing) | New endpoint = new attack surface + new 500 risk |
-| **New interactive UI** (button, form, modal, link) | reviewer + **qa-engineer** (verify wired: onClick exists, form submits, modal closes) | Static review can't see runtime button-without-action |
+| **New interactive UI** (button, form, modal, link) | reviewer + **qa-engineer** (verify wired + visual gate: emoji-as-icon, motion present, responsive present) | Static review can't see runtime button-without-action; visual gate catches AI-slop |
+| **New UI surface from scratch** (page, hero, dashboard panel) | reviewer + **qa-engineer** + **designer** (light pass: tokens used, anti-pattern list respected) | New surface = highest AI-slop risk; designer reviews token discipline + anti-pattern compliance |
 | **DB schema / queries / migrations / config** | reviewer + **auditor** (Bucket B: pool, slow query, index coverage, migration safety scan) | DB-class bugs need real query log + EXPLAIN |
 | **Auth / payment / data flow change** | full 3-way (reviewer + qa-engineer + auditor) | Critical path; runtime + static + metrics all required |
 | **Refactor: ≥200 LOC, multi-file, no behavior change intended** | reviewer + **auditor** (before/after metrics: did duplication/complexity actually drop?) + **qa-engineer** (golden path still works = no behavior drift) | Refactor without measurable improvement = wasted; verify intent |
@@ -523,11 +543,13 @@ To enable audit + tuning of the Diff-Scope Heuristic, log every review dispatch 
 - reviewer: {yes|no} — {why}
 - qa-engineer: {yes|no} — {why}
 - auditor: {yes|no} — {why}
+- designer: {yes|no} — {why} (light pass for new UI surface; full Phase 3.5 dispatch logged separately)
 
 **Outcome:**
 - reviewer findings: {count P0/P1/P2}
 - qa-engineer findings: {count P0/P1/P2}
 - auditor findings: {count P0/P1/P2}
+- designer findings: {count P0/P1/P2 — anti-pattern violations, token discipline, missing responsive/motion}
 - Time to complete review: {minutes}
 
 **Heuristic accuracy assessment** (filled at Phase 7 LEARN):
@@ -815,6 +837,7 @@ When dispatching agents, you MUST use the fully-qualified name with the plugin p
 ```
 CORRECT (always use these):
   subagent_type: "dev-squad:architect"
+  subagent_type: "dev-squad:designer"
   subagent_type: "dev-squad:backend"
   subagent_type: "dev-squad:frontend"
   subagent_type: "dev-squad:reviewer"

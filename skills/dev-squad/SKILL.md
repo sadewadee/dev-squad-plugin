@@ -1,6 +1,6 @@
 ---
 name: dev-squad
-description: Invoke the dev-squad agent swarm for collaborative development. Full-stack app building with 10 agents (coordinator, architect, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer). Supports feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, and runtime/stability/quality auditing.
+description: Invoke the dev-squad agent swarm for collaborative development. Full-stack app building with 11 agents (coordinator, architect, designer, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer). Phase 3.5 DESIGN gate (designer) prevents AI-slop UI by producing design tokens + visual spec + component inventory + responsive spec BEFORE frontend codes. Supports feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, and runtime/stability/quality auditing.
 ---
 
 # Dev Squad - Agent Swarm
@@ -77,10 +77,11 @@ Works without any setup. Coordinator dispatches agents sequentially via Agent to
 |-------|------|-------|----------|
 | coordinator | Lead/Coordinator + Memory Manager | opus | 1 |
 | architect | System Architect | opus | 2 |
+| designer | UI/UX Designer (Phase 3.5 anti-AI-slop gate) | sonnet (think_harder) | 3 |
 | backend | Backend Developer | sonnet | - |
-| frontend | Frontend Developer | sonnet | - |
+| frontend | Frontend Developer (implements designer's spec) | sonnet | - |
 | reviewer | **Security Lead** + Static Code Reviewer + Phase 5 metrics synthesizer | sonnet | - |
-| qa-engineer | Runtime QA (Phase 5.5 functional verification) + Investigation Mode debugger | sonnet | - |
+| qa-engineer | Runtime QA (Phase 5.5 functional verification + Visual Gate) + Investigation Mode debugger | sonnet | - |
 | auditor | Stability execution (Phase 5.6) + multi-language code quality metrics (Phase 5.7) | sonnet | - |
 | devops | DevOps Engineer | sonnet | - |
 | git-ops | Git Operations Manager | sonnet | - |
@@ -95,6 +96,13 @@ Works without any setup. Coordinator dispatches agents sequentially via Agent to
 - Convention & standard tracking
 - Project context preservation
 
+**Designer (UI/UX — Phase 3.5 Anti-AI-Slop Gate):**
+- **Phase 3.5 DESIGN ownership** — produces 4 BLOCKING artifacts before frontend codes: `design-tokens.md`, `visual-spec.md`, `component-inventory.md`, `responsive-spec.md`
+- **Anti-AI-slop authority** — rejects emoji-as-icon, default shadcn slate, AI-cliché gradients, missing responsive, missing motion, "modern minimal" boilerplate
+- **Reference-grounded design** — uses WebSearch + grep-github + playwright (screenshots) + chrome-devtools (style inspection) on ≥3 reference sites before locking palette/type/layout
+- **Veto power** on UI PRs that violate anti-pattern list (emoji-as-icon = P0, inline arbitrary values = P1, missing responsive = P0)
+- **`--mvp-mode` escape hatch** — slimmed deliverable for rapid prototyping (tokens + slim visual spec only)
+
 **Reviewer (Security Lead + Static Code Reviewer + Phase 5 Synthesizer):**
 - **Security ownership end-to-end** — threat modeling, auth review, OWASP, incident response
 - **Veto power** on P0-P1 security issues — can block any merge
@@ -102,10 +110,11 @@ Works without any setup. Coordinator dispatches agents sequentially via Agent to
 - Static code review (diff-based) — multi-angle: security, performance, spec compliance, architecture
 - **Phase 5 Metrics Report synthesis** — combines static review findings + qa-engineer functional verification + auditor stability/quality reports into single PDCA Check artifact
 
-**QA Engineer (Runtime Verification + Investigation Mode):**
+**QA Engineer (Runtime Verification + Visual Gate + Investigation Mode):**
 - **Phase 5.5 FUNCTIONAL VERIFICATION** — boots the app, drives golden path via playwright, audits every interactive element, smoke-tests every API endpoint, captures browser console/network
+- **Visual Gate (anti-AI-slop runtime check)** — runs designer's anti-pattern list against shipped UI: emoji-as-icon regex scan, inline arbitrary value scan, responsive presence check (3 breakpoints), motion presence check, default shadcn palette check
 - **Investigation Mode** — fresh-eyes debugger when self-healing iter 3 triggers (author has thrashed for 2 iterations); produces Investigation Report with root cause + recommended fix; author applies the fix
-- **Veto power** on P0 functional findings (runtime crash, missing endpoint, broken auth, button without onClick) and P1 in golden path
+- **Veto power** on P0 functional findings (runtime crash, missing endpoint, broken auth, button without onClick, emoji-as-icon, missing responsive) and P1 in golden path
 
 **Auditor (Stability + Code Quality Metrics):**
 - **Phase 5.6 STABILITY EXECUTION** — config drift detection, DB performance (slow queries, missing indexes, connection leaks, migration safety, pool sanity), endpoint hammering for 500-leak detection, failure injection (with `.dev-squad/staging-env` hard guard), API pattern compliance (REST/GraphQL/gRPC anti-patterns)
@@ -119,8 +128,9 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 
 | Pattern | Where Applied | What It Does |
 |---------|--------------|--------------|
+| **Phase 3.5 DESIGN gate** | Phase 3.5 (zero-to-ship) | Designer produces 4 BLOCKING artifacts before frontend codes UI; anti-AI-slop authority |
 | **Two-Stage Review** | Phase 4 (per task) | Spec compliance → Code quality, loop until both pass; agents chosen via Diff-Scope Heuristic |
-| **3-Way Phase 5 Review** | Phase 5 (full feature) | reviewer (static) + qa-engineer (runtime) + auditor (automated) dispatched in parallel; reviewer synthesizes single Metrics Report |
+| **3-Way Phase 5 Review** | Phase 5 (full feature) | reviewer (static, incl. design lint) + qa-engineer (runtime + Visual Gate) + auditor (automated) dispatched in parallel; reviewer synthesizes single Metrics Report. Designer added as light pass for new UI surfaces. |
 | **Diff-Scope Dispatch Heuristic** | Every review dispatch | Coordinator picks reviewer / qa-engineer / auditor combo per diff scope; logs decision to .dev-squad/dispatch-log.md |
 | **Phase Gate Judge** | Between all phases | Cheap haiku agent validates deliverables before transition |
 | **Confidence Scoring** | Phase 5 review | Score 0-100 per finding, filter < 80 as non-actionable |
@@ -163,11 +173,19 @@ Phase 3: SCAFFOLD (Monorepo)
     [Git-Ops] → Git init + .gitignore + branch protection + PR template
     |
     v
+Phase 3.5: DESIGN (BLOCKING anti-AI-slop gate; skip ONLY with --mvp-mode)
+    [Designer] → design-tokens.md + visual-spec.md (≥3 refs + screenshots) + component-inventory.md + responsive-spec.md
+    [Designer] → uses WebSearch + grep-github + playwright + chrome-devtools to ground design in real references
+    [Designer] → anti-pattern list: emoji-as-icon, default shadcn slate, AI-cliché gradients, missing responsive, missing motion (project-specific)
+    Frontend cannot start UI work until all 4 artifacts exist.
+    |
+    v
 Phase 4: IMPLEMENT (Production-Grade)
     [Backend]  → Auth(JWT+RBAC) + health checks + rate limiting + validation + logging + API versioning + migrations (TDD)
-    [Frontend] → Loading/error/empty states + error boundaries + WCAG a11y + strict TS + design tokens (TDD)
+    [Frontend] → Read all 4 design artifacts → translate tokens → implement components per inventory → wire motion → respect responsive (TDD)
+    [Frontend] → SVG icons only (NO emoji), design tokens only (NO inline arbitrary values)
     [Shared]   → packages/shared-types + packages/shared-validators (Zod)
-    (parallel via worktrees — NO type duplication, NO raw SQL, NO `any`)
+    (parallel via worktrees — NO type duplication, NO raw SQL, NO `any`, NO AI-slop)
     |
     v
 Phase 5: REVIEW (Mandatory Quality Gate)
@@ -426,6 +444,21 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | Creating diagrams | MCP | `mermaid-mcp` — ERD, C4, sequence diagrams |
 | Past decisions | MCP | `episodic-memory` — recover past ADRs |
 | Project knowledge | Skill | `claude-md-management:revise-claude-md` |
+
+### Designer (sonnet, think_harder) — Skills for design process, MCP for reference grounding
+
+| Phase | Tool Type | Specific Tool |
+|-------|-----------|---------------|
+| Visual direction | Skill | `frontend-design` — mandatory before locking palette/type |
+| Design exploration | Skill | `brainstorming` — color/font/motion choices |
+| Reference research | MCP | `WebSearch` — find ≥3 reference URLs (current year) |
+| Reference research | MCP | `grep-github` — find production design patterns + token files |
+| Reference capture | MCP | `playwright` — screenshot reference sites per breakpoint |
+| Style inspection | MCP | `chrome-devtools` (use_browser) — extract real computed styles from refs |
+| Library docs | MCP | `context7` — design system libs (shadcn, radix, framer-motion) |
+| Wireframe creation | MCP | `mermaid-mcp` — per-page wireframes per breakpoint |
+| Verification | Skill | `verification-before-completion` — all 4 artifacts present + concrete |
+| Past design | MCP | `episodic-memory` — recover prior brand palettes / vocabulary |
 
 ### Backend (sonnet) — Skills for discipline, MCP for docs
 
@@ -686,17 +719,18 @@ Agents use two communication modes based on priority:
 ### Agent Communication Matrix
 
 ```
-              coord  arch  backend  frontend  reviewer  qa-eng  auditor  devops  git-ops  writer
-coordinator     -     ✓      ✓         ✓         ✓        ✓       ✓        ✓       ✓       ✓
-architect       ✓     -      ✓         ✓         ✓        ✓       ✓        ✓       -       ✓
-backend         ✓     ✓      -         ✓         ✓        ✓       ✓        ✓       -       -
-frontend        ✓     ✓      ✓         -         ✓        ✓       ✓        ✓       -       ✓
-reviewer        ✓     ✓      ✓         ✓         -        ✓       ✓        ✓       ✓       -
-qa-engineer     ✓     ✓      ✓         ✓         ✓        -       ✓        ✓       -       -
-auditor         ✓     ✓      ✓         ✓         ✓        ✓       -        ✓       -       -
-devops          ✓     ✓      ✓         ✓         ✓        ✓       ✓        -       ✓       -
-git-ops         ✓     -      ✓         ✓         ✓        ✓       ✓        ✓       -       -
-writer          ✓     ✓      -         ✓         ✓        -       -        -       -       -
+              coord  arch  design  backend  frontend  reviewer  qa-eng  auditor  devops  git-ops  writer
+coordinator     -     ✓     ✓        ✓         ✓         ✓        ✓       ✓        ✓       ✓       ✓
+architect       ✓     -     ✓        ✓         ✓         ✓        ✓       ✓        ✓       -       ✓
+designer        ✓     ✓     -        -         ✓         ✓        ✓       -        -       -       ✓
+backend         ✓     ✓     -        -         ✓         ✓        ✓       ✓        ✓       -       -
+frontend        ✓     ✓     ✓        ✓         -         ✓        ✓       ✓        ✓       -       ✓
+reviewer        ✓     ✓     ✓        ✓         ✓         -        ✓       ✓        ✓       ✓       -
+qa-engineer     ✓     ✓     ✓        ✓         ✓         ✓        -       ✓        ✓       -       -
+auditor         ✓     ✓     -        ✓         ✓         ✓        ✓       -        ✓       -       -
+devops          ✓     ✓     -        ✓         ✓         ✓        ✓       ✓        -       ✓       -
+git-ops         ✓     -     -        ✓         ✓         ✓        ✓       ✓        ✓       -       -
+writer          ✓     ✓     ✓        -         ✓         ✓        -       -        -       -       -
 ```
 
 ### Direct Message Format (P0-P1)
@@ -754,6 +788,21 @@ writer          ✓     ✓      -         ✓         ✓        -       -     
 | Code duplication >5% threshold | auditor | backend/frontend | P2 | Direct |
 | Investigation Mode handoff (iter 3 self-healing) | coordinator | qa-engineer | P1 | Dispatch |
 | Investigation Report → fix recommendation | qa-engineer | backend/frontend | P1 | Direct |
+| Phase 3.5 dispatch (zero-to-ship UI gate) | coordinator | designer | P0 | Dispatch |
+| Designer hands off 4 artifacts → frontend can start UI | designer | frontend | P1 | Direct |
+| Architecture page list incomplete (designer blocked) | designer | architect | P1 | Direct |
+| Brand vibe / domain context for designer | architect / coordinator | designer | P1 | Direct |
+| Copy length affects designer's layout proportion | designer | writer | P2 | Direct |
+| Emoji-as-icon detected at runtime (Visual Gate) | qa-engineer | frontend (CC designer) | P0 | Direct |
+| Inline arbitrary values in JSX (token discipline) | reviewer | frontend (CC designer) | P1 | Direct |
+| Missing responsive — page renders identical at all viewports | qa-engineer | frontend (CC designer) | P0 | Direct |
+| Motion missing on speced-animated state | qa-engineer | frontend (CC designer) | P1 | Direct |
+| Default shadcn slate primary used despite custom palette specced | qa-engineer | frontend (CC designer) | P1 | Direct |
+| Anti-pattern from visual-spec.md detected (e.g., AI gradient hero) | qa-engineer / reviewer | frontend (CC designer) | P1 | Direct |
+| Component variant needed but not in inventory | frontend | designer | P2 | Mediated |
+| Designer artifacts incomplete (missing concrete value, generic anti-pattern list) | coordinator | designer | P0 | Dispatch |
+| Refactoring with visual change in scope | coordinator | designer | P1 | Dispatch |
+| Brand visual identity decision (across multiple projects) | designer | coordinator | P2 | Mediated |
 | Secret exposed in config | reviewer | devops | P0 | Direct |
 | Health check missing | devops | backend | P1 | Direct |
 | Merge conflict | git-ops | backend/frontend | P1 | Direct |

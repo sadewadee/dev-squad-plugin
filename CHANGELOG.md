@@ -2,6 +2,95 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.0] — Designer agent + Phase 3.5 anti-AI-slop gate
+
+User reported persistent failure mode: zero-to-ship UI output looks generic — default shadcn slate palette, AI-cliché purple-to-blue gradients, emoji used as icons, responsive skipped, no motion, "modern minimal" boilerplate. Diagnosis: no agent exists to **reject** AI-slop; frontend agent is an implementer, not a designer. v4.8.0 adds the missing role.
+
+### Added — `agents/dev-squad/designer.md` (11th agent — sonnet, `think_harder`)
+Owns Phase 3.5 DESIGN. Anti-AI-slop authority. Produces 4 BLOCKING artifacts in `.dev-squad/design/` before frontend can write any UI code:
+
+1. **`design-tokens.md`** — concrete color palette, typography ladder, spacing scale, radius, motion timings + easings, shadow tokens. No TBD placeholders allowed.
+2. **`visual-spec.md`** — ≥3 reference URLs with playwright-captured screenshots in `.dev-squad/design/refs/`, brand vibe (concrete adjectives, not "modern minimal"), project-specific anti-pattern list (emoji-as-icon, default shadcn slate, AI-cliché gradients, missing responsive, missing motion).
+3. **`component-inventory.md`** — every component × variants × states (loading / error / empty / focus / hover / active / disabled).
+4. **`responsive-spec.md`** — mermaid wireframes per page × mobile / tablet / desktop breakpoints.
+
+Designer uses WebSearch + grep-github + playwright (screenshots references) + chrome-devtools (study computed styles of refs) — designing from imagination = AI slop, blocked.
+
+### Added — Phase 3.5 DESIGN in zero-to-ship workflow (`commands/build.md`, `coordinator.md`)
+Sits between Phase 3 SCAFFOLD and Phase 4 IMPLEMENT. BLOCKING gate — frontend cannot start UI work until all 4 designer artifacts exist. `--mvp-mode` flag exists for rapid prototyping (slim deliverable: tokens + slim visual-spec only). Workflow tracking JSON now includes `ui_design` phase.
+
+### Added — Visual Gate in `qa-engineer.md` Phase 5.5
+qa-engineer's Phase 5.5 functional verification now runs designer's anti-pattern list against shipped UI:
+- **Emoji-as-icon detection** (P0): regex `[\u{1F300}-\u{1F9FF}]` in `.tsx`/`.jsx`
+- **Inline arbitrary value detection** (P1): grep for Tailwind `[#hex]`, `[Npx]` patterns
+- **Responsive presence check** (P0): playwright at 375 / 768 / 1280 viewports + screenshot per page; identical layout at all = P0
+- **Motion presence check** (P1): observe DOM transitions on speced-animated states
+- **Default shadcn palette check** (P1): computed `backgroundColor` of primary button vs design-tokens.md
+- **Anti-pattern list scan** (P1-P2): targeted detection per row in `visual-spec.md`
+
+Visual Gate findings auto-CC'd to designer via direct message.
+
+### Added — Pass 5: DESIGN COMPLIANCE in `reviewer.md` static lane
+reviewer's multi-angle review now has a fifth pass: design token discipline lint. Greps for inline arbitrary values, emoji codepoints in JSX, missing responsive classes on layout components, missing motion classes on speced-animated components. Cross-checks component usage against `component-inventory.md`. Hands runtime visual concerns to qa-engineer Visual Gate; reviewer's lane is static lint only.
+
+### Added — Designer in 5 daily-routine workflows (`coordinator.md`)
+- **Feature Development** — designer dispatched if feature has UI (skipped if backend-only or `--mvp-mode`)
+- **Refactoring** — designer dispatched if visual change in scope (updated tokens / inventory / responsive for affected components only)
+- **New Project Setup** — designer mandatory after architect (skipped only if `--mvp-mode`)
+- Per-task review (Diff-Scope Heuristic) — added "New UI surface from scratch" row → reviewer + qa-engineer + designer (light pass: tokens used, anti-pattern compliance)
+
+### Added — Dispatch Decision Log includes designer
+`.dev-squad/dispatch-log.md` entries now include `designer: {yes|no}` row + designer findings count per dispatch.
+
+### Changed — `frontend.md` reads designer artifacts (no more ad-hoc design)
+Replaced "DESIGN REFERENCE WORKFLOW" (frontend improvising design) with **DESIGN ARTIFACTS WORKFLOW**:
+1. Read all 4 designer artifacts (BLOCKING — STOP if missing)
+2. Translate `design-tokens.md` to code (no inline arbitrary values allowed)
+3. Implement components per `component-inventory.md` — every variant + state
+4. Wire motion per token system + reduced-motion fallback
+5. Implement responsive per `responsive-spec.md` mermaid wireframes
+6. SVG icons only — emoji-as-icon is P0 violation
+Frontend Bootstrap Context now includes mandatory step: read all 4 design artifacts before any UI code.
+
+### Changed — Cross-agent communication tables (5 agents)
+- `architect.md` — added Designer row (handoff page list + component boundaries to Phase 3.5)
+- `frontend.md` — added Designer row (escalate spec ambiguity, request new variant)
+- `qa-engineer.md` — added Designer row (Visual Gate findings CC)
+- `reviewer.md` — added Designer row (token violation found in static lane)
+- `architect.md` "To Designer" handoff section added between architect-to-frontend handoff
+
+### Changed — `skills/dev-squad/SKILL.md`
+- Description: 10 → 11 agents
+- Team Members table updated
+- Designer Extended Responsibilities section added
+- Agent Communication Matrix expanded 10×10 → 11×11 (designer row + column)
+- Common Cross-Agent Scenarios table — 17 new designer-related rows (Phase 3.5 dispatch, artifact handoff, visual gate findings, anti-pattern detection, MVP-mode escape)
+- v3.0 Orchestration Patterns — added "Phase 3.5 DESIGN gate" row
+- Agent-Specific Tool Matrix — Designer section added (frontend-design, brainstorming, WebSearch, grep-github, playwright, chrome-devtools, context7, mermaid-mcp, episodic-memory)
+
+### Changed — `commands/build.md`
+- Workflow renamed: 8 phases → 9 phases (added Phase 3.5)
+- Team table 10 → 11 agents
+- Phase 4 IMPLEMENT updated: frontend MUST read all 4 design artifacts before UI work; design tokens enforced; SVG icons only; responsive per spec; motion wired
+- Phase 5 Lane 2 (qa-engineer) updated to include Visual Gate execution
+
+### Changed — `README.md`
+- Agent count 10 → 11
+- Designer row in team composition table
+- Frontend description updated (implements designer's spec)
+- New "Phase 3.5 DESIGN Gate (Anti-AI-Slop)" feature section
+- Zero-to-ship phase listing updated to 9 phases including Phase 3.5
+- Directory tree updated with `designer.md`
+
+### Behavior expectations
+- **Backward compatible**: existing v4.7.1 zero-to-ship runs continue to work; if user explicitly sets `--mvp-mode`, behavior matches old flow (frontend designs ad-hoc).
+- **No opus quota impact**: designer is sonnet (with `think_harder` for design judgment). No new opus-tier dispatches added.
+- **Rate limit impact**: +1 dispatch per zero-to-ship build. Mitigated by designer being skip-able in workflows where it doesn't apply (backend-only feature, pure code refactor, hotfix, bug fix).
+
+### Migration notes for existing projects
+- Existing projects continue without change. Designer artifacts in `.dev-squad/design/` are produced on first re-build or when running `/dev-squad start` on a feature with UI.
+- Frontend agent will fail-soft if designer artifacts are missing in a non-zero-to-ship context (escalates to coordinator instead of improvising).
+
 ## [4.7.1] — Wire qa-engineer + auditor into all daily-routine workflows
 
 Patch release. v4.7.0 introduced qa-engineer + auditor agents and 3-way Phase 5 review for zero-to-ship, but only Bug Fix and Performance Optimization daily workflows actually dispatched the new agents. Other daily workflows (Feature Development, Refactoring, Security Audit, Data Migration, New Project Setup) and per-task two-stage review still routed exclusively to reviewer — meaning the new agents only fired during the heaviest workflow (zero-to-ship). User reported this gap; v4.7.1 closes it.

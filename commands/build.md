@@ -31,11 +31,12 @@ Agent tool with:
     - If "1" → Use TEAMS MODE (TeamCreate, message/broadcast, shared task list)
     - If not set → Use SUBAGENT MODE (Agent tool, SendMessage, TodoWrite)
 
-    ## Workflow: Zero-to-Ship (8 Phases — PDCA Cycle)
+    ## Workflow: Zero-to-Ship (9 Phases — PDCA Cycle)
 
-    You MUST execute all 8 phases in order. Do NOT skip phases.
+    You MUST execute all 9 phases in order. Do NOT skip phases.
 
-    Phases 0-2 are PLAN. Phases 3-4-6 are DO. Phase 5 is CHECK. Phase 7 is ACT.
+    Phases 0-2 + 3.5 are PLAN. Phases 3-4-6 are DO. Phase 5 is CHECK. Phase 7 is ACT.
+    Phase 3.5 (DESIGN) is the anti-AI-slop gate — designer produces 4 BLOCKING artifacts before frontend can write UI. Skip ONLY if `--mvp-mode` flag is set by user.
     Skipping Phase 7 (LEARN) breaks the cycle — the next build won't benefit from this build's lessons.
 
     ### Phase 0: ULTRAPLAN (Deep Thinking — Coordinator Only)
@@ -129,7 +130,7 @@ Agent tool with:
     ### Phase 3: SCAFFOLD (Monorepo)
     - Dispatch devops → create MONOREPO structure (see Monorepo Standard below)
     - Dispatch git-ops → repo init, .gitignore, branch protection, PR template, initial commit
-    - Write .dev-squad/workflow-active marker file
+    - Write .dev-squad/workflow-active marker file (now includes `ui_design` phase between scaffold and implement)
     - Scaffold MUST include:
       - Monorepo with apps/ (backend, frontend) + packages/ (shared)
       - Workspace package manager (pnpm/npm/go workspaces)
@@ -144,12 +145,29 @@ Agent tool with:
     - SELF-HEALING: Run `docker compose config` + `make dev` — if fails, diagnose → fix → retry (max 5)
     - PHASE GATE: Judge agent verifies scaffold builds
 
+    ### Phase 3.5: DESIGN (BLOCKING anti-AI-slop gate — skip ONLY with `--mvp-mode`)
+    - Dispatch **designer** → produce 4 BLOCKING artifacts in `.dev-squad/design/`:
+      - `design-tokens.md` (color palette, typography ladder, spacing scale, radius, motion timings/easings, shadow — concrete values, no TBD)
+      - `visual-spec.md` (≥3 reference URLs with screenshots in `.dev-squad/design/refs/`, brand vibe, project-specific anti-pattern list)
+      - `component-inventory.md` (every component × variants × states including loading/error/empty/focus)
+      - `responsive-spec.md` (mermaid wireframes per page × mobile/tablet/desktop)
+    - Designer uses WebSearch + grep-github + playwright (screenshot references) + chrome-devtools (study real reference styles)
+    - Designer's anti-pattern list is project-specific (NOT generic) — must explicitly reject: emoji-as-icon, default shadcn slate primary, AI-cliché purple-to-blue gradients, missing responsive, missing motion
+    - SELF-HEALING: If artifacts incomplete (missing concrete values, no reference screenshots, generic anti-pattern list) → re-dispatch designer with specific gap call-out
+    - PHASE GATE: Verify all 4 artifacts present + designer's self-check passed before transitioning to Phase 4
+    - `--mvp-mode` escape: produce only design-tokens.md + slim visual-spec.md (1 ref + anti-pattern list); skip component-inventory + responsive-spec
+
     ### Phase 4: IMPLEMENT (Subagent-Driven Development Pattern)
     - Dispatch writer FIRST → create all page copy, microcopy, legal pages, SEO metadata
       Writer outputs content as TypeScript constants in content/ directory
       Frontend uses writer's content — no placeholder text allowed
     - Dispatch backend + frontend in parallel (use worktrees for isolation)
-    - Frontend MUST: capture design reference → extract tokens → apply BEFORE coding components
+    - Frontend MUST: Read all 4 designer artifacts in `.dev-squad/design/` BEFORE coding any UI. No improvising.
+    - Frontend MUST: copy design-tokens.md values into `src/styles/design-tokens.ts` and `tailwind.config.ts`. Inline arbitrary values like `text-[#abc]` are P1 violations.
+    - Frontend MUST: implement every component variant + state per `component-inventory.md`
+    - Frontend MUST: wire motion per `design-tokens.md` motion section, with reduced-motion fallback
+    - Frontend MUST: implement responsive per `responsive-spec.md` mermaid wireframes (mobile/tablet/desktop)
+    - Frontend MUST: use SVG icons (lucide-react / heroicons / custom) — NEVER emoji as icon
     - Frontend MUST: use writer's content constants — NOT hardcode text in JSX
     - Follow architect's design document and API contracts
     - TDD enforced — tests written before implementation
@@ -187,16 +205,18 @@ Agent tool with:
       - Graceful shutdown (drain connections, finish in-flight requests)
 
     Frontend MUST implement (no shortcuts):
-      - Loading/error/empty states for EVERY async operation
+      - Loading/error/empty states for EVERY async operation (per component-inventory.md)
       - Error boundaries for component tree isolation
       - Accessibility: semantic HTML, ARIA, keyboard nav (WCAG 2.1 AA)
       - Auth token handling via httpOnly cookies (NOT localStorage)
       - XSS prevention: sanitize all user-rendered content
       - Strict TypeScript — zero `any` types
-      - Responsive: mobile-first, tested at breakpoints
+      - Responsive: mobile-first, per `.dev-squad/design/responsive-spec.md` wireframes (375 / 768 / 1280 minimum)
       - Core Web Vitals: LCP < 2.5s, FID < 100ms, CLS < 0.1
       - Code splitting with React.lazy + Suspense
-      - Design tokens/system — no inline styles
+      - Design tokens from `.dev-squad/design/design-tokens.md` — NO inline arbitrary values, NO inline styles
+      - Motion wired per design-tokens motion section, with `prefers-reduced-motion` fallback
+      - Icons: SVG only (lucide-react / heroicons / custom) — emoji-as-icon is P0 violation
       - Form validation with Zod schemas (shared with backend if possible)
       - No console.log in production code
       - i18n-ready: no hardcoded user-facing strings
@@ -211,13 +231,14 @@ Agent tool with:
       Pass 3: SPEC COMPLIANCE → PRD requirements met line-by-line
       Pass 4: ARCHITECTURE → ADR conformance, SOLID, shared packages used
 
-    **Lane 2: qa-engineer (runtime execution — Phase 5.5 FUNCTIONAL VERIFICATION)**:
+    **Lane 2: qa-engineer (runtime execution — Phase 5.5 FUNCTIONAL VERIFICATION + Visual Gate)**:
       - Boot backend + frontend
       - Drive every PRD acceptance criterion via playwright (golden path)
       - Audit every interactive element (button without onClick = P1, form to nonexistent endpoint = P0)
       - Smoke-test every API endpoint: valid + invalid + malformed + oversized + missing auth + expired token
       - Browser console + network gate (any error/warning = finding)
       - Cross-boundary integration check (frontend → API → DB → response round-trip)
+      - **Visual Gate (anti-AI-slop)**: emoji-as-icon regex scan, inline arbitrary value scan, responsive presence check (3 breakpoints via playwright), motion presence check, default shadcn palette check, anti-pattern list scan from designer's `visual-spec.md`
       - Output: `.dev-squad/functional-verification.md`
 
     **Lane 3: auditor (automated tooling — Phase 5.6 STABILITY EXECUTION + Phase 5.7 CODE QUALITY METRICS)**:
@@ -463,10 +484,11 @@ Agent tool with:
     | Agent | subagent_type | Model | Role |
     |-------|--------------|-------|------|
     | Architect | `dev-squad:architect` | opus | System design, tech stack, ADRs |
+    | Designer | `dev-squad:designer` | sonnet (think_harder) | Phase 3.5 design tokens + visual spec + component inventory + responsive spec; anti-AI-slop authority |
     | Backend | `dev-squad:backend` | sonnet (opus for auth/integration) | API + DB + business logic |
-    | Frontend | `dev-squad:frontend` | sonnet (opus for cross-package) | UI + state + responsive design |
-    | Reviewer | `dev-squad:reviewer` | sonnet (opus for security review) | Security lead + static code review + Phase 5 metrics report synthesis |
-    | QA Engineer | `dev-squad:qa-engineer` | sonnet | Runtime functional verification (Phase 5.5) + Investigation Mode (fresh-eyes debug at iter 3) |
+    | Frontend | `dev-squad:frontend` | sonnet (opus for cross-package) | UI implementation per designer's spec — translates design artifacts to code |
+    | Reviewer | `dev-squad:reviewer` | sonnet (opus for security review) | Security lead + static code review (5 passes incl. design compliance) + Phase 5 metrics report synthesis |
+    | QA Engineer | `dev-squad:qa-engineer` | sonnet | Runtime functional verification (Phase 5.5) + Visual Gate anti-AI-slop + Investigation Mode (fresh-eyes debug at iter 3) |
     | Auditor | `dev-squad:auditor` | sonnet | Stability execution (Phase 5.6) + code quality metrics (Phase 5.7), multi-language |
     | DevOps | `dev-squad:devops` | sonnet | Docker, CI/CD, monitoring, deploy |
     | Git-Ops | `dev-squad:git-ops` | sonnet | Branches, PRs, releases |
@@ -496,6 +518,7 @@ Agent tool with:
         "discover": "pending",
         "design": "pending",
         "scaffold": "pending",
+        "ui_design": "pending",
         "implement": "pending",
         "review": "pending",
         "ship": "pending",

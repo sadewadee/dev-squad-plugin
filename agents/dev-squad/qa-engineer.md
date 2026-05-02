@@ -122,6 +122,48 @@ You MUST complete this phase before reviewer can APPROVE. No exceptions, even fo
    - Any uncaught error, React warning, hydration mismatch, key warning, missing prop type = P1 finding
    - "Just a warning" is not an excuse — warnings often hide real bugs
 
+7. **Visual gate (anti-AI-slop check — runs designer's anti-pattern list against shipped UI)**
+
+   Read `.dev-squad/design/visual-spec.md` anti-pattern list. For each item, run the matching detection against frontend output. **This is the gate that prevents AI-slop UI from shipping.**
+
+   - **Emoji-as-icon detection** (P0):
+     ```bash
+     # Grep frontend source for emoji codepoints used as icon
+     grep -rn -E "[\x{1F300}-\x{1F9FF}]" apps/frontend/src --include="*.tsx" --include="*.jsx"
+     ```
+     Any match where emoji is rendered as visual element (not in copy from writer agent) = P0 finding. Designer-listed icon library (lucide-react / heroicons) must be used.
+
+   - **Inline arbitrary value detection** (P1):
+     ```bash
+     # Tailwind arbitrary values bypass design tokens
+     grep -rn -E '\[(#[0-9a-fA-F]{3,8}|[0-9]+px)\]' apps/frontend/src --include="*.tsx"
+     ```
+     Any `text-[#abc123]`, `mt-[17px]`, `h-[42px]` etc. = P1 finding. Designer-specified tokens must be used.
+
+   - **Responsive presence check** (P0):
+     - Use `playwright` to navigate every page at 3 viewports: 375x667 (mobile), 768x1024 (tablet), 1280x800 (desktop)
+     - `browser_take_screenshot` per page per viewport → save to `.dev-squad/design/qa-shots/{page}-{viewport}.png`
+     - Compare actual layout against `responsive-spec.md` mermaid wireframes
+     - Page that renders identical at all 3 widths (no breakpoint behavior) = P0 finding (responsive skipped)
+
+   - **Motion presence check** (P1):
+     - Read `design-tokens.md` motion section to know which states should animate
+     - Use `playwright`: hover a button, click a modal trigger, switch a tab — observe DOM transitions via `browser_console_messages` (CSS transition events) and screenshot before/after
+     - Static state change (no transition observed) on speced-animated state = P1 finding
+
+   - **Reference grounding check** (P2):
+     - Open reference screenshots in `.dev-squad/design/refs/` side-by-side with QA shots
+     - Brand vibe mismatch (e.g. designer specced "editorial like Stripe docs", QA shot looks like generic shadcn dashboard) = P2 finding flagged for designer review
+
+   - **Default shadcn palette check** (P1):
+     - Read primary color from `design-tokens.md`
+     - Grep computed styles via playwright for primary button: `getComputedStyle(button).backgroundColor`
+     - If color matches Tailwind slate/zinc default range (rgb(15,23,42) etc.) AND designer specced something else = P1 finding
+
+   - **Anti-pattern list scan** (P1-P2 per item):
+     - For each row in `visual-spec.md` anti-pattern list, run a targeted detection (grep, playwright snapshot inspection, or visual diff)
+     - Each match = severity per anti-pattern row
+
 ### Output: `.dev-squad/functional-verification.md`
 
 ```markdown
@@ -153,12 +195,22 @@ You MUST complete this phase before reviewer can APPROVE. No exceptions, even fo
 - `Hydration mismatch in RootLayout` on /dashboard — P1
 - `Each child should have unique "key"` in PostList — P2
 
+## Visual Gate Findings (anti-AI-slop, per designer's `.dev-squad/design/visual-spec.md`)
+| Check | Result | Severity | Detail |
+|---|---|---|---|
+| Emoji-as-icon (regex `[\u{1F300}-\u{1F9FF}]` in JSX) | ❌ found | P0 | LandingHero.tsx:18 uses `🚀`; designer specced lucide-react |
+| Inline arbitrary values (Tailwind `[...]`) | ❌ found | P1 | 7 occurrences; design tokens not used |
+| Responsive presence (3 breakpoints) | ✅ pass | — | layout shifts at 768px and 1280px |
+| Motion wired (per design-tokens.md) | ❌ partial | P1 | button hover has no transition; modal in/out has no animation |
+| Default shadcn palette | ✅ pass | — | custom palette applied |
+| Anti-pattern: "purple-to-blue gradient hero" | ❌ found | P1 | Hero.tsx:24 uses `from-purple-500 to-blue-500` |
+
 ## Verdict
 - P0 count: 2  → BLOCK approve
-- P1 count: 3
+- P1 count: 5 (3 functional + 2 visual gate)
 - P2 count: 1
 
-Approve only allowed if P0 = 0 AND P1 ≤ existing budget.
+Approve only allowed if P0 = 0 AND P1 ≤ existing budget. Visual Gate findings auto-CC'd to designer.
 ```
 
 ### Graceful degrade if MCP unavailable
@@ -290,6 +342,7 @@ Hand back to coordinator in this exact format:
 |-------|----------------|---------|
 | **Backend** | API endpoint missing/wrong shape, 500 leak, auth failure under valid token | "POST /api/v1/posts returns 500 — payload shape matches contract, root cause needed" |
 | **Frontend** | Button without onClick, form submitting to wrong endpoint, hydration mismatch, console errors | "Export CSV button has no onClick handler at DashboardPage.tsx:142" |
+| **Designer** | Visual Gate finding (emoji-as-icon, inline arbitrary values, missing responsive, missing motion, AI-slop pattern from anti-pattern list) | "Emoji `🚀` used as icon at LandingHero.tsx:18 — P0 per visual-spec.md anti-pattern list" |
 | **Reviewer** (security lead) | Functional finding overlaps security (info leak, broken auth flow) | "POST /api/v1/users returns 500 with stack trace — info disclosure + functional fail" |
 | **Coordinator** | Investigation Report return; degraded MCP report; ship/no-ship decision needed | "Phase 5.5 DEGRADED — playwright not installed. Decision needed." |
 

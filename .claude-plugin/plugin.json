@@ -1,7 +1,7 @@
 {
   "name": "dev-squad",
-  "version": "4.7.1",
-  "description": "Full-stack dev team agent swarm with 10 specialized agents and zero-to-ship capability. Agents: coordinator (opus), architect (opus), backend (sonnet), frontend (sonnet), reviewer/security-lead (sonnet), qa-engineer (sonnet), auditor (sonnet), devops (sonnet), git-ops (sonnet), writer (sonnet). Phase 5 review is 3-way parallel (static + runtime + automated tooling). Multi-language quality metrics (JS/TS, Go, Python). Supports zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, and runtime stability/quality auditing.",
+  "version": "4.8.0",
+  "description": "Full-stack dev team agent swarm with 11 specialized agents and zero-to-ship capability. Agents: coordinator (opus), architect (opus), designer (sonnet think_harder), backend (sonnet), frontend (sonnet), reviewer/security-lead (sonnet), qa-engineer (sonnet), auditor (sonnet), devops (sonnet), git-ops (sonnet), writer (sonnet). Phase 3.5 DESIGN gate (designer) prevents AI-slop UI by producing design tokens + visual spec + component inventory + responsive spec BEFORE frontend codes. Phase 5 review is 3-way parallel (static + runtime + automated tooling) with anti-AI-slop Visual Gate. Multi-language quality metrics (JS/TS, Go, Python). Supports zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, and runtime stability/quality auditing.",
   "author": {
     "name": "sadewadee"
   },
