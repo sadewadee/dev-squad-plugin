@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "dev-squad",
-      "description": "Full-stack dev team agent swarm with 8 specialized agents",
-      "version": "4.6.0",
+      "description": "Full-stack dev team agent swarm with 10 specialized agents",
+      "version": "4.7.0",
       "source": "./",
       "author": {
         "name": "sadewadee"

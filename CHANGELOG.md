@@ -2,6 +2,74 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] — Agent split: qa-engineer + auditor; multi-language metrics; DB perf execution
+
+This release splits execution responsibilities out of `reviewer` into two new agents and extends Phase 5 to a 3-way parallel review (static + runtime + automated). Closes the v4.6 reviewer overload (~770 lines, 9 distinct roles) and adds polyglot support (Go + Python in addition to JS/TS), database performance execution (slow query log + connection leak + migration safety + pool sanity), and API pattern compliance enforcement (REST/GraphQL/gRPC anti-patterns).
+
+### Added — two new agents
+
+- **`qa-engineer`** (sonnet, maxTurns 35) — runtime QA. Owns Phase 5.5 FUNCTIONAL VERIFICATION (boot app, drive golden path via playwright, audit interactive elements, smoke-test API endpoints, browser console gate) and Investigation Mode (fresh-eyes debugger when self-healing iter 3 triggers). Skills: `playwright-skill`, `superpowers-chrome:browsing`, `superpowers:systematic-debugging`, `superpowers:verification-before-completion`, `dev-squad:tdd-workflow`. Veto on P0 functional findings + P1 in golden path.
+- **`auditor`** (sonnet, maxTurns 30) — automated stability + quality metrics. Owns Phase 5.6 STABILITY EXECUTION (5 buckets: config drift, DB perf, endpoint hammer, failure injection, API pattern compliance) and Phase 5.7 CODE QUALITY METRICS (multi-language tool runner). Skills: `superpowers:verification-before-completion`, `superpowers:systematic-debugging`, `dev-squad:postgres-patterns`, `dev-squad:golang-patterns`, `dev-squad:golang-testing`, `dev-squad:backend-patterns`, `dev-squad:security-review`. Installs missing analyzer tools on demand.
+
+### Changed — reviewer slimmed to original mandate
+
+- `reviewer.md` removed Phase 5.5 FUNCTIONAL VERIFICATION (moved to qa-engineer) and Investigation Mode (moved to qa-engineer). Reviewer is now **static analysis only** — security review, code review on diff, multi-angle review (security/perf/spec/architecture passes), and **Phase 5 Metrics Report synthesis** (combines its own findings + qa-engineer's functional report + auditor's stability and quality reports into single PDCA Check artifact).
+- `reviewer.md` `maxTurns` 35 → 25 (back closer to original 21, reflects narrower scope).
+- `reviewer.md` skills removed: `playwright-skill`, `superpowers-chrome:browsing` (those moved to qa-engineer).
+- File size impact: reviewer was ~770 lines after v4.6; back to ~580 lines.
+
+### Changed — Phase 5 is now 3-way parallel
+
+- Coordinator dispatches **reviewer + qa-engineer + auditor** in parallel during Phase 5. Each owns a distinct lane and is not interchangeable. After all three return, reviewer synthesizes the single Phase 5 Metrics Report.
+- All three have veto in their domain: reviewer (security), qa-engineer (functional), auditor (stability/quality).
+- Self-healing loop iteration 3 (fresh-eyes investigation) now hands off to **qa-engineer**, not reviewer — qa-engineer has playwright + chrome-devtools for browser-state inspection that reviewer lacks.
+- Self-healing iteration log's `Tier:` field now uses `qa-engineer-investigation` (was `reviewer-investigation`).
+- Bug Fix workflow updated: dispatch qa-engineer first for reproduce + root cause; reviewer for static regression check.
+- Performance Optimization workflow updated: dispatch auditor for profiling + DB perf bucket + benchmark validation (was reviewer).
+
+### Added — multi-language code quality metrics (Phase 5.7)
+
+`auditor` detects project language(s) at audit start by scanning for `package.json`, `tsconfig.json`, `go.mod`, `pyproject.toml`, `requirements.txt`, `Cargo.toml`. Tool set per language:
+
+| Concern | JS/TS | Go | Python |
+|---|---|---|---|
+| Cyclomatic complexity | `eslint --max-complexity=10` | `gocyclo -over 10` | `radon cc -n B` |
+| Duplication | `jscpd --threshold 5` | `dupl -t 50` | `jscpd` |
+| Dead code | `ts-prune`, `unimported` | `staticcheck U1000`, `deadcode` | `vulture` |
+| Circular deps | `madge --circular` | n/a (compile-time) | `pylint cyclic-import` |
+| Type escape | grep `\bany\b`, `@ts-ignore` | grep `interface{}`, `\bany\b` | grep `: Any\b`, `# type: ignore` |
+| Outdated deps | `npm-check-updates` | `go list -u -m all` | `pip list --outdated` |
+| Linter aggregator | `eslint --max-warnings 0` | `golangci-lint run` | `ruff check` |
+
+Go-specific gates: `go vet`, `staticcheck`, `errcheck`, `go mod tidy -diff`, `go test -race`. JS/TS-specific gates: `tsc --noEmit`, unjustified `@ts-ignore` detection.
+
+For polyglot projects (e.g., Go backend + TS frontend), auditor runs the appropriate tool set per language directory and merges findings.
+
+### Added — Phase 5.6 STABILITY EXECUTION (focuses on 500-class + DB perf)
+
+Five buckets in `auditor`:
+
+- **Bucket A: Config Drift** — diff `.env.example` vs env vars actually consumed in code; validator coverage; `docker compose config` parse; boot health; CORS/TLS/port sanity.
+- **Bucket B: Database Stability** — pool size vs `max_connections`; slow query capture via `pg_stat_statements`; index coverage cross-reference; idle-in-transaction connection leak detection; migration safety scan (NOT NULL on large tables, missing CONCURRENTLY, ACCESS EXCLUSIVE locks); N+1 detection from query log.
+- **Bucket C: Endpoint Hammering** — every endpoint tested with valid/invalid/malformed/oversized payload + missing-auth + expired-token + SQL-injection-shaped string. Any 500 response = P0 (unhandled exception leak). Stack trace in error body = P0 (info disclosure).
+- **Bucket D: Failure Injection** — DB unavailability, network drop, config key delete, worker SIGTERM. Hard guard: refuses to run without `.dev-squad/staging-env` flag (prevents accidental prod-like data loss).
+- **Bucket E: API Pattern Compliance** — REST (pagination, idempotency keys, versioning, Retry-After), GraphQL (depth limit, complexity limit, DataLoader, introspection-disabled-in-prod), gRPC (deadlines, error code mapping, streaming pattern correctness).
+
+### Added — failure injection hard guard
+
+`.dev-squad/staging-env` flag file required before auditor runs Bucket D failure injection. Without it, auditor refuses (prints error, exits). Mitigates risk of running chaos tests against shared/prod environments.
+
+### Why these changes
+- User feedback during v4.7 design: "jika agent terlalu besar sebaiknya pecah jadi beberapa agent baru" — reviewer was at ~770 lines / 9 distinct roles after v4.6. Splitting respects single responsibility, reduces prompt bloat per dispatch, enables Phase 5 parallel execution.
+- "performance and stability improvement" + "code quality improvement" + "support golang tidak hanya js" + "include database performance, merge, maxconnections, sampe pemilihan cara penggunaan api" — direct asks. Stability + DB perf go to auditor Phase 5.6; code quality goes to auditor Phase 5.7 with multi-language tool matrix; API pattern compliance is Bucket E.
+- Performance load testing (k6 / lighthouse) deliberately deferred per user direction — "untuk k6 dan lighthouse kurasa belum saatnya, atau bisa dibuatkan skill terpisah". Future release as separate plugin/skill.
+
+### Documentation
+- README updated: team table 8 → 10, agent count corrected, new agents documented.
+- `commands/build.md` Phase 5 section rewritten for 3-way parallel dispatch with detailed lane responsibilities.
+- `skills/dev-squad/SKILL.md` Team Members table updated; Database/Query Optimization workflow diagrams updated to use auditor for DB perf work.
+- No opus quota impact — both new agents are sonnet.
+
 ## [4.6.0] — QA hardening: functional verification, LOOKUP enforcement, fresh-eyes debugging
 
 This release closes three quality gaps observed in earlier versions: (1) reviewer never executed the app — bugs caught only at user manual test, (2) MCP lookup was prompt-only and skipped under turn pressure during debug, (3) authors debugged their own code with no fresh-eyes intervention for complex multi-service / browser / multi-module bugs.

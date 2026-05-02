@@ -1,6 +1,6 @@
 # dev-squad
 
-A full-stack development team agent swarm plugin for Claude Code. Eight specialized AI agents collaborate in a hierarchical coordination model to handle zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, and content authoring.
+A full-stack development team agent swarm plugin for Claude Code. **Ten specialized AI agents** collaborate in a hierarchical coordination model to handle zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, runtime/stability/quality auditing, and content authoring.
 
 Current version is in `.claude-plugin/plugin.json`.
 
@@ -12,7 +12,9 @@ Current version is in `.claude-plugin/plugin.json`.
 | **architect** | System Architect | opus | System design, tech stack decisions, database schema, ADRs, infrastructure planning |
 | **backend** | Backend Developer | sonnet | API development, database operations, business logic, migrations, auth implementation |
 | **frontend** | Frontend Developer | sonnet | UI implementation, React/Next.js, state management, responsive/accessible design |
-| **reviewer** | Security Lead + Code Reviewer/QA | sonnet | End-to-end security ownership, threat modeling, OWASP enforcement, code review, performance profiling |
+| **reviewer** | Security Lead + Static Code Reviewer | sonnet | End-to-end security, threat modeling, OWASP, static code review on diff, Phase 5 metrics report synthesis |
+| **qa-engineer** | Runtime QA + Investigation Mode | sonnet | Phase 5.5 functional verification (boot app, drive golden path via playwright, audit interactive elements, smoke-test endpoints, browser console gate). Fresh-eyes debugger when self-healing iter 3 triggers. |
+| **auditor** | Stability + Quality Metrics | sonnet | Phase 5.6 stability execution (config drift, DB perf, endpoint hammer, failure injection, API pattern compliance) + Phase 5.7 code quality metrics (multi-language: JS/TS, Go, Python). Installs analyzer tools on demand. |
 | **devops** | DevOps Engineer | sonnet | Docker/Compose, Traefik, CI/CD, monitoring, secrets management, deployment strategies |
 | **git-ops** | Git Operations Manager | sonnet | Branch management, PR workflows, merge strategies, release management, changelog generation |
 | **writer** | Content Writer | sonnet | Page copy, microcopy, legal pages, SEO metadata, documentation — production-ready content, not placeholders |
@@ -41,6 +43,18 @@ Agents use a dual-mode communication protocol:
 
 ### Security Lead with Veto Power
 The reviewer agent owns security end-to-end. It has veto power on P0-P1 security issues and can directly message any agent for urgent security fixes without coordinator mediation. Every PR goes through OWASP Top 10 checks, dependency auditing, and threat modeling.
+
+### 3-Way Phase 5 Review (static + runtime + automated)
+Phase 5 of zero-to-ship dispatches three agents in parallel: **reviewer** does static code review on the diff, **qa-engineer** boots the app and drives the golden path through a real browser via playwright, and **auditor** runs real analyzer tools (slow query log, connection leak detector, jscpd, golangci-lint, ts-prune, etc.) against the codebase. Each has veto in their domain. Reviewer synthesizes a single Phase 5 Metrics Report from all three lanes for the PDCA Check artifact.
+
+### Multi-Language Code Quality (JS/TS, Go, Python)
+The auditor agent auto-detects project language via `package.json` / `go.mod` / `pyproject.toml` and runs the appropriate analyzer set. Polyglot projects (e.g., Go backend + TypeScript frontend) get parallel tool runs per language directory with merged findings. Tools are installed on demand at devDependencies / `go install` / `pip install --user` scope.
+
+### Fresh-Eyes Debugger via 3-Tier Self-Healing
+When the self-healing loop hits iteration 3 after the author has thrashed for 2 iterations on the same bug, coordinator hands off to qa-engineer in **Investigation Mode**. qa-engineer does fresh LOOKUP, cross-boundary trace, browser-state inspection (playwright/chrome-devtools), git history analysis, and produces an Investigation Report with recommended fix. The author then applies the fix in their context (separation of diagnosis from ownership prevents author bias).
+
+### Failure Injection with Hard Guard
+The auditor's failure injection bucket (kill DB, drop network, delete config, SIGTERM workers) refuses to run without a `.dev-squad/staging-env` flag file. This guard prevents accidental chaos testing against shared or production-like environments.
 
 ### Enterprise Patterns
 Built-in support for Architecture Decision Records (ADRs), conventional commits, semantic versioning, trunk-based development, feature flags, blue/green deployments, circuit breakers, health check endpoints, structured logging, and distributed tracing.
@@ -194,7 +208,9 @@ dev-squad-plugin/
 │       ├── architect.md          # System Architect agent (opus)
 │       ├── backend.md            # Backend Developer agent (sonnet)
 │       ├── frontend.md           # Frontend Developer agent (sonnet)
-│       ├── reviewer.md           # Security Lead + Code Reviewer agent (sonnet)
+│       ├── reviewer.md           # Security Lead + Static Code Reviewer agent (sonnet)
+│       ├── qa-engineer.md        # Runtime QA + Investigation Mode agent (sonnet)
+│       ├── auditor.md            # Stability + Quality Metrics agent (sonnet)
 │       ├── devops.md             # DevOps Engineer agent (sonnet)
 │       ├── git-ops.md            # Git Operations Manager agent (sonnet)
 │       └── writer.md             # Content Writer agent (sonnet)

@@ -193,14 +193,38 @@ Agent tool with:
       - No console.log in production code
       - i18n-ready: no hardcoded user-facing strings
 
-    ### Phase 5: REVIEW (Multi-Angle Parallel Review)
-    - Launch 4 parallel review passes (dispatch as parallel agents or in teams mode):
+    ### Phase 5: REVIEW (3-way parallel — static + runtime + automated)
+
+    Dispatch THREE agents in PARALLEL (each owns a distinct lane — they are not interchangeable):
+
+    **Lane 1: reviewer (static analysis)** — multi-angle review on diff:
       Pass 1: SECURITY → OWASP Top 10, auth, injection, XSS, CSRF, secrets
       Pass 2: PERFORMANCE → N+1 queries, indexes, pagination, bundle size
       Pass 3: SPEC COMPLIANCE → PRD requirements met line-by-line
       Pass 4: ARCHITECTURE → ADR conformance, SOLID, shared packages used
-    - Each finding scored 0-100 confidence. Only confidence >= 80 is actionable.
-    - ALL items below are MANDATORY:
+
+    **Lane 2: qa-engineer (runtime execution — Phase 5.5 FUNCTIONAL VERIFICATION)**:
+      - Boot backend + frontend
+      - Drive every PRD acceptance criterion via playwright (golden path)
+      - Audit every interactive element (button without onClick = P1, form to nonexistent endpoint = P0)
+      - Smoke-test every API endpoint: valid + invalid + malformed + oversized + missing auth + expired token
+      - Browser console + network gate (any error/warning = finding)
+      - Cross-boundary integration check (frontend → API → DB → response round-trip)
+      - Output: `.dev-squad/functional-verification.md`
+
+    **Lane 3: auditor (automated tooling — Phase 5.6 STABILITY EXECUTION + Phase 5.7 CODE QUALITY METRICS)**:
+      - Phase 5.6: config drift, DB perf (slow queries, missing indexes, connection leaks, migration safety, pool sanity), endpoint hammering for 500-leak detection, failure injection (with .dev-squad/staging-env hard guard), API pattern compliance (REST/GraphQL/gRPC anti-patterns)
+      - Phase 5.7: multi-language tool runner (detects JS/TS via package.json, Go via go.mod, Python via pyproject.toml). Runs cyclomatic, duplication, dead code, circular deps, type-escape, dep currency. Tools per language:
+        - JS/TS: eslint --max-complexity, jscpd, ts-prune, madge, npm-check-updates, tsc --noEmit
+        - Go: gocyclo, dupl, staticcheck, errcheck, golangci-lint, go test -race, go mod tidy -diff
+        - Python: radon cc, jscpd, vulture, ruff, pip list --outdated
+      - Outputs: `.dev-squad/stability-report.md` + `.dev-squad/quality-metrics.md`
+
+    After all three return: **reviewer synthesizes** the single Phase 5 Metrics Report from all three artifacts. This is the PDCA Check output that feeds Phase 7 LEARN.
+
+    Each finding scored 0-100 confidence. Only confidence >= 80 is actionable.
+    ALL P0-P1 from any lane MUST be fixed — each agent has veto in their domain.
+    ALL items below are MANDATORY:
 
     Security (reviewer MUST verify each):
       - [ ] Threat model completed for all features
@@ -428,15 +452,17 @@ Agent tool with:
     
     CRITICAL: Always use "dev-squad:{name}" as subagent_type. Plain names will NOT work.
     
-    | Agent | subagent_type | Model |
-    |-------|--------------|-------|
-    | Architect | `dev-squad:architect` | opus |
-    | Backend | `dev-squad:backend` | sonnet (opus for auth/integration) |
-    | Frontend | `dev-squad:frontend` | sonnet (opus for cross-package) |
-    | Reviewer | `dev-squad:reviewer` | sonnet (opus for security review) |
-    | DevOps | `dev-squad:devops` | sonnet |
-    | Git-Ops | `dev-squad:git-ops` | sonnet |
-    | Writer | `dev-squad:writer` | sonnet |
+    | Agent | subagent_type | Model | Role |
+    |-------|--------------|-------|------|
+    | Architect | `dev-squad:architect` | opus | System design, tech stack, ADRs |
+    | Backend | `dev-squad:backend` | sonnet (opus for auth/integration) | API + DB + business logic |
+    | Frontend | `dev-squad:frontend` | sonnet (opus for cross-package) | UI + state + responsive design |
+    | Reviewer | `dev-squad:reviewer` | sonnet (opus for security review) | Security lead + static code review + Phase 5 metrics report synthesis |
+    | QA Engineer | `dev-squad:qa-engineer` | sonnet | Runtime functional verification (Phase 5.5) + Investigation Mode (fresh-eyes debug at iter 3) |
+    | Auditor | `dev-squad:auditor` | sonnet | Stability execution (Phase 5.6) + code quality metrics (Phase 5.7), multi-language |
+    | DevOps | `dev-squad:devops` | sonnet | Docker, CI/CD, monitoring, deploy |
+    | Git-Ops | `dev-squad:git-ops` | sonnet | Branches, PRs, releases |
+    | Writer | `dev-squad:writer` | sonnet | Page copy, microcopy, legal pages |
 
     ## Smart Model Routing
     Override model per-dispatch based on task complexity:

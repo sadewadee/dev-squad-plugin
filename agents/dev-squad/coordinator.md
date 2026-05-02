@@ -224,12 +224,13 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 
 ### Bug Fix
 ```
-1. Dispatch reviewer → root cause (issuetracker + systematic-debugging)
+1. Dispatch qa-engineer → reproduce + root cause (Investigation Mode if runtime/cross-boundary, else regular debug)
 2. Assess severity: critical → hotfix path, normal → standard path
-3. Dispatch backend OR frontend → fix with TDD
-4. Dispatch reviewer → validation + regression check
-5. Dispatch git-ops → PR (hotfix branch if critical)
-6. Completion report
+3. Dispatch backend OR frontend → fix with TDD using qa-engineer's recommended fix
+4. Dispatch qa-engineer → re-verify (runtime), reviewer → regression check on diff
+5. Dispatch auditor (if stability/quality area touched) → re-run impacted metrics
+6. Dispatch git-ops → PR (hotfix branch if critical)
+7. Completion report
 ```
 
 ### Refactoring
@@ -262,10 +263,10 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 
 ### Performance Optimization
 ```
-1. Dispatch reviewer → profiling + bottleneck identification
-2. Dispatch architect → architecture-level optimizations
+1. Dispatch auditor → profiling + DB perf bucket (slow queries, indexes, pool, leaks) + bottleneck identification
+2. Dispatch architect → architecture-level optimizations (caching strategy, read replicas, schema)
 3. Dispatch backend + frontend → parallel optimization
-4. Dispatch reviewer → benchmark validation (before/after)
+4. Dispatch auditor → benchmark validation (before/after metrics from Phase 5.6 + 5.7 tools)
 5. Dispatch devops → monitoring + alerting updates
 6. Completion with metrics delta
 ```
@@ -326,12 +327,14 @@ Phase 4: IMPLEMENT (Production-Grade)
   6. Shared packages MUST be used: shared-types for API types, shared-validators for Zod schemas
   7. PREVENT: no `any` types, no raw SQL, no hardcoded URLs, no localStorage tokens, no skipped error handling
 
-Phase 5: REVIEW (Mandatory Quality Gate)
-  1. Dispatch reviewer → security audit (threat model, OWASP 10-step, dependency CVEs)
-  2. Dispatch reviewer → performance check (N+1, indexes, pagination, bundle size)
-  3. Dispatch reviewer → code quality (test coverage >=80%, no `any`, no swallowed errors, structured logging, health checks)
-  4. ALL P0-P1 findings MUST be fixed — reviewer has veto power
-  5. Re-review after fixes applied
+Phase 5: REVIEW (Mandatory Quality Gate — 3-way parallel dispatch)
+  Dispatch reviewer + qa-engineer + auditor in PARALLEL. Each owns a distinct lane:
+  1. **reviewer** (static analysis only): security audit (threat model, OWASP 10-step, dependency CVEs) + multi-angle review on diff (security/perf/spec/architecture passes)
+  2. **qa-engineer** (runtime execution): Phase 5.5 FUNCTIONAL VERIFICATION — boot app, drive golden path via playwright, audit interactive elements, smoke-test API endpoints, browser console gate. Output `.dev-squad/functional-verification.md`.
+  3. **auditor** (automated tooling): Phase 5.6 STABILITY EXECUTION (config drift, DB perf, endpoint hammer, failure injection on staging-flag, API pattern compliance) + Phase 5.7 CODE QUALITY METRICS (multi-language: JS/TS, Go, Python tool runners). Output `.dev-squad/stability-report.md` + `.dev-squad/quality-metrics.md`.
+  4. After all three return: reviewer synthesizes the **single Phase 5 Metrics Report** (PDCA Check) from all three artifacts.
+  5. ALL P0-P1 findings MUST be fixed — reviewer (security), qa-engineer (functional), auditor (stability/quality) all have veto.
+  6. Re-review after fixes applied — only the lane(s) that flagged need to re-validate.
 
 Phase 6: SHIP (Verified Deploy)
   1. Dispatch devops → staging deployment + verify: health checks pass, monitoring shows data, alerts configured, resource limits OK, TLS configured, secrets via env only, rollback documented
@@ -402,8 +405,11 @@ TeamCreate with teammates:
 - dev-squad:backend (sonnet, isolation: worktree)
 - dev-squad:frontend (sonnet, isolation: worktree)
 - dev-squad:reviewer (sonnet, permissionMode: plan — security gate)
+- dev-squad:qa-engineer (sonnet — runtime functional verification + investigation mode)
+- dev-squad:auditor (sonnet — stability execution + quality metrics)
 - dev-squad:devops (sonnet)
 - dev-squad:git-ops (sonnet)
+- dev-squad:writer (sonnet)
 ```
 
 **Communication:** Use `message` for direct teammate contact, `broadcast` for announcements.
@@ -435,8 +441,11 @@ Task 2: Design architecture (architect) → depends on Task 1 + user approval
 Task 3: Scaffold monorepo (devops + git-ops) → depends on Task 2
 Task 4: Implement backend (backend) → depends on Task 3
 Task 5: Implement frontend (frontend) → depends on Task 3
-Task 6: Security + quality review (reviewer) → depends on Task 4 + 5
-Task 7: Deploy staging + ship (devops + git-ops) → depends on Task 6
+Task 6a: Security + code review (reviewer, static) → depends on Task 4 + 5
+Task 6b: Functional verification (qa-engineer, runtime) → depends on Task 4 + 5
+Task 6c: Stability + quality metrics (auditor, automated tooling) → depends on Task 4 + 5
+Task 6d: Phase 5 metrics report synthesis (reviewer) → depends on Task 6a + 6b + 6c
+Task 7: Deploy staging + ship (devops + git-ops) → depends on Task 6d
 ```
 
 ## Two-Stage Review Protocol (Both Modes)
@@ -553,7 +562,7 @@ ITERATION 1-2: AUTHOR RETRIES
      d. Apply fix (author runs the fix command in their context)
      e. VERIFY: re-run the SAME command. If pass → done. If fail → INCREMENT iteration
 
-ITERATION 3: FRESH-EYES INVESTIGATION (handoff to reviewer)
+ITERATION 3: FRESH-EYES INVESTIGATION (handoff to qa-engineer)
   Trigger conditions (any one):
   - Same error persists after iteration 1+2 (author thrashing)
   - Error pattern crosses services / modules / browser-server boundary
@@ -562,30 +571,31 @@ ITERATION 3: FRESH-EYES INVESTIGATION (handoff to reviewer)
 
   Steps:
   1. Stop dispatching author
-  2. Dispatch reviewer in Investigation Mode (see reviewer.md "Investigation Mode")
+  2. Dispatch **qa-engineer** in Investigation Mode (see qa-engineer.md "Investigation Mode")
+     - qa-engineer has playwright + chrome-devtools for browser-state inspection; reviewer does not
      - Include: full error trace, both prior LOOKUP+FIX attempts from author, current branch state
-  3. Reviewer returns Investigation Report — root cause + recommended fix (NOT applied)
-  4. If reviewer status = ROOT CAUSE IDENTIFIED:
-     - Dispatch original author with reviewer's report + recommended fix
-     - Author applies fix in their context (they own their code; reviewer owns diagnosis)
+  3. qa-engineer returns Investigation Report — root cause + recommended fix (NOT applied)
+  4. If qa-engineer status = ROOT CAUSE IDENTIFIED:
+     - Dispatch original author with qa-engineer's report + recommended fix
+     - Author applies fix in their context (they own their code; qa-engineer owns diagnosis)
      - Verify
-  5. If reviewer status = NEEDS ARCHITECT → jump to iteration 4
-  6. If reviewer status = UNABLE TO REPRODUCE → escalate to user with reviewer's findings
+  5. If qa-engineer status = NEEDS ARCHITECT → jump to iteration 4
+  6. If qa-engineer status = UNABLE TO REPRODUCE → escalate to user with qa-engineer's findings
 
 ITERATION 4-5: ARCHITECT RE-DESIGN
-  Trigger: reviewer flagged NEEDS ARCHITECT, OR fix from iteration 3 also failed.
+  Trigger: qa-engineer flagged NEEDS ARCHITECT, OR fix from iteration 3 also failed.
 
-  1. Dispatch architect with: full history (all author attempts + reviewer investigation)
+  1. Dispatch architect with: full history (all author attempts + qa-engineer investigation)
   2. Architect proposes design-level fix (interface change, contract update, refactor)
   3. Architect creates ADR if change is structural
   4. Coordinate implementation: backend + frontend may both need updates
   5. Verify
 
 If 5 iterations exhausted:
-  - Log all 5 attempts: author 2x, reviewer investigation, architect 2x
+  - Log all 5 attempts: author 2x, qa-engineer investigation, architect 2x
   - Escalate to user with:
     - What was attempted at each tier
-    - Reviewer's root cause analysis
+    - qa-engineer's root cause analysis
     - Architect's proposed redesign (if any)
     - WebSearch / context7 / grep-github results that did NOT match (lookup audit trail)
     - Suggested manual intervention
@@ -641,7 +651,7 @@ Maintain `.dev-squad/self-healing-log.md` per build. Each iteration writes one e
 
 ```markdown
 ## Iteration {N} — {timestamp}
-**Tier:** author | reviewer-investigation | architect
+**Tier:** author | qa-engineer-investigation | architect
 **Agent:** {who was dispatched}
 **Trigger:** {what error / phase}
 **LOOKUP audit:**
@@ -682,8 +692,8 @@ Phase 4 (IMPLEMENT):
   If fails → self-healing loop with opus (cross-package wiring issues)
 
 Phase 5 (REVIEW):
-  After reviewer flags P0-P1 → dispatch fix → self-healing loop
-  Repeat until reviewer approves or 5 attempts exhausted
+  After reviewer / qa-engineer / auditor flags P0-P1 → dispatch fix → self-healing loop
+  Repeat until all three lanes approve or 5 attempts exhausted
 
 Phase 6 (SHIP):
   After `docker compose up` → check health endpoints
@@ -702,6 +712,8 @@ CORRECT (always use these):
   subagent_type: "dev-squad:backend"
   subagent_type: "dev-squad:frontend"
   subagent_type: "dev-squad:reviewer"
+  subagent_type: "dev-squad:qa-engineer"
+  subagent_type: "dev-squad:auditor"
   subagent_type: "dev-squad:devops"
   subagent_type: "dev-squad:git-ops"
   subagent_type: "dev-squad:writer"

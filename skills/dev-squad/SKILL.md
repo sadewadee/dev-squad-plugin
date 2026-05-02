@@ -1,6 +1,6 @@
 ---
 name: dev-squad
-description: Invoke the dev-squad agent swarm for collaborative development. Full-stack app building with 8 agents (coordinator, architect, backend, frontend, reviewer, devops, git-ops, writer). Supports feature development, database tasks, bug fixes, architecture changes, security audits, and infrastructure work.
+description: Invoke the dev-squad agent swarm for collaborative development. Full-stack app building with 10 agents (coordinator, architect, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer). Supports feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, and runtime/stability/quality auditing.
 ---
 
 # Dev Squad - Agent Swarm
@@ -79,7 +79,9 @@ Works without any setup. Coordinator dispatches agents sequentially via Agent to
 | architect | System Architect | opus | 2 |
 | backend | Backend Developer | sonnet | - |
 | frontend | Frontend Developer | sonnet | - |
-| reviewer | **Security Lead** + Code Reviewer/QA + Performance Engineer | sonnet | - |
+| reviewer | **Security Lead** + Static Code Reviewer + Phase 5 metrics synthesizer | sonnet | - |
+| qa-engineer | Runtime QA (Phase 5.5 functional verification) + Investigation Mode debugger | sonnet | - |
+| auditor | Stability execution (Phase 5.6) + multi-language code quality metrics (Phase 5.7) | sonnet | - |
 | devops | DevOps Engineer | sonnet | - |
 | git-ops | Git Operations Manager | sonnet | - |
 | writer | Content Writer | sonnet | - |
@@ -93,16 +95,23 @@ Works without any setup. Coordinator dispatches agents sequentially via Agent to
 - Convention & standard tracking
 - Project context preservation
 
-**Reviewer (Security Lead + Performance Engineer):**
+**Reviewer (Security Lead + Static Code Reviewer + Phase 5 Synthesizer):**
 - **Security ownership end-to-end** — threat modeling, auth review, OWASP, incident response
 - **Veto power** on P0-P1 security issues — can block any merge
 - **Direct-message authority** — can contact any agent for P0-P1 security fixes without coordinator mediation
-- Query optimization & EXPLAIN analysis
-- N+1 query detection
-- Load testing & performance budgets
-- Profiling & bottleneck identification
-- Performance regression detection
-- Index strategy review
+- Static code review (diff-based) — multi-angle: security, performance, spec compliance, architecture
+- **Phase 5 Metrics Report synthesis** — combines static review findings + qa-engineer functional verification + auditor stability/quality reports into single PDCA Check artifact
+
+**QA Engineer (Runtime Verification + Investigation Mode):**
+- **Phase 5.5 FUNCTIONAL VERIFICATION** — boots the app, drives golden path via playwright, audits every interactive element, smoke-tests every API endpoint, captures browser console/network
+- **Investigation Mode** — fresh-eyes debugger when self-healing iter 3 triggers (author has thrashed for 2 iterations); produces Investigation Report with root cause + recommended fix; author applies the fix
+- **Veto power** on P0 functional findings (runtime crash, missing endpoint, broken auth, button without onClick) and P1 in golden path
+
+**Auditor (Stability + Code Quality Metrics):**
+- **Phase 5.6 STABILITY EXECUTION** — config drift detection, DB performance (slow queries, missing indexes, connection leaks, migration safety, pool sanity), endpoint hammering for 500-leak detection, failure injection (with `.dev-squad/staging-env` hard guard), API pattern compliance (REST/GraphQL/gRPC anti-patterns)
+- **Phase 5.7 CODE QUALITY METRICS** — multi-language tool runner (auto-detects via package.json / go.mod / pyproject.toml). JS/TS: eslint --max-complexity, jscpd, ts-prune, madge. Go: gocyclo, dupl, staticcheck, errcheck, golangci-lint, go test -race. Python: radon, vulture, ruff.
+- **Tool installation on demand** — installs missing analyzers at devDependencies / `go install` / `pip install --user`
+- **Veto power** on P0 stability/quality findings (race condition, P1 metric exceed by >20%)
 
 ## v3.0 Orchestration Patterns
 
@@ -238,11 +247,13 @@ Performance Issue
     ↓
 [Coordinator] → Identify slow queries
     ↓
-[Reviewer] → Analyze EXPLAIN output, missing indexes
+[Auditor] → Slow query log capture, EXPLAIN analysis, missing indexes, connection leak check, pool sanity
     ↓
 [Architect] → Propose index/structure changes
     ↓
 [Backend] → Optimize queries, add indexes
+    ↓
+[Auditor] → Re-run benchmark, before/after metrics
     ↓
 [DevOps] → Update monitoring/alerts
     ↓
@@ -287,7 +298,8 @@ Agent tool with:
     | Architect | `dev-squad:architect` | Schema design, database architecture, index strategy |
     | Backend | `dev-squad:backend` | Migration implementation, query writing, ORM setup |
     | DevOps | `dev-squad:devops` | Docker compose DB config, connection pooling, backup |
-    | Reviewer | `dev-squad:reviewer` | Query optimization, EXPLAIN analysis, security review |
+    | Reviewer | `dev-squad:reviewer` | Security review (SQL injection, auth on data endpoints), static code review |
+    | Auditor | `dev-squad:auditor` | Query optimization (slow query log, EXPLAIN), connection leak detection, migration safety scan, pool sanity, index coverage |
 
     CRITICAL: Always dispatch using "dev-squad:{name}" — plain names will NOT resolve.
 
