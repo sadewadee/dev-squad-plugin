@@ -119,10 +119,12 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 
 | Pattern | Where Applied | What It Does |
 |---------|--------------|--------------|
-| **Two-Stage Review** | Phase 4 (per task) | Spec compliance → Code quality, loop until both pass |
+| **Two-Stage Review** | Phase 4 (per task) | Spec compliance → Code quality, loop until both pass; agents chosen via Diff-Scope Heuristic |
+| **3-Way Phase 5 Review** | Phase 5 (full feature) | reviewer (static) + qa-engineer (runtime) + auditor (automated) dispatched in parallel; reviewer synthesizes single Metrics Report |
+| **Diff-Scope Dispatch Heuristic** | Every review dispatch | Coordinator picks reviewer / qa-engineer / auditor combo per diff scope; logs decision to .dev-squad/dispatch-log.md |
 | **Phase Gate Judge** | Between all phases | Cheap haiku agent validates deliverables before transition |
 | **Confidence Scoring** | Phase 5 review | Score 0-100 per finding, filter < 80 as non-actionable |
-| **Multi-Angle Review** | Phase 5 review | 4 parallel review passes: security, performance, spec, architecture |
+| **Multi-Angle Review** | Phase 5 reviewer lane | 4 review passes within reviewer's static lane: security, performance, spec, architecture |
 | **Systematic Debugging** | All agents | 4-phase: investigate → analyze → hypothesize → implement |
 | **Plan Review Loop** | Phase 2 design | Dispatch reviewer for plan, max 3 iterations |
 | **Verification-Before-Completion** | Phase 6 + all tasks | Evidence before claims, run commands fresh |
@@ -217,6 +219,10 @@ Schema Request
     ↓
 [Backend] → Generate migration files
     ↓
+[Auditor] → Migration safety scan (Bucket B): NOT NULL on big tables, CONCURRENTLY on indexes, lock duration estimate
+    ↓
+[Reviewer] → Security check (SQL injection paths, RLS policies, sensitive columns)
+    ↓
 [DevOps] → Update docker-compose with DB config
     ↓
 [Coordinator] → Documentation
@@ -229,15 +235,21 @@ Migration Request
     ↓
 [Coordinator] → Review migration impact
     ↓
-[Architect] → Validate migration safety
+[Architect] → Validate migration strategy + rollback plan
     ↓
-[Backend] → Write reversible migration
+[Backend] → Write reversible migration (up + down)
     ↓
-[Reviewer] → Test migration up/down
+[Auditor] → Migration safety scan: lock duration, CONCURRENTLY usage, NOT NULL on large tables, ACCESS EXCLUSIVE detection
     ↓
-[DevOps] → Apply to staging, then production
+[Reviewer] → Test migration up/down + security check on new permissions
     ↓
-[Coordinator] → Completion report
+[DevOps] → Apply to staging + backup verification, then production
+    ↓
+[QA Engineer] → Hit endpoints during/after staging migration, verify zero downtime
+    ↓
+[Auditor] → Post-migration: re-run pool/leak/slow-query check, confirm no regression
+    ↓
+[Coordinator] → Completion report (auditor's safety scan + qa-engineer's runtime verification = go/no-go evidence)
 ```
 
 ## Workflow: Query Optimization
@@ -674,14 +686,17 @@ Agents use two communication modes based on priority:
 ### Agent Communication Matrix
 
 ```
-             coordinator  architect  backend  frontend  reviewer  devops  git-ops
-coordinator       -          ✓          ✓        ✓         ✓        ✓       ✓
-architect         ✓          -          ✓        ✓         ✓        ✓       -
-backend           ✓          ✓          -        ✓         ✓        ✓       -
-frontend          ✓          ✓          ✓        -         ✓        ✓       -
-reviewer          ✓          ✓          ✓        ✓         -        ✓       ✓
-devops            ✓          ✓          ✓        ✓         ✓        -       ✓
-git-ops           ✓          -          ✓        ✓         ✓        ✓       -
+              coord  arch  backend  frontend  reviewer  qa-eng  auditor  devops  git-ops  writer
+coordinator     -     ✓      ✓         ✓         ✓        ✓       ✓        ✓       ✓       ✓
+architect       ✓     -      ✓         ✓         ✓        ✓       ✓        ✓       -       ✓
+backend         ✓     ✓      -         ✓         ✓        ✓       ✓        ✓       -       -
+frontend        ✓     ✓      ✓         -         ✓        ✓       ✓        ✓       -       ✓
+reviewer        ✓     ✓      ✓         ✓         -        ✓       ✓        ✓       ✓       -
+qa-engineer     ✓     ✓      ✓         ✓         ✓        -       ✓        ✓       -       -
+auditor         ✓     ✓      ✓         ✓         ✓        ✓       -        ✓       -       -
+devops          ✓     ✓      ✓         ✓         ✓        ✓       ✓        -       ✓       -
+git-ops         ✓     -      ✓         ✓         ✓        ✓       ✓        ✓       -       -
+writer          ✓     ✓      -         ✓         ✓        -       -        -       -       -
 ```
 
 ### Direct Message Format (P0-P1)
@@ -721,14 +736,32 @@ git-ops           ✓          -          ✓        ✓         ✓        ✓ 
 
 | Scenario | From | To | Priority | Mode |
 |----------|------|-----|----------|------|
-| SQL injection found | reviewer | backend | P0 | Direct |
-| XSS vulnerability | reviewer | frontend | P0 | Direct |
-| API endpoint returns 500 | frontend | backend | P1 | Direct |
+| SQL injection found (static) | reviewer | backend | P0 | Direct |
+| XSS vulnerability (static) | reviewer | frontend | P0 | Direct |
+| API endpoint returns 500 (runtime detection) | qa-engineer | backend | P0 | Direct |
+| 500 leak under malformed payload (Bucket C) | auditor | backend | P0 | Direct |
+| Stack trace in error response (info disclosure) | auditor | backend + reviewer | P0 | Direct |
+| Connection leak detected (Bucket B) | auditor | backend | P0 | Direct |
+| Migration safety violation (NOT NULL on big table, missing CONCURRENTLY) | auditor | backend + architect | P0 | Direct |
+| Hydration mismatch / browser console error | qa-engineer | frontend | P1 | Direct |
+| Button without onClick (interactive audit) | qa-engineer | frontend | P1 | Direct |
+| Missing endpoint per contract | qa-engineer | backend | P0 | Direct |
+| Slow query (>100ms in pg_stat_statements) | auditor | backend | P1 | Direct |
+| Missing index for WHERE/ORDER BY column | auditor | backend | P1 | Direct |
+| Pool size > 80% max_connections | auditor | devops | P1 | Direct |
+| Config drift (missing env validator, CORS wildcard) | auditor | devops | P1 | Direct |
+| Cyclomatic complexity threshold breach | auditor | backend/frontend | P2 | Direct |
+| Code duplication >5% threshold | auditor | backend/frontend | P2 | Direct |
+| Investigation Mode handoff (iter 3 self-healing) | coordinator | qa-engineer | P1 | Dispatch |
+| Investigation Report → fix recommendation | qa-engineer | backend/frontend | P1 | Direct |
 | Secret exposed in config | reviewer | devops | P0 | Direct |
 | Health check missing | devops | backend | P1 | Direct |
 | Merge conflict | git-ops | backend/frontend | P1 | Direct |
+| PR ready (touches new endpoint/UI) | git-ops | qa-engineer | P2 | Direct |
+| PR ready (touches DB/migrations) | git-ops | auditor | P2 | Direct |
 | PR too large | git-ops | coordinator | P2 | Mediated |
 | Design doesn't match ADR | reviewer | architect | P2 | Mediated |
+| API anti-pattern recurring across endpoints | auditor | architect | P2 | Mediated |
 | Schema improvement idea | backend | architect | P3 | Mediated |
 | Code style suggestion | reviewer | backend | P3 | Mediated |
 | Nice-to-have optimization | reviewer | frontend | P3 | Mediated |

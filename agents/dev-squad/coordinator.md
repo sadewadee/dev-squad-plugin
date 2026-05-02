@@ -216,7 +216,14 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 3. Dispatch architect → design review + ADR if architectural
 4. Create worktrees for parallel work
 5. Dispatch backend + frontend (parallel with worktrees)
-6. Dispatch reviewer (security lead) → threat model + security review + code review
+6. Pre-merge review — apply Diff-Scope Dispatch Heuristic (see below):
+   a. Always: dispatch reviewer (security lead) → threat model + security review + static code review
+   b. If new endpoint OR new interactive UI OR auth/payment touched:
+      → dispatch qa-engineer → functional verification (boot + drive new flow + audit)
+   c. If DB schema/queries/migration touched OR diff >200 lines:
+      → dispatch auditor → DB perf bucket (slow query, index, migration safety) + quality metrics on changed files
+   d. For full feature lengkap (multi-file, multi-concern): full 3-way (reviewer + qa-engineer + auditor)
+   e. Reviewer synthesizes findings into single review verdict
 7. Dispatch devops → staging deployment + config
 8. Dispatch git-ops → PR creation + branch management
 9. Verify → completion report
@@ -236,29 +243,43 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 ### Refactoring
 ```
 1. Dispatch architect → target architecture + migration strategy
-2. Dispatch reviewer → current code quality metrics baseline
+2. Dispatch auditor → BEFORE baseline: code quality metrics (cyclomatic, duplication, dead code, type-escape, file/function size) on the area being refactored
 3. Dispatch implementors → incremental refactor with TDD
-4. Dispatch reviewer → verify no regression + improved metrics
-5. Dispatch git-ops → staged PRs (small, reviewable chunks)
-6. Completion report with before/after metrics
+4. Dispatch qa-engineer → functional smoke verify after each refactor batch (golden path still works, no regression in interactive flows)
+5. Dispatch auditor → AFTER metrics: re-run same tools, prove improvement (less duplication, lower complexity, fewer dead exports)
+6. Dispatch reviewer → static review on diff (intent preserved, no behavioral drift)
+7. Dispatch git-ops → staged PRs (small, reviewable chunks)
+8. Completion report with before/after metrics — refactoring without measurable improvement = wasted effort, flag and discuss
 ```
 
 ### Security Audit
 ```
-1. Dispatch reviewer (security lead) → full security audit (OWASP, threat model, deps, secrets, configs)
-2. Dispatch architect → architecture-level findings
-3. Dispatch backend + frontend + devops → parallel fixes
-4. All → reviewer re-validation
-5. Audit report with severity ratings
+1. Dispatch reviewer (security lead) → full static security audit (OWASP, threat model, deps CVE, secrets, configs)
+2. Dispatch auditor → security-adjacent runtime testing:
+   - Bucket C: endpoint hammering (SQL-injection-shaped strings, malformed JSON, oversized payload, expired token, missing auth) — surfaces what static OWASP misses
+   - Bucket D: failure injection on .dev-squad/staging-env (DB drop, network drop) — surfaces broken graceful degradation
+   - Bucket A: config drift — env validator coverage, CORS not wildcard, TLS chain
+3. Dispatch qa-engineer → auth flow end-to-end live test (register → login → token in cookie → protected → refresh → logout) + browser console for token leaks
+4. Dispatch architect → architecture-level findings
+5. Dispatch backend + frontend + devops → parallel fixes
+6. All → reviewer re-validation + qa-engineer re-verify auth + auditor re-run impacted buckets
+7. Audit report with severity ratings (synthesized by reviewer from all 3 lanes)
 ```
 
 ### Data Migration
 ```
 1. Dispatch architect → strategy + rollback plan
-2. Dispatch backend → scripts + validation
-3. Dispatch devops → staging + backup
-4. Dispatch reviewer → dry-run validation
-5. Go/no-go decision
+2. Dispatch backend → scripts + validation (up + down migrations)
+3. Dispatch auditor → migration safety scan (Bucket B):
+   - NOT NULL on tables >1M rows without batched backfill = P0
+   - Missing CONCURRENTLY on CREATE INDEX for hot tables = P1
+   - ACCESS EXCLUSIVE locks held during migration = P1
+   - Estimated lock duration via pg_class.reltuples + per-row time
+4. Dispatch devops → staging environment + backup verification
+5. Dispatch reviewer → dry-run validation, schema diff review, security check on new permissions
+6. Dispatch qa-engineer → run migration on staging, hit endpoints during/after, verify zero downtime
+7. Dispatch auditor → post-migration: re-run pool/leak/slow query check, verify no regression
+8. Go/no-go decision based on auditor's safety scan + qa-engineer's runtime verification
 ```
 
 ### Performance Optimization
@@ -275,10 +296,15 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 ```
 1. Dispatch architect → full architecture + tech stack + ADR
 2. Dispatch devops → scaffolding + CI/CD + environments + secrets
-3. Dispatch backend + frontend → initial implementation (parallel)
-4. Dispatch reviewer → initial review + standards enforcement
-5. Dispatch git-ops → repo setup + branch protection + templates
-6. Update CLAUDE.md with project conventions
+3. Dispatch auditor → POST-SCAFFOLD audit (before any feature code):
+   - Bucket A: config drift (.env.example vs .env.template consistency, env validator stub present, docker compose config parses, /health endpoint responds, CORS not wildcard in prod config, TLS chain valid for staging)
+   - Catch scaffolding mistakes before they compound
+4. Dispatch backend + frontend → initial implementation (parallel)
+5. Dispatch reviewer → initial review + standards enforcement (security baseline, no `any`, error envelope shape)
+6. Dispatch qa-engineer → smoke test the scaffold (boot + /health + /ready + frontend renders root)
+7. Dispatch git-ops → repo setup + branch protection + templates
+8. Update CLAUDE.md with project conventions
+9. Set `.dev-squad/staging-env` flag if isolated staging exists (enables auditor failure injection in future audits)
 ```
 
 ### Zero-to-Ship (Full Project Build)
@@ -448,23 +474,103 @@ Task 6d: Phase 5 metrics report synthesis (reviewer) → depends on Task 6a + 6b
 Task 7: Deploy staging + ship (devops + git-ops) → depends on Task 6d
 ```
 
+## Diff-Scope Dispatch Heuristic (apply BEFORE every review dispatch)
+
+Not every change needs full 3-way review. Dispatching reviewer + qa-engineer + auditor on a typo fix is waste. Use this heuristic to decide which agents to dispatch per task.
+
+### Decision table (check in order; first match wins)
+
+| Diff scope | Dispatch | Why |
+|---|---|---|
+| **Trivial**: typo, comment-only, docs-only, formatting | reviewer (light pass) OR skip review entirely if user opts in | No code semantics changed |
+| **Tiny**: <50 LOC, no new endpoint, no new UI element, no auth/payment/data | reviewer only | Static review sufficient |
+| **New endpoint** (backend) | reviewer + **auditor** (Bucket C: hammer the new endpoint with valid/invalid/malformed/auth-missing) | New endpoint = new attack surface + new 500 risk |
+| **New interactive UI** (button, form, modal, link) | reviewer + **qa-engineer** (verify wired: onClick exists, form submits, modal closes) | Static review can't see runtime button-without-action |
+| **DB schema / queries / migrations / config** | reviewer + **auditor** (Bucket B: pool, slow query, index coverage, migration safety scan) | DB-class bugs need real query log + EXPLAIN |
+| **Auth / payment / data flow change** | full 3-way (reviewer + qa-engineer + auditor) | Critical path; runtime + static + metrics all required |
+| **Refactor: ≥200 LOC, multi-file, no behavior change intended** | reviewer + **auditor** (before/after metrics: did duplication/complexity actually drop?) + **qa-engineer** (golden path still works = no behavior drift) | Refactor without measurable improvement = wasted; verify intent |
+| **Bug fix < 50 LOC** | reviewer + **qa-engineer** (verify the bug is gone in runtime) | Static review confirms intent; runtime verifies behavior |
+| **Performance fix** | **auditor** (re-run impacted Phase 5.6/5.7 metrics, prove improvement) + reviewer (no security regression) | Need quantitative proof of improvement |
+| **Pre-merge final gate for full feature** | full 3-way | Last chance to catch everything |
+| **Hotfix to production** | reviewer (security check) + qa-engineer (smoke test golden path) — skip auditor unless fix touches DB/perf | Speed matters; auditor full run is too slow for hotfix path |
+
+### Coordinator decision protocol
+
+Before any review dispatch:
+1. Look at the diff (`git diff` or implementer's reported scope)
+2. Apply heuristic table — find first matching row
+3. Log decision to `.dev-squad/dispatch-log.md` (see Dispatch Decision Log section)
+4. Dispatch the agents listed; skip the others
+5. If user explicitly requests "full review" or "thorough", override to full 3-way regardless of scope
+
+**Default for ambiguous cases**: lean toward MORE coverage (3-way), not less. Cost of missed bug > cost of extra dispatch.
+
+## Dispatch Decision Log
+
+To enable audit + tuning of the Diff-Scope Heuristic, log every review dispatch decision to `.dev-squad/dispatch-log.md`. Append-only — one entry per dispatch decision.
+
+### Entry format
+
+```markdown
+## {ISO timestamp} — {task ID or PR # or feature name}
+
+**Diff stats:** {LOC changed} lines across {N} files
+**Areas touched:** {backend|frontend|db|infra|docs|...}
+**New endpoints:** {count} | **New UI elements:** {count} | **Auth/payment touched:** {yes|no}
+**Heuristic row matched:** {row from Diff-Scope Heuristic table}
+
+**Agents dispatched:**
+- reviewer: {yes|no} — {why}
+- qa-engineer: {yes|no} — {why}
+- auditor: {yes|no} — {why}
+
+**Outcome:**
+- reviewer findings: {count P0/P1/P2}
+- qa-engineer findings: {count P0/P1/P2}
+- auditor findings: {count P0/P1/P2}
+- Time to complete review: {minutes}
+
+**Heuristic accuracy assessment** (filled at Phase 7 LEARN):
+- Was the dispatch right? {yes|no|partial}
+- If wrong: which agent should have been added/skipped? {note}
+```
+
+### Why log this
+
+- **Audit**: prove coordinator follows heuristic, doesn't auto-3-way-everything (waste) or auto-reviewer-only (gap).
+- **Tuning**: Phase 7 LEARN reads the log to find patterns — "we kept missing DB issues because heuristic treated 60-LOC migration as tiny". Heuristic table updates based on miss patterns.
+- **User trust**: user can review dispatch decisions and challenge them.
+
+### What NOT to log
+
+- Agent's own internal turn-by-turn work (that's their problem).
+- Sensitive data from the diff (just metadata).
+
+### Cleanup
+
+`.dev-squad/dispatch-log.md` rolls over per build. For long-running projects, archive to `.dev-squad/dispatch-log-archive/{date}.md` weekly. Reviewer reads the active log + recent archive during Phase 7 LEARN.
+
 ## Two-Stage Review Protocol (Both Modes)
 
-Every deliverable goes through TWO review passes before completion:
+Every NON-TRIVIAL deliverable goes through TWO review passes before completion. For trivial changes (per heuristic above), one pass with reviewer is enough.
 
 ```
 1. SPEC COMPLIANCE REVIEW
-   - Dispatch reviewer (or haiku judge agent for cost efficiency)
+   - Apply Diff-Scope Dispatch Heuristic to choose agents
+   - For new endpoints/UI: dispatch qa-engineer (functional verification = ground truth for spec compliance)
+   - For static spec-doc match: dispatch reviewer (or haiku judge agent for cost efficiency on simple gates)
    - Check: Does implementation match requirements line-by-line?
    - Check: All acceptance criteria met?
    - If issues → implementer fixes → re-review (loop until pass)
 
 2. CODE QUALITY REVIEW
-   - Dispatch reviewer for full code quality check
-   - Check: Patterns, security, performance, tests, OWASP
+   - Apply Diff-Scope Dispatch Heuristic to choose agents
+   - For DB/perf/large diff: dispatch auditor (real metrics)
+   - For security/static patterns: dispatch reviewer (OWASP, type safety, error handling)
+   - Check: Patterns, security, performance, tests, OWASP, complexity
    - If issues → implementer fixes → re-review (loop until pass)
 
-3. ONLY mark task complete after BOTH passes approve
+3. ONLY mark task complete after BOTH passes approve from all dispatched agents
 ```
 
 ## Phase Gate Decision (Judge Pattern)

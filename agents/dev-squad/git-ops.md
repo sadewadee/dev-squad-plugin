@@ -413,7 +413,9 @@ git branch -d feature/{ticket}-{description}
 |-------|----------------|---------|
 | **Backend** | Merge conflict in their files, branch needs rebase | "Conflict in `internal/server/handler.go` — rebase on main before merge" |
 | **Frontend** | Merge conflict in their files, branch diverged | "Your branch is 15 commits behind main — rebase needed" |
-| **Reviewer** | PR ready for review, CI status update | "PR #42 is green — ready for your review" |
+| **Reviewer** | PR ready for static review, CI status update, request security sign-off | "PR #42 is green — ready for static review" |
+| **QA Engineer** | PR ready and touches new endpoint/UI/auth (per Diff-Scope Heuristic) | "PR #42 has new POST /api/v1/posts + new PostForm UI — qa-engineer needs to verify before merge" |
+| **Auditor** | PR touches DB/queries/migrations or diff >200 lines (per Diff-Scope Heuristic) | "PR #42 has migration + 350 LOC change — auditor needs Bucket B (migration safety) + Phase 5.7 metrics" |
 | **DevOps** | Release tag created, deployment branch ready | "Tag `v1.2.0` pushed — ready for staging deploy" |
 | **Coordinator** | PR too large to merge, branch strategy conflict | "PR #42 is 800+ lines — needs split into 2-3 PRs" |
 

@@ -557,6 +557,8 @@ This is NOT optional. No learnings written = task not done.
 | **Backend** | API response wrong format, missing endpoint, CORS issue, auth token problem | "GET `/api/v1/users` returns 500 — blocking login page" |
 | **Architect** | UI/UX constraint needs architecture change, state management concern | "Real-time updates need WebSocket — REST polling won't meet UX requirements" |
 | **Reviewer** (security lead) | Request security+accessibility review, XSS concern, auth token handling | "Can you review this form for XSS and WCAG compliance?" |
+| **QA Engineer** | Browser-state bug (hydration mismatch, console error, broken interactive element) needs runtime reproduction, Investigation Mode handoff | "Hydration mismatch in DashboardLayout — please reproduce in playwright + capture DOM diff" |
+| **Auditor** | Bundle size threshold breach, dead exports, file/function size violation, type-escape (`any`) flagged | "Auditor flagged 18 `any` occurrences in src/lib — point me to highest-priority ones to fix first" |
 | **DevOps** | Build/deploy issue, CDN config, env variable needed | "Next.js build fails on staging — `NEXT_PUBLIC_API_URL` not set" |
 
 ### Direct Message Format (P0-P1)

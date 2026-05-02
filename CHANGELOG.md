@@ -2,6 +2,62 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.1] — Wire qa-engineer + auditor into all daily-routine workflows
+
+Patch release. v4.7.0 introduced qa-engineer + auditor agents and 3-way Phase 5 review for zero-to-ship, but only Bug Fix and Performance Optimization daily workflows actually dispatched the new agents. Other daily workflows (Feature Development, Refactoring, Security Audit, Data Migration, New Project Setup) and per-task two-stage review still routed exclusively to reviewer — meaning the new agents only fired during the heaviest workflow (zero-to-ship). User reported this gap; v4.7.1 closes it.
+
+This release also wires cross-agent communication so other agents know **when** to escalate to qa-engineer or auditor (previously they could only contact reviewer for QA/perf concerns). And adds a **Diff-Scope Dispatch Heuristic** so coordinator picks the right combo of agents per task — not always 3-way (waste) and not always reviewer-only (gap).
+
+### Added — Diff-Scope Dispatch Heuristic (`coordinator.md`)
+Decision table coordinator applies BEFORE every review dispatch. Picks reviewer / qa-engineer / auditor combo based on diff scope:
+- Trivial / tiny → reviewer only (or skip)
+- New endpoint → reviewer + auditor (Bucket C hammer)
+- New interactive UI → reviewer + qa-engineer (verify wired)
+- DB schema/queries/migrations → reviewer + auditor (Bucket B safety + perf)
+- Auth/payment/data flow → full 3-way
+- Refactor ≥200 LOC → reviewer + auditor (before/after metrics) + qa-engineer (no behavior drift)
+- Bug fix <50 LOC → reviewer + qa-engineer (verify bug gone in runtime)
+- Performance fix → auditor (prove improvement) + reviewer (no security regression)
+- Pre-merge final gate → full 3-way
+- Hotfix to production → reviewer + qa-engineer (skip auditor for speed)
+
+Default for ambiguous: lean MORE coverage, not less. Cost of missed bug > cost of extra dispatch.
+
+### Added — Dispatch Decision Log (`coordinator.md`)
+Coordinator writes append-only entries to `.dev-squad/dispatch-log.md` per dispatch decision: diff stats, areas touched, heuristic row matched, agents dispatched + why, outcome (P0/P1/P2 counts per agent), time to complete. Phase 7 LEARN reads the log + assesses heuristic accuracy ("was the dispatch right?"). Updates heuristic table based on miss patterns. Rolls over per build; weekly archive for long-running projects.
+
+### Changed — 5 daily workflows updated (`coordinator.md`)
+- **Feature Development** — pre-merge review now applies Diff-Scope Heuristic; reviewer always + qa-engineer for new endpoints/UI + auditor for DB/large diff
+- **Refactoring** — auditor BEFORE baseline metrics + AFTER metrics (prove improvement) + qa-engineer (no behavior drift) + reviewer (intent preserved)
+- **Security Audit** — reviewer (static OWASP) + auditor (Bucket C endpoint hammer + Bucket D failure injection + Bucket A config drift) + qa-engineer (auth flow live test)
+- **Data Migration** — auditor migration safety scan (Bucket B): NOT NULL on big tables, missing CONCURRENTLY, ACCESS EXCLUSIVE locks; qa-engineer runs migration on staging + hits endpoints during; auditor post-migration regression check
+- **New Project Setup** — auditor post-scaffold audit (Bucket A: config drift, env validator, docker compose parse, /health, CORS, TLS) + qa-engineer smoke test scaffold
+
+### Changed — Two-Stage Review Protocol (`coordinator.md`, `commands/build.md`)
+- Spec compliance pass: qa-engineer for new endpoint/UI (functional verification = ground truth); reviewer for static spec match
+- Code quality pass: auditor for DB/perf/large diff (real metrics); reviewer for security/patterns
+- Per-task review uses heuristic; not always reviewer-only
+
+### Added — cross-agent communication tables now know about qa-engineer + auditor
+- `architect.md` "Who You Talk To" — added qa-engineer (vague acceptance criteria) + auditor (architecture-level perf concern from audit)
+- `backend.md` "Who You Talk To" — added qa-engineer (functional verification request, runtime trace) + auditor (DB perf, migration safety)
+- `frontend.md` "Who You Talk To" — added qa-engineer (browser-state bug) + auditor (bundle size, dead exports, type-escape)
+- `devops.md` "Who You Talk To" — added qa-engineer (staging ready) + auditor (config drift, pool/max_connections mismatch)
+- `git-ops.md` "Who You Talk To" — added qa-engineer (PR touches new endpoint/UI per heuristic) + auditor (PR touches DB/migration per heuristic)
+
+### Changed — `skills/dev-squad/SKILL.md` cross-references
+- **Agent Communication Matrix** updated 7×7 → 10×10 (added qa-engineer, auditor, writer rows/columns)
+- **Common Cross-Agent Scenarios** table — added 17 new scenarios involving qa-engineer/auditor (500 leak detection, hydration mismatch, button without onClick, slow query, missing index, pool sanity, config drift, complexity threshold, Investigation Mode handoff, PR-ready dispatches per heuristic)
+- **v3.0 Orchestration Patterns** table — added "3-Way Phase 5 Review" and "Diff-Scope Dispatch Heuristic" rows; clarified Multi-Angle Review is reviewer's static lane within Phase 5
+- **Schema Design workflow diagram** — auditor migration safety scan + reviewer security check (was reviewer doing both)
+- **Migration workflow diagram** — auditor migration safety pre-deploy + qa-engineer staging runtime verification + auditor post-migration regression check
+
+### Why this patch
+v4.7.0 audit (commissioned by user before release) revealed 18 findings across 5 P0 (workflow gaps), 9 P1 (cross-agent communication gaps), 3 P2 (SKILL.md diagram drift), 1 P3 (pattern table). Without this patch, daily routine usage of dev-squad effectively bypassed the new agents — they only ran during full zero-to-ship builds, which is the rarest workflow. v4.7.1 closes all 18 findings.
+
+### Backward compatibility
+No breaking changes. Existing zero-to-ship Phase 5 dispatch unchanged. Bug Fix and Performance Optimization workflows unchanged (already wired in v4.7.0). Other workflows now dispatch additional agents per heuristic — slight runtime increase per workflow (+sonnet calls), but each lane is bounded and parallelizable. No opus impact.
+
 ## [4.7.0] — Agent split: qa-engineer + auditor; multi-language metrics; DB perf execution
 
 This release splits execution responsibilities out of `reviewer` into two new agents and extends Phase 5 to a 3-way parallel review (static + runtime + automated). Closes the v4.6 reviewer overload (~770 lines, 9 distinct roles) and adds polyglot support (Go + Python in addition to JS/TS), database performance execution (slow query log + connection leak + migration safety + pool sanity), and API pattern compliance enforcement (REST/GraphQL/gRPC anti-patterns).

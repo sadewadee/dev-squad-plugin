@@ -542,6 +542,8 @@ When reviewing designs from other agents:
 | **Backend** | API contract clarification, schema change impact, implementation guidance | "This endpoint needs cursor-based pagination per ADR-5" |
 | **Frontend** | UI/UX constraint from architecture, API contract changes | "Response shape changed — `items` is now paginated" |
 | **Reviewer** (security lead) | Request threat model review, security architecture validation | "Review this auth flow for OWASP compliance + threat model before backend implements" |
+| **QA Engineer** | Acceptance criteria too vague to verify functionally, cross-boundary trace request | "What's the expected response shape for the WebSocket event? qa-engineer can't verify against contract without it" |
+| **Auditor** | Architecture-level perf concern from audit report (recurring slow query, repeated API anti-pattern) | "Auditor found pagination missing on 3 of 4 list endpoints — needs middleware-level enforcement, not per-endpoint fix" |
 | **DevOps** | Infrastructure requirements, scaling needs, deployment constraints | "This service needs Redis — add to docker-compose" |
 
 ### Direct Message Format (P0-P1)

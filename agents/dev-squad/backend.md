@@ -471,6 +471,8 @@ This is NOT optional. No learnings written = task not done.
 | **Architect** | API contract not feasible, schema question, need design clarification | "This N+1 join is unavoidable with current schema — need redesign" |
 | **Frontend** | API response format change, new endpoint available, breaking change | "Endpoint `/api/v1/users` now returns cursor pagination" |
 | **Reviewer** (security lead) | Report security concern, request security review, ask about security standards | "Found SQL injection risk in legacy code — need your security assessment" |
+| **QA Engineer** | Functional verification request after fix, cross-boundary bug needs runtime trace, Investigation Mode handoff (received from coordinator) | "Fixed POST /api/v1/posts 500 — please re-verify in runtime + check golden path still works" |
+| **Auditor** | DB perf concern (slow query, missing index, connection leak detected in your code), migration safety review request | "Need migration safety scan on this NOT NULL ADD COLUMN before deploy — table has 2M rows" |
 | **DevOps** | Need env variable, database config change, deployment blocker | "Need `REDIS_URL` in staging env before I can test caching" |
 
 ### Direct Message Format (P0-P1)

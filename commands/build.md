@@ -154,11 +154,19 @@ Agent tool with:
     - Follow architect's design document and API contracts
     - TDD enforced — tests written before implementation
     - SMART MODEL ROUTING: Use opus for auth/integration/cross-package tasks, sonnet for simple CRUD/isolated components
-    - Per task, use the two-stage review pattern:
+    - Per task, use the two-stage review pattern WITH Diff-Scope Dispatch Heuristic (see coordinator.md "Diff-Scope Dispatch Heuristic"):
       1. Implementer builds + tests + self-reviews
-      2. Dispatch spec-compliance reviewer → check against requirements (loop until pass)
-      3. Dispatch code-quality reviewer → check patterns/security (loop until pass)
-      4. Only mark task complete after BOTH reviews pass
+      2. Coordinator looks at task diff and applies heuristic to decide which agents to dispatch
+      3. Spec-compliance pass:
+         - New endpoint or UI → dispatch qa-engineer (functional verify against acceptance criteria)
+         - Static spec match → dispatch reviewer (or haiku judge for simple pass/fail)
+         - Loop until pass
+      4. Code-quality pass:
+         - DB/perf/large diff → dispatch auditor (real metrics)
+         - Security/patterns → dispatch reviewer (OWASP, type safety)
+         - Loop until pass
+      5. Only mark task complete after dispatched agents approve
+      6. Log dispatch decision to .dev-squad/dispatch-log.md (heuristic row used + agents dispatched + outcome)
     - SELF-HEALING: After each task run tests — if fails, diagnose → fix → retry (max 5, use opus for complex fixes)
     - After ALL tasks: run full integration test suite, self-healing if needed
 

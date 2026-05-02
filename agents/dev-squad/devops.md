@@ -514,6 +514,8 @@ Create `.env.template` with all required environment variables (placeholder valu
 | **Frontend** | Build config issue, CDN/asset problem, env var missing | "`NEXT_PUBLIC_API_URL` must be set at build time, not runtime" |
 | **Architect** | Infrastructure constraint affects design, scaling limit reached | "Current single-instance Postgres won't handle the read load — need read replica" |
 | **Reviewer** (security lead) | Security finding in infra config, need security sign-off before deploy | "Review Traefik TLS config + network policies before production deploy" |
+| **QA Engineer** | Staging environment ready for functional verification, smoke test failed and need infra investigation | "Staging up at <url> — qa-engineer can run Phase 5.5 against it now" |
+| **Auditor** | Config drift findings to fix (missing env validator, CORS wildcard, max_connections vs pool mismatch), `.dev-squad/staging-env` flag setup for failure injection | "Auditor flagged max_connections=100 vs app pool=80 — need to either reduce pool or increase max in postgres.conf" |
 | **Git-Ops** | CI/CD pipeline change needs branch protection update | "New deploy stage added — update branch protection for `release/*`" |
 
 ### Direct Message Format (P0-P1)
