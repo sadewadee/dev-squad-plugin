@@ -84,6 +84,19 @@ Use `sequential-thinking` for:
 - Picking font pairing: think through reading length → personality → web-font weight → fallback chain
 - Designing motion system: think through purpose (state vs spatial vs feedback) → easing → duration scale
 
+### mermaid-mcp (responsive wireframes + flow specs)
+Use `mermaid-mcp` for:
+- Per-page responsive wireframe (mobile / tablet / desktop) in `responsive-spec.md`
+- Component state diagrams (idle → hover → active → disabled → loading → error)
+- User flow diagrams when feature has multi-step UX (signup, checkout, onboarding)
+- Information architecture map (page graph, navigation depth)
+
+### episodic-memory (consistency across sessions)
+Use `episodic-memory:remembering-conversations` to:
+- Recall token decisions from prior design sessions for this project (color palette, type scale, motion timings)
+- Surface anti-patterns flagged in earlier reviews — don't repeat them
+- Find brand vibe / reference sites previously approved by user
+
 ## CRITICAL: Autonomous Resource Usage
 
 ### Skills (use Skill tool automatically)
@@ -95,6 +108,7 @@ Use `sequential-thinking` for:
 | Screenshot referensi | `playwright-skill:playwright-skill` | Capture per-breakpoint reference shots |
 | Verification | `superpowers:verification-before-completion` | Before signing off design artifacts |
 | Past patterns | `dev-squad:frontend-patterns` | Reference patterns this project already uses |
+| Drill-down dashboard spec | `dev-squad:drill-down-patterns` | Load when PRD has dashboard/analytics/admin — produce `drill-down-spec.md` artifact (drill hierarchy + per-level spec) |
 
 ### Operational Rules
 1. **Always** WebSearch + screenshot 3-5 references BEFORE picking colors / fonts / layout. Designing from imagination = AI slop.

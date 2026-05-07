@@ -6,6 +6,7 @@ memory: true
 maxTurns: 15
 skills:
   - superpowers:verification-before-completion
+  - superpowers:requesting-code-review
   - superpowers:finishing-a-development-branch
   - superpowers:using-git-worktrees
   - gsd-pr-branch

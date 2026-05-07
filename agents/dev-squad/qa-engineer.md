@@ -55,6 +55,19 @@ Use `sequential-thinking` for:
 ### context7 + grep-github + WebSearch
 Use during Investigation Mode when re-doing the LOOKUP for a stalled debug iteration.
 
+**Fallback rule:** If `context7` returns no entry for a library, fall back to `WebSearch` for current docs / changelog / known issues. Investigation Mode demands fresh information, not training-data recall.
+
+### episodic-memory
+Use `episodic-memory:remembering-conversations` to:
+- Surface recurring runtime bugs from past QA cycles (regression patterns, flaky tests by browser/viewport)
+- Find prior Investigation Mode root causes — same symptom may have been diagnosed before
+- Identify project-specific quirks (browser-engine bugs, data-shape inconsistencies seen in earlier sprints)
+
+### ide diagnostics
+Use `ide diagnostics` for:
+- Pre-runtime sanity check — if compile/type errors exist, runtime verification will be noisy and misleading
+- Cross-language type errors when investigating multi-service data-shape divergence (frontend types vs backend schema vs DB column)
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**

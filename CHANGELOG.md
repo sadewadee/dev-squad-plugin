@@ -2,6 +2,112 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.11.0] — SaaS-class scope: multi-tenancy, billing, drill-down dashboards
+
+**Why:** dev-squad's zero-to-ship workflow produced solid MVP web apps but lacked the patterns needed for SaaS-class applications: multi-tenancy, subscription billing, plan-based access control, API key management, outbound webhooks, audit logs, admin dashboards with drill-down. The user's target shifted to "selain zero-to-ship juga bisa membuat SaaS yang lengkap termasuk drill down" — and analysis of a production SaaS reference (lastsaas — 22 API handlers, 15 validated collections covering tenants/users/plans/billing/webhooks/audit) confirmed 18 SaaS subsystems were not covered by existing skills.
+
+This release fills that gap with 2 substantial new skills + Phase 0 SaaS mode detection. Multi-tenancy is an architectural decision that must be locked early — retrofit later = cross-tenant data leak (P0 security incident). The mode is auto-detected from PRD keywords with explicit user confirmation.
+
+### Added — `skills/saas-patterns/SKILL.md`
+
+15 sections covering production-class SaaS backend:
+
+1. **Multi-tenancy** — 4 tenancy strategies (shared DB / schema-per-tenant / DB-per-tenant / hybrid), tenant model, RLS policies, tenant context middleware, mandatory cross-tenant isolation test suite
+2. **Subscription billing (Stripe)** — full lifecycle, webhook handler with idempotency, plan change with proration, promo codes
+3. **Plan-based access / entitlements** — entitlement check pattern, middleware-based gating, seat counting
+4. **API key management** — secure creation (full key shown once), SHA-256 hashing, scope-based authorization, revocation
+5. **Outbound webhooks** — signed delivery (HMAC-SHA256 + timestamp), retry with exponential backoff (8 attempts over 7 days), DLQ + auto-disable, customer verification snippet
+6. **Audit logs** — separate from system log, immutable, hot/cold tier strategy, PII redaction
+7. **In-app notifications & messages** — multi-channel delivery (realtime + email + push), per-user preferences
+8. **Transactional email** — template registry, provider abstraction (Resend/SendGrid/SES swappable)
+9. **Hybrid validation** — two-layer defense (app-level Zod/struct tags + DB-level CHECK constraints / JSON Schema). Sync test pattern from lastsaas
+10. **Admin scope** — root-tenant API key OR dedicated admin_users; separate `/admin/api/v1/*` namespace
+11. **Usage events / metering** — for usage-based billing or quota enforcement; aggregation strategy
+12. **Runtime config / feature flags** — per-user > per-tenant > global resolution, cache invalidation via pub/sub
+13. **SSO / multi-IdP** — ssoConnections model, domain-routed login, enforcement flag
+14. **White-label / tenant branding** — custom CSS sandboxing, custom domain support
+15. **Admin drill-down endpoints** — REST hierarchy pattern, time-series response shape, cursor pagination
+
+Plus comprehensive anti-pattern table (10 SaaS anti-patterns + correct alternatives).
+
+### Added — `skills/drill-down-patterns/SKILL.md`
+
+11 sections covering drill-down dashboard frontend:
+
+1. **Five drill levels** — KPI cards → time-series → segment table → entity detail → event detail. Concrete example with deep-linkable URLs at each level
+2. **URL state architecture** — Zod-typed search params hook (`useDashboardSearch`), shareability rules
+3. **Breadcrumb with state preservation** — every step carries relevant filters
+4. **Time-series with brush + zoom** — recharts/visx pattern with debounced URL update, granularity auto-selection table
+5. **Virtualized tables** — TanStack Virtual + TanStack Table pattern, cursor-based infinite scroll for 10k+ rows
+6. **Cross-filter coordination** — Zustand store + URL bridge (subscribeWithSelector), composable filter composition
+7. **Empty/loading/error states per drill level** — skeleton matching layout, error class-specific recovery, empty with action
+8. **Permission-aware drill items** — PermissionGate component, locked-state visibility for discoverability
+9. **Real-time updates** — polling vs SSE vs WebSocket decision matrix, "last updated" indicator pattern
+10. **Performance considerations** — bundle splitting per level, memoization rules, React Query stale time per level type, Suspense boundary strategy, optimistic UI for mutations
+11. **Designer's drill-down spec** — Phase 3.5 artifact template (mermaid hierarchy + per-level spec + filter model + anti-patterns)
+
+### Added — Phase 0 Step 2.5: SaaS Mode Detection (`commands/build.md`)
+
+Auto-detect SaaS scope from PRD/description keywords (subscription/tenant/billing/plans/multi-tenant/team workspace/admin panel/drill down/analytics dashboard/white-label) — if 2+ match OR `--saas` flag → coordinator runs explicit confirmation via AskUserQuestion (full SaaS / SaaS-without-drill-down / standard app). Decision recorded in `.dev-squad/master-plan.md` and locked. If active, architect MUST produce ADR-001 to ADR-004 (tenancy, billing, plan structure, admin scope) before backend codes.
+
+### Changed — Phase 3 SCAFFOLD + Phase 3.5 DESIGN extensions (`commands/build.md`)
+
+- Phase 3 SCAFFOLD: when SaaS mode active, devops scaffolds additional backend modules (`tenants/plans/billing/webhooks/api-keys/audit-log/notifications/admin`) referencing saas-patterns
+- Phase 3.5 DESIGN: when SaaS + dashboard/analytics scope, designer ALSO produces `drill-down-spec.md` artifact (5th artifact alongside the existing 4)
+
+### Changed — agent prompts (5 files, conditional skill loading)
+
+- **coordinator.md** — added `dev-squad:saas-patterns` and `dev-squad:drill-down-patterns` to Skills Selection Matrix (conditional load on SaaS mode)
+- **architect.md** — added `dev-squad:saas-patterns` (load when producing ADR-001 to ADR-004)
+- **backend.md** — added `dev-squad:saas-patterns` (load for SaaS-class backend implementation)
+- **frontend.md** — added `dev-squad:drill-down-patterns` (load for drill-down dashboards)
+- **designer.md** — added `dev-squad:drill-down-patterns` (load to produce drill-down-spec.md artifact)
+
+Skills are NOT in frontmatter `skills:` (would auto-load every dispatch and bloat context). They're in body Skill Selection Matrix — invoked on demand when SaaS mode is active.
+
+### Reference architecture credit
+
+Patterns inspired by analysis of:
+- **lastsaas** (Jon Radoff) — production SaaS Go reference: 22 API handlers, 15 validated collections, hybrid validation pattern (Go struct tags + MongoDB JSON Schema sync)
+- **memberstack-claude-boilerplate** — Next.js auth middleware + plan-based access pattern
+- **Composio audit-project** — multi-agent review iteration loop pattern
+- **Anthropic frontend-design plugin** — visual design quality discipline
+
+Zero new MCP/plugin installs required.
+
+### Migration
+
+None. Auto-update via `auto-update.sh` on next session start. Existing zero-to-ship workflow unchanged for non-SaaS projects (Phase 0 Step 2.5 simply doesn't trigger if no SaaS keywords detected).
+
+## [4.10.0] — Expanded MCP utilization across all 11 agents (zero new installs)
+
+**Why:** A baseline audit of all 11 agent prompts revealed under-utilization of MCPs that were already recommended in CLAUDE.md but not actually triggered by agent prompts. `mermaid-mcp` was only invoked by 3 agents (architect, coordinator, designer-via-body). `episodic-memory` was missing from auditor and qa-engineer where past findings are gold. `ide diagnostics` was scattered. The writer agent was the thinnest of all — only `context7` and `sequential-thinking` mentioned. The `WebSearch` fallback pattern (when `context7` returns no entry) was explicit only in architect.
+
+This release fixes that — pure prompt-level boost, **zero new MCP/plugin installs required**.
+
+### Changed — agent prompts (9 files)
+
+- **`agents/dev-squad/writer.md`** — Major rewrite of MCP ENFORCEMENT. Added: `grep-github` (find production README/microcopy patterns), `mermaid-mcp` (system overview, user journey, auth flow diagrams in docs), `episodic-memory` (brand voice consistency across sessions), `WebSearch` (legal/compliance verification, citation/fact-checking, fallback for stale context7), `claude-md-management` (persist project conventions). Was thinnest agent in MCP utilization — now matches peers.
+- **`agents/dev-squad/auditor.md`** — Added `episodic-memory` (recurring stability patterns, false-positive history, quality metric trends) and `ide diagnostics` (compile-time issues that correlate with runtime instability). Added WebSearch fallback rule.
+- **`agents/dev-squad/qa-engineer.md`** — Added `episodic-memory` (regression patterns, prior Investigation Mode root causes, project-specific quirks) and `ide diagnostics` (pre-runtime sanity check). Added WebSearch fallback rule.
+- **`agents/dev-squad/devops.md`** — Added `mermaid-mcp` (infra topology, CI/CD pipeline, multi-env promotion, failover diagrams) and `ide diagnostics` (YAML/Dockerfile/Terraform/K8s manifest lint). Added WebSearch fallback rule. Updated MCP table.
+- **`agents/dev-squad/reviewer.md`** — Added `superpowers:brainstorming` to skills frontmatter (threat modeling needed exploratory thinking, was referenced in body but not loaded). Added `mermaid-mcp` (threat-surface diagrams, auth flow, privilege graphs). Added WebSearch fallback rule + CVE corroboration via web. Updated MCP table.
+- **`agents/dev-squad/backend.md`** — Added `mermaid-mcp` (API request lifecycle, auth sequence, transaction saga, job pipelines). Added WebSearch fallback rule. Updated MCP table.
+- **`agents/dev-squad/frontend.md`** — Added `mermaid-mcp` (component hierarchy, state flow, data-fetching sequence, interaction state machines) and `ide diagnostics` (TypeScript drift, lint warnings before commit). Added WebSearch fallback rule. Updated MCP table.
+- **`agents/dev-squad/designer.md`** — Promoted `mermaid-mcp` to MCP ENFORCEMENT (was only used in body for wireframes; now explicit for component state diagrams, user flow, IA map). Added `episodic-memory` (token consistency across sessions, anti-pattern recall, prior brand-vibe approvals).
+- **`agents/dev-squad/git-ops.md`** — Added `superpowers:requesting-code-review` to skills frontmatter (git-ops orchestrates PR review handoff but didn't auto-load the skill).
+
+### Why this matters
+
+- **No install bloat.** All MCPs referenced were already recommended in CLAUDE.md — graceful-degrade rule still applies (agents no-op if MCP not installed).
+- **Better diagram production.** mermaid-mcp now wired into 6 more agents — backend produces sequence diagrams, devops produces topology, reviewer visualizes attack surface, etc. Each agent owns a distinct diagram class to avoid overlap.
+- **Better cross-session consistency.** episodic-memory in writer (tone), designer (tokens), auditor (recurring findings), qa-engineer (regression patterns) means the swarm builds project-specific knowledge that survives across runs.
+- **Anti-stale-knowledge discipline.** Explicit WebSearch fallback in 7 agents prevents agents from silently relying on training-data when context7 has no entry.
+
+### Migration
+
+None. Auto-update via `auto-update.sh` on next session start.
+
 ## [4.9.0] — Workflow mapping schema + companion plugin auto-install
 
 **Why:** Knowledge of "which agent runs in which phase, which artifacts gate next phase, which companion skill should be invoked when" was scattered across 5+ files (coordinator.md, build.md, SKILL.md, individual agents). This caused drift and made it hard for users to install the right companion ecosystem. v4.9.0 introduces a **machine-readable runtime contract** + **declarative companion manifest** + **auto-install bootstrap**.

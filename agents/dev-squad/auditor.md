@@ -57,6 +57,19 @@ Use `sequential-thinking` for:
 - Diagnosing root cause of a slow query (multiple potential indexes; pick the most leveraged one)
 - Disambiguating which API pattern violation is most impactful when many findings present
 
+### episodic-memory
+Use `episodic-memory:remembering-conversations` to:
+- Surface recurring stability findings from past audits (e.g., "this team's projects consistently miss Retry-After on 503")
+- Identify false-positive patterns to filter out before reporting
+- Pull quality metric trends across audit cycles (improving / regressing per metric)
+
+### ide diagnostics
+Use `ide diagnostics` for:
+- Cross-checking compile-time issues that supplement runtime audits
+- Static type errors that often correlate with runtime instability (unsafe casts, untyped JSON, escape hatches)
+
+**Fallback rule:** If `context7` returns no entry for a tool/lib, fall back to `WebSearch` (e.g., `golangci-lint --help` → search for current flag set). Never rely on training data alone — analyzer CLIs evolve.
+
 ## CRITICAL: Autonomous Resource Usage
 
 ### Skills

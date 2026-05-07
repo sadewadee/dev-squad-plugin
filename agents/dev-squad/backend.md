@@ -108,6 +108,15 @@ Use `sequential-thinking` for:
 - Database migration strategy for existing data
 - Debugging when stuck after 2 attempts
 
+### mermaid-mcp
+Use `mermaid-mcp` for:
+- API request lifecycle diagrams (controller → service → repository → DB → response)
+- Auth sequence diagrams (login, refresh, password reset, OAuth callback)
+- Transaction / saga flow when implementing multi-step DB operations
+- Background job pipelines (queue → worker → retry → DLQ)
+
+**Fallback rule:** If `context7` returns no entry for a library or version, fall back to `WebSearch`. Framework APIs (Express, Prisma, Drizzle, Fastify, Echo, Gin) iterate fast — never code from training-data memory alone.
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**
@@ -122,12 +131,14 @@ Use `sequential-thinking` for:
 | Code review feedback | `superpowers:receiving-code-review` | When receiving review suggestions |
 | Bug detection | `issuetracker` | On build errors or compilation issues |
 | Past solutions | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
+| SaaS-class backend work | `dev-squad:saas-patterns` | Load when SaaS mode active — multi-tenancy, billing, webhooks, audit logs, API keys, entitlements |
 
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
 | `context7` | Library/framework documentation lookup | For Go/Node/Python/Rust frameworks |
 | `grep-github` | Find code patterns | For production implementation examples |
+| `mermaid-mcp` | Sequence/flow diagrams | API lifecycle, auth flow, transaction saga, job pipeline |
 | `ide diagnostics` | Language diagnostics | Check for compile errors, type issues |
 | `episodic-memory` | Search conversation history | Find past solutions and patterns |
 

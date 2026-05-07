@@ -1,7 +1,7 @@
 {
   "name": "dev-squad",
-  "version": "4.9.0",
-  "description": "Full-stack dev team agent swarm with 11 specialized agents, zero-to-ship capability, and runtime workflow contract. Agents: coordinator (opus), architect (opus), designer (sonnet think_harder), backend (sonnet), frontend (sonnet), reviewer/security-lead (sonnet), qa-engineer (sonnet), auditor (sonnet), devops (sonnet), git-ops (sonnet), writer (sonnet). v4.9.0 adds: workflow JSON schema (.claude-plugin/workflows/) as canonical dispatch contract, companion plugin manifest with auto-install (/dev-squad bootstrap), UI-UX Pro Max integration in designer Phase 3.5, and GSD (get-shit-done) skills wired into 5 agents. Phase 3.5 DESIGN gate prevents AI-slop UI. Phase 5 review is 3-way parallel (static + runtime + automated tooling) with anti-AI-slop Visual Gate. Multi-language quality metrics (JS/TS, Go, Python).",
+  "version": "4.11.0",
+  "description": "Full-stack dev team agent swarm with 11 specialized agents, zero-to-ship capability, and runtime workflow contract. Agents: coordinator (opus), architect (opus), designer (sonnet think_harder), backend (sonnet), frontend (sonnet), reviewer/security-lead (sonnet), qa-engineer (sonnet), auditor (sonnet), devops (sonnet), git-ops (sonnet), writer (sonnet). v4.11.0 adds SaaS-class scope: 2 new skills (saas-patterns covering multi-tenancy/billing/webhooks/audit/api-keys/entitlements; drill-down-patterns covering URL state/breadcrumb/time-series brush/virtualized table/cross-filter) + Phase 0 SaaS mode auto-detect with confirmation + extended Phase 3 SCAFFOLD for SaaS modules + extended Phase 3.5 DESIGN with drill-down spec artifact. Phase 3.5 DESIGN gate prevents AI-slop UI. Phase 5 review is 3-way parallel (static + runtime + automated tooling) with anti-AI-slop Visual Gate. Multi-language quality metrics (JS/TS, Go, Python).",
   "author": {
     "name": "sadewadee"
   },

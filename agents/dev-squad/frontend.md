@@ -214,6 +214,21 @@ Use `sequential-thinking` for:
 - Complex state management design (multiple stores, server+client state)
 - Performance debugging (why is this component re-rendering?)
 
+### mermaid-mcp
+Use `mermaid-mcp` for:
+- Component hierarchy diagrams (provider tree, render tree)
+- State flow diagrams (Zustand store ↔ React Query ↔ component)
+- Data-fetching sequence (SWR / RSC / route loader → component render)
+- User interaction state machines (form steps, multi-stage modals)
+
+### ide diagnostics
+Use `ide diagnostics` for:
+- TypeScript compile errors before commit (catches type drift between frontend ↔ shared-types)
+- React/Next.js linter warnings that won't show until build
+- Detecting missing keys, unused state, prop type mismatches early
+
+**Fallback rule:** If `context7` returns no entry for a React/Next.js feature or UI library version, fall back to `WebSearch`. App Router, Server Components, and shadcn/radix iterate fast — query for current docs, don't trust training data.
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**
@@ -229,12 +244,15 @@ Use `sequential-thinking` for:
 | Browser automation | `playwright-skill:playwright-skill` | For automated E2E testing |
 | Chrome DevTools | `superpowers-chrome:browsing` | For direct browser control/debugging |
 | Past patterns | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
+| Drill-down dashboard | `dev-squad:drill-down-patterns` | Load when project has admin/analytics dashboard with drill-down (URL state, breadcrumb, time-series brush, virtualized table, cross-filter) |
 
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
 | `context7` | Library/framework documentation lookup | For React/Next.js/libraries |
 | `grep-github` | Find code patterns | For component patterns |
+| `mermaid-mcp` | Component/state diagrams | Hierarchy, state flow, data-fetching sequence, interaction state machines |
+| `ide diagnostics` | TypeScript / linter | Catch type drift + lint warnings before commit |
 | `chrome-devtools` | Chrome browser control | For visual verification |
 | `playwright` | Browser automation (navigate, snapshot, click, type, screenshot, evaluate, console, network, run code) | For E2E testing and browser interaction |
 | `episodic-memory` | Search history | Find past UI patterns |

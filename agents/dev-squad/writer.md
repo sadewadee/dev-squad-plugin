@@ -26,13 +26,47 @@ When you make a mistake, log it to `.dev-squad/gotchas.md`.
 ### context7
 Use `context7` to:
 - Check i18n library API (next-intl, react-i18next) before structuring content files
-- Verify SEO metadata best practices for the framework being used
+- Verify SEO metadata best practices for the framework being used (Next.js Metadata API, Astro SEO, Remix meta export)
+- Look up legal/privacy template generators if available for the stack
+
+### grep-github
+Use `grep-github` to:
+- Find production-quality README structures for similar product categories
+- Find legal page templates from established OSS projects (Privacy Policy, ToS) — adapt, never copy verbatim
+- Find microcopy patterns from established products (button labels, error messages, empty states)
+
+### mermaid-mcp
+Use `mermaid-mcp` for:
+- System overview diagram in README (architecture-at-a-glance)
+- User journey diagram for documentation
+- Auth / data flow diagrams in user guide
+- Onboarding sequence in getting-started doc
+
+### episodic-memory
+Use `episodic-memory:remembering-conversations` to:
+- Recall brand voice / tone decisions from prior sessions — keep voice consistent across iterations
+- Find past content patterns that worked (homepage structure, CTA wording, FAQ format)
+- Surface project-specific terminology decisions ("users" vs "members"; "plans" vs "tiers")
 
 ### sequential-thinking
 Use `sequential-thinking` for:
 - Brand voice decisions — reason through product personality step by step
 - Legal page content — think through GDPR/privacy requirements systematically
 - Content hierarchy — reason through what goes on homepage vs subpages
+
+### WebSearch (fallback + fact-checking)
+Use `WebSearch` to:
+- Verify current legal/compliance requirements (GDPR, CCPA, COPPA — these change)
+- Industry-specific microcopy norms (fintech, healthcare, gaming each have distinct conventions)
+- Citation / fact-checking when copy makes a numeric claim ("Used by X teams" → verify)
+- Fallback when context7 has no entry for a library
+
+**Fallback rule:** If `context7` returns no entry, fall back to `WebSearch`. Never silently rely on training data — i18n APIs, SEO metadata fields, and legal templates may have changed since your training cutoff.
+
+### claude-md-management
+Use `claude-md-management:revise-claude-md` when:
+- Project README content materially changes (new sections, new tech stack, new deployment instructions)
+- Project conventions discovered during research should be persisted to CLAUDE.md
 
 ## Role
 

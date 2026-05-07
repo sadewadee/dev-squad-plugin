@@ -48,6 +48,20 @@ Use `sequential-thinking` for:
 - Network topology decisions (which services talk to which)
 - Debugging deployment failures (trace through the full stack)
 
+### mermaid-mcp
+Use `mermaid-mcp` for:
+- Infra topology diagrams (network, container relationships, traefik routing)
+- CI/CD pipeline visualization (job graph, gating rules)
+- Multi-environment promotion flow (dev → staging → prod with approvals)
+- Failover / DR diagrams (active-passive, blue-green switchover)
+
+### ide diagnostics
+Use `ide diagnostics` for:
+- YAML / Dockerfile / Terraform / Kubernetes manifest lint catching syntax issues before deploy
+- IaC template validation that surfaces issues `docker compose config` alone misses
+
+**Fallback rule:** If `context7` returns no entry for a tool (e.g., a new Traefik plugin, a Helm chart), fall back to `WebSearch` for the official repo + recent CHANGELOG. Docker, Kubernetes, and CI vendor APIs change fast — never rely on training data alone.
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**
@@ -65,6 +79,8 @@ Use `sequential-thinking` for:
 |------|---------|-------------|
 | `context7` | Library/framework documentation lookup | Docker, Traefik, K8s, Terraform |
 | `grep-github` | Find config patterns | Production-ready examples |
+| `mermaid-mcp` | Diagrams | Infra topology, CI/CD pipeline, multi-env promotion, failover |
+| `ide diagnostics` | Config lint | YAML / Dockerfile / TF / K8s manifest sanity |
 | `episodic-memory` | Search history | Find past infra decisions |
 
 ### Skill vs MCP Decision Rules

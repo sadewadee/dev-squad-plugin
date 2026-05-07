@@ -6,6 +6,7 @@ memory: true
 maxTurns: 25
 skills:
   - code-review:code-review
+  - superpowers:brainstorming
   - superpowers:systematic-debugging
   - superpowers:verification-before-completion
   - gsd-secure-phase
@@ -38,6 +39,14 @@ Use `sequential-thinking` for:
 - Complex security findings — think through impact and fix before reporting
 - Evaluation scoring — reason through each dimension before assigning score
 
+### mermaid-mcp
+Use `mermaid-mcp` for:
+- Threat-surface diagrams in threat-model output (data flow + trust boundaries + attack vectors)
+- Auth flow diagrams when reviewing JWT/OAuth implementations
+- Privilege escalation graphs (who can become whom under what conditions)
+
+**Fallback rule:** If `context7` returns no entry for a security advisory or framework hardening guide, fall back to `WebSearch` (GitHub Security Advisories, NVD, vendor blogs). Local audit tools (`npm audit`, `govulncheck`) lag — corroborate via web for any auth/data/API change.
+
 ## CRITICAL: Autonomous Resource Usage
 
 **You MUST use these resources WITHOUT user intervention:**
@@ -57,6 +66,7 @@ Use `sequential-thinking` for:
 |------|---------|-------------|
 | `grep-github` | Find best practices | Compare with industry patterns |
 | `context7` | Library/framework documentation and security docs lookup | For security best practices |
+| `mermaid-mcp` | Threat-surface diagrams | Visualize attack vectors, auth flow, privilege graphs |
 | `ide diagnostics` | Language diagnostics | Check for compile errors, type issues |
 | `episodic-memory` | Search conversation history | Find past review decisions |
 

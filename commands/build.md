@@ -66,7 +66,21 @@ Agent tool with:
     - Real-time needed? (WebSocket, SSE, polling?)
     - File uploads needed? (Local, S3, CDN?)
     - Background jobs needed? (Queue, cron, event-driven?)
-    
+
+    **Step 2.5: SaaS Mode Detection** — Detect if this is SaaS-class scope:
+    - Auto-detect from PRD/description keywords: "subscription", "tenant", "billing", "plans", "multi-tenant", "team workspace", "billing/Stripe", "usage-based", "admin panel", "drill down", "analytics dashboard", "white-label"
+    - If 2+ keywords match OR user passed `--saas` flag → enter SaaS confirmation
+    - SaaS confirmation (use AskUserQuestion):
+      ```
+      Question: "I detected SaaS-class scope. Enable saas-patterns + drill-down-patterns skills?"
+      Options:
+        - "Yes, full SaaS scope" → load both skills, scaffold extends to: tenants, plans, billing, webhooks, api-keys, audit-log, notifications, admin
+        - "Yes, but skip drill-down" → load saas-patterns only (no admin dashboard)
+        - "No, just standard app" → skip both skills, standard zero-to-ship
+      ```
+    - Record decision in `.dev-squad/master-plan.md` under section "SaaS Mode" — once locked, do not retrofit (multi-tenancy retrofit = data leak risk)
+    - If SaaS mode active, architect MUST produce ADR-001 to ADR-004 (tenancy strategy, billing model, plan structure, admin scope) in Phase 2 BEFORE backend codes
+
     **Step 3: Write Master Plan** — Create `.dev-squad/master-plan.md`:
     ```markdown
     # Master Plan: {project name}
@@ -134,6 +148,7 @@ Agent tool with:
     - Dispatch devops → create MONOREPO structure (see Monorepo Standard below)
     - Dispatch git-ops → repo init, .gitignore, branch protection, PR template, initial commit
     - Write .dev-squad/workflow-active marker file (now includes `ui_design` phase between scaffold and implement)
+    - **If SaaS mode active** (per Phase 0 Step 2.5): devops scaffolds additional backend modules — `apps/backend/src/{tenants,plans,billing,webhooks,api-keys,audit-log,notifications,admin}/` (or Go-equivalent `internal/...`). Reference `dev-squad:saas-patterns` skill for module contracts.
     - Scaffold MUST include:
       - Monorepo with apps/ (backend, frontend) + packages/ (shared)
       - Workspace package manager (pnpm/npm/go workspaces)
@@ -154,6 +169,7 @@ Agent tool with:
       - `visual-spec.md` (≥3 reference URLs with screenshots in `.dev-squad/design/refs/`, brand vibe, project-specific anti-pattern list)
       - `component-inventory.md` (every component × variants × states including loading/error/empty/focus)
       - `responsive-spec.md` (mermaid wireframes per page × mobile/tablet/desktop)
+    - **If SaaS mode active AND PRD has dashboard/analytics/admin scope:** designer ALSO produces `drill-down-spec.md` (drill hierarchy mermaid + per-level spec for KPI cards, time-series, segment table, entity detail, event detail + filter model + anti-patterns). Reference `dev-squad:drill-down-patterns` skill.
     - Designer uses WebSearch + grep-github + playwright (screenshot references) + chrome-devtools (study real reference styles)
     - Designer's anti-pattern list is project-specific (NOT generic) — must explicitly reject: emoji-as-icon, default shadcn slate primary, AI-cliché purple-to-blue gradients, missing responsive, missing motion
     - SELF-HEALING: If artifacts incomplete (missing concrete values, no reference screenshots, generic anti-pattern list) → re-dispatch designer with specific gap call-out
