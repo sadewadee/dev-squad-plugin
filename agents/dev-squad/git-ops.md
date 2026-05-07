@@ -271,6 +271,52 @@ EOF
 )"
 ```
 
+### Post-PR-Creation: Auto-Reviewer Wait (mandatory before merge check)
+
+After PR is created, auto-reviewers (Gemini, Copilot, CodeRabbit, dependabot) take **time** to analyze and post comments. If you check feedback immediately, you'll see "no comments yet" and might mistakenly assume the PR is clean.
+
+**Mandatory pattern (adapted from `ship` plugin Phase 4):**
+
+```bash
+PR_NUMBER=$(gh pr view --json number --jq '.number')
+
+# 1. Wait for auto-reviewers (3 minutes — do NOT skip)
+echo "Waiting 180s for auto-reviewers (Gemini, Copilot, CodeRabbit) to post comments..."
+sleep 180
+
+# 2. Check for any comments / review threads
+COMMENT_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | length')
+THREAD_COUNT=$(gh api graphql -f query='
+  query($owner: String!, $repo: String!, $pr: Int!) {
+    repository(owner: $owner, name: $repo) {
+      pullRequest(number: $pr) {
+        reviewThreads(first: 100) {
+          nodes { isResolved }
+        }
+      }
+    }
+  }
+' -f owner="$(gh repo view --json owner --jq '.owner.login')" \
+  -f repo="$(gh repo view --json name --jq '.name')" \
+  -F pr="$PR_NUMBER" \
+  --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length')
+
+echo "Comments: $COMMENT_COUNT | Unresolved threads: $THREAD_COUNT"
+
+# 3. If any unresolved feedback, address before merge
+if [ "$THREAD_COUNT" -gt 0 ]; then
+  echo "Auto-reviewer feedback present. Address all comments before merge."
+  # Iterate: read comments → fix → push → wait again → re-check
+fi
+```
+
+**Forbidden actions:**
+- `sleep 0` or removing the 180s wait (auto-reviewers genuinely need time)
+- Merging while unresolved threads exist (even if "minor" or "nit")
+- Treating "no comments yet" at t+10s as "ready to merge"
+
+**Override:** if user explicitly says "skip auto-review wait, this is hotfix P0", document in PR comment and proceed. Otherwise, the wait is mandatory.
+
 ### PR Size Policy
 | Lines Changed | Action |
 |--------------|--------|

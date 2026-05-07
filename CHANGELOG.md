@@ -2,6 +2,90 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.12.0] — Production discipline hardening (security hook + .claude/ pre-seed + Phase 5 iteration + auto-reviewer wait)
+
+**Why:** Analysis of `security-guidance`, `audit-project`, `ship`, and `memberstack` plugins identified 4 production-shipping disciplines dev-squad lacked. Each addresses a real friction or risk in shipping production code from generated builds. Zero new MCP/plugin installs.
+
+### Added — Security pattern PreToolUse hook (`hooks/guard-unsafe-code.py`)
+
+Ports + adapts pattern detection from Composio's `security-guidance` plugin. Blocks/warns 9 dangerous code patterns being written to user files via Edit/Write/MultiEdit:
+
+- `eval(` / `new Function(` — JS code injection
+- `child_process.exec(` / `execSync(` — Node shell injection
+- `dangerouslySetInnerHTML` / `.innerHTML=` / `document.write(` — React/DOM XSS
+- `pickle.load` / `pickle.loads` — Python deserialization RCE
+- `os.system(` — Python shell injection
+- GitHub Actions YAML `${{ github.event.* }}` in `run:` blocks — CI injection
+
+**Modes:**
+- Default: advisory — warn once per session per (file × pattern), log to `.dev-squad/security-warnings.log` in user's project, allow tool to proceed
+- Strict: set `DEV_SQUAD_STRICT_SECURITY=1` → exit 2 (block edit)
+- Disable: set `DEV_SQUAD_DISABLE_UNSAFE_CODE_GUARD=1`
+
+**Allow-list:** test files (`.test.`, `.spec.`, `__tests__/`, `tests/fixtures/`) and dev-squad-plugin's own files are exempt (test code legit uses `eval()` for assertion harnesses; plugin docs reference dangerous patterns to teach about them).
+
+Registered in `hooks/hooks.json` as new `PreToolUse` matcher for `Write|Edit|MultiEdit` (separate from existing Bash matcher for `guard-dangerous-ops.sh`).
+
+### Added — `.claude/` pre-seed in generated apps (Phase 6 SHIP step)
+
+Pattern adopted from memberstack-claude-boilerplate: every dev-squad-built project now ships with self-documenting context for future Claude sessions:
+
+- `CLAUDE.md` (project root, auto-loaded) — project overview, tech stack, how-to-run, where things live, references to detail docs
+- `.claude/architecture.md` — entities + relationships, modules, data flow, auth flow (with mermaid)
+- `.claude/conventions.md` — naming, file org, error handling, validation, testing, commits
+- `.claude/gotchas.md` — known issues, footguns (filtered from `.dev-squad/gotchas.md` to project-relevant only)
+
+**Compound benefit:** every future Claude session on the project loads CLAUDE.md automatically and discovers detail docs in `.claude/`. No re-discovery on each session. Each doc kept under 200 LOC — context, not exhaustive reference.
+
+Writer + architect collaborate during Phase 6 SHIP to produce these. Tightly integrated with existing Phase 7 LEARN's CLAUDE.md update step.
+
+### Changed — `agents/dev-squad/coordinator.md` Phase 5 formal iteration loop
+
+Phase 5 review previously had implicit "ALL P0-P1 must be fixed; re-review after fixes". Now formalized with explicit loop logic:
+
+```
+iter = 1
+while findings_p0_or_p1 exists AND iter <= 5:
+  - Group findings by responsible agent (backend/frontend/devops/writer)
+  - Dispatch agent with file:line + severity + fix instructions
+  - After agent reports done, run verification (reviewer/qa/auditor re-checks the lane that flagged)
+  - If verification PASSES → mark resolved
+    If verification FAILS or test/build breaks → git restore + log iteration + retry
+  - iter++
+If iter > 5 unresolved → escalate to user with: findings, attempts, blast radius, recommendation
+```
+
+**Rollback rule:** if a fix attempt breaks an existing passing test, treat as regression — `git restore` immediately. Don't accumulate broken fixes.
+
+**Anti-thrashing:** if iter N produces verbatim same failure as iter N-1, skip to next escalation tier.
+
+Pattern adopted from Composio's `audit-project` plugin Phase 4-6 iteration loop.
+
+### Changed — `agents/dev-squad/git-ops.md` Auto-Reviewer Wait
+
+Adopted from `ship` plugin Phase 4 mandatory wait. After PR creation, git-ops MUST wait 180s before checking comment threads — auto-reviewers (Gemini, Copilot, CodeRabbit, dependabot) need time to analyze and post.
+
+**Mandatory pattern in git-ops body:**
+- 180s sleep after `gh pr create`
+- Then check `comments` count + unresolved review threads via GraphQL
+- If unresolved threads exist → address before merge
+- Override allowed only on explicit user "skip auto-review wait, this is hotfix P0"
+
+Forbidden: `sleep 0`, removing wait, treating "no comments yet" at t+10s as "ready to merge".
+
+### Reference architecture credit
+
+- Composio `security-guidance` — pattern detection logic + warning state per session
+- Composio `audit-project` — iteration loop with verification rollback
+- Composio `ship` — auto-reviewer wait pattern (3 minutes is empirical, not arbitrary)
+- memberstack-claude-boilerplate — `.claude/` directory convention as compound productivity gain
+
+### Migration
+
+None required. Auto-update on next session start. New hook is advisory by default — no existing flow blocked. Existing projects without `.claude/` directory simply don't get pre-seed (only newly-built projects via `/dev-squad build` get it).
+
+To opt out of security hook entirely: `export DEV_SQUAD_DISABLE_UNSAFE_CODE_GUARD=1` in shell. To enable strict (block) mode: `export DEV_SQUAD_STRICT_SECURITY=1`.
+
 ## [4.11.1] — Consolidate drill-down-patterns into saas-patterns (structural fix)
 
 **Why:** v4.11.0 split SaaS coverage into two skills (`saas-patterns` for backend + `drill-down-patterns` for frontend admin dashboard). User correctly flagged this as poor structure: drill-down only triggers in SaaS mode + dashboard scope — there's no other invocation path in dev-squad's flow. Two skills that always co-load are one skill with internal structure. The split added maintenance cost (2 files to keep in sync, 5 agent files to reference both, 2 changelog entries) without giving users a meaningful choice — you can't load drill-down without saas-patterns making sense.

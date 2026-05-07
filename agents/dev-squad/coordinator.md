@@ -419,7 +419,30 @@ Phase 5: REVIEW (Mandatory Quality Gate — 3-way parallel dispatch)
   3. **auditor** (automated tooling): Phase 5.6 STABILITY EXECUTION (config drift, DB perf, endpoint hammer, failure injection on staging-flag, API pattern compliance) + Phase 5.7 CODE QUALITY METRICS (multi-language: JS/TS, Go, Python tool runners). Output `.dev-squad/stability-report.md` + `.dev-squad/quality-metrics.md`.
   4. After all three return: reviewer synthesizes the **single Phase 5 Metrics Report** (PDCA Check) from all three artifacts.
   5. ALL P0-P1 findings MUST be fixed — reviewer (security), qa-engineer (functional), auditor (stability/quality) all have veto.
-  6. Re-review after fixes applied — only the lane(s) that flagged need to re-validate.
+  6. **Phase 5 Iteration Loop** (formalized — replaces ad-hoc fix dispatch):
+     ```
+     iter = 1
+     while findings_p0_or_p1 exists AND iter <= 5:
+       a. Group findings by responsible agent (backend / frontend / devops / writer)
+       b. Dispatch responsible agent with: {file:line, severity, fix instructions} per finding
+       c. After agent reports done, run verification:
+          - reviewer findings → reviewer re-checks the diff (static)
+          - qa-engineer findings → qa-engineer re-runs failing flow (runtime)
+          - auditor findings → auditor re-runs the failing tool (metric)
+       d. If verification PASSES for that finding → mark resolved
+          If verification FAILS or test/build broke (regression) →
+            - `git restore` the modified file(s) for THAT specific fix attempt
+            - log to .dev-squad/iteration-log.md with iter number, agent, fix attempted, why it failed
+            - retry with next iter (with the prior failure context)
+       e. iter++
+     If iter > 5 with unresolved P0/P1 → escalate to user with:
+       - findings remaining
+       - what was tried each iteration
+       - blast radius assessment (what's safe to ship despite unresolved finding)
+       - recommendation (force-ship with documented exception OR pause for architect re-design)
+     ```
+     **Rollback rule:** if a fix attempt breaks an existing passing test, treat as regression — `git restore` immediately. Don't accumulate fixes that fail verification.
+     **Anti-thrashing rule:** if iter N produces verbatim same failure as iter N-1, skip to next escalation tier (don't burn iteration budget on identical attempts).
 
 Phase 6: SHIP (Verified Deploy)
   1. Dispatch devops → staging deployment + verify: health checks pass, monitoring shows data, alerts configured, resource limits OK, TLS configured, secrets via env only, rollback documented

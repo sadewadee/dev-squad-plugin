@@ -51,6 +51,15 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/guard-dangerous-ops.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/guard-unsafe-code.py\""
+          }
+        ]
       }
     ],
     "PostToolUse": [

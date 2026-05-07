@@ -317,7 +317,13 @@ Agent tool with:
       - [ ] Rollback procedure documented
     - Dispatch git-ops for PR creation with full description
     - Dispatch reviewer for final sign-off
-    - Update CLAUDE.md with project conventions
+    - **Pre-seed self-documenting context for future Claude sessions** (mandatory): writer + architect collaborate to produce in user's project root:
+      - `CLAUDE.md` — project overview (1 paragraph), tech stack, how-to-run, where things live (`apps/backend/`, `apps/frontend/`, `packages/`), references to detail docs in `.claude/`. Auto-loaded by Claude Code at session start.
+      - `.claude/architecture.md` — entities + relationships, key modules + responsibilities, data flow, auth flow (with mermaid). Sourced from architect's Phase 2 design doc.
+      - `.claude/conventions.md` — naming, file organization, error handling, validation, testing, commit format. Sourced from reviewer's Phase 5 notes + ADRs.
+      - `.claude/gotchas.md` — known issues, footguns, things to be careful about. Sourced from `.dev-squad/gotchas.md` (filter to project-relevant only — drop dev-squad-internal entries).
+      - **Why this matters:** every future Claude session on this project loads `CLAUDE.md` automatically and discovers detail docs in `.claude/`. No re-discovery, no re-reading source from scratch. Compound productivity gain.
+      - Keep each doc tight (under 200 LOC). They're context, not exhaustive reference — link to source code for details.
     - Proceed to Phase 7 (do NOT mark workflow complete yet)
 
     ### Phase 7: LEARN (PDCA Act — Retrospective)
