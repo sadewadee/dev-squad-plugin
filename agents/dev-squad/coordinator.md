@@ -78,8 +78,7 @@ Use `context7` to:
 | Bug detection | `issuetracker` | On build errors or on-demand scans |
 | Discover skills | `find-skills` | When team needs capability not yet installed |
 | Project knowledge | `claude-md-management:revise-claude-md` | Update CLAUDE.md with project learnings |
-| SaaS scope dispatch | `dev-squad:saas-patterns` | Load when Phase 0 Step 2.5 detects SaaS mode — guide architect/backend through SaaS subsystems (multi-tenancy, billing, webhooks, audit logs, entitlements) |
-| Drill-down dashboard dispatch | `dev-squad:drill-down-patterns` | Load when SaaS mode + dashboard scope — guide designer/frontend through drill-down UX (URL state, breadcrumb, time-series brush, virtualized table, cross-filter) |
+| SaaS scope dispatch | `dev-squad:saas-patterns` | Load when Phase 0 Step 2.5 detects SaaS mode — guide architect/backend through SaaS subsystems (Part 1: multi-tenancy, billing, webhooks, audit, entitlements) AND designer/frontend through admin dashboard with drill-down (Part 2: URL state, breadcrumb, time-series brush, virtualized table, cross-filter) |
 
 ### MCP Servers (use directly)
 | Tool | Purpose |

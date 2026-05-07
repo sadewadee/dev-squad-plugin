@@ -244,7 +244,7 @@ Use `ide diagnostics` for:
 | Browser automation | `playwright-skill:playwright-skill` | For automated E2E testing |
 | Chrome DevTools | `superpowers-chrome:browsing` | For direct browser control/debugging |
 | Past patterns | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
-| Drill-down dashboard | `dev-squad:drill-down-patterns` | Load when project has admin/analytics dashboard with drill-down (URL state, breadcrumb, time-series brush, virtualized table, cross-filter) |
+| Drill-down / admin dashboard | `dev-squad:saas-patterns` (Part 2) | Load when project has admin/analytics dashboard with drill-down — Part 2 covers URL state, breadcrumb, time-series brush, virtualized table, cross-filter, permission-aware items, perf |
 
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |

@@ -169,7 +169,7 @@ Agent tool with:
       - `visual-spec.md` (≥3 reference URLs with screenshots in `.dev-squad/design/refs/`, brand vibe, project-specific anti-pattern list)
       - `component-inventory.md` (every component × variants × states including loading/error/empty/focus)
       - `responsive-spec.md` (mermaid wireframes per page × mobile/tablet/desktop)
-    - **If SaaS mode active AND PRD has dashboard/analytics/admin scope:** designer ALSO produces `drill-down-spec.md` (drill hierarchy mermaid + per-level spec for KPI cards, time-series, segment table, entity detail, event detail + filter model + anti-patterns). Reference `dev-squad:drill-down-patterns` skill.
+    - **If SaaS mode active AND PRD has dashboard/analytics/admin scope:** designer ALSO produces `drill-down-spec.md` (drill hierarchy mermaid + per-level spec for KPI cards, time-series, segment table, entity detail, event detail + filter model + anti-patterns). Reference `dev-squad:saas-patterns` Part 2 Section 26 (drill-down spec template lives in same skill, not separate).
     - Designer uses WebSearch + grep-github + playwright (screenshot references) + chrome-devtools (study real reference styles)
     - Designer's anti-pattern list is project-specific (NOT generic) — must explicitly reject: emoji-as-icon, default shadcn slate primary, AI-cliché purple-to-blue gradients, missing responsive, missing motion
     - SELF-HEALING: If artifacts incomplete (missing concrete values, no reference screenshots, generic anti-pattern list) → re-dispatch designer with specific gap call-out

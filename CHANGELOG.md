@@ -2,6 +2,33 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.11.1] — Consolidate drill-down-patterns into saas-patterns (structural fix)
+
+**Why:** v4.11.0 split SaaS coverage into two skills (`saas-patterns` for backend + `drill-down-patterns` for frontend admin dashboard). User correctly flagged this as poor structure: drill-down only triggers in SaaS mode + dashboard scope — there's no other invocation path in dev-squad's flow. Two skills that always co-load are one skill with internal structure. The split added maintenance cost (2 files to keep in sync, 5 agent files to reference both, 2 changelog entries) without giving users a meaningful choice — you can't load drill-down without saas-patterns making sense.
+
+This release consolidates them. The drill-down content becomes Part 2 of saas-patterns. No content lost.
+
+### Changed
+
+- **`skills/saas-patterns/SKILL.md`** — restructured as two parts. Part 1 (sections 1–15, unchanged): backend patterns. Part 2 (sections 16–26, merged from drill-down-patterns): frontend admin dashboard. Total: 1771 LOC. Anti-patterns table now has backend + frontend subsections. Frontmatter description updated to reflect full-stack coverage.
+- **`agents/dev-squad/coordinator.md`** — collapsed two skill rows into one (`saas-patterns` referenced once, mentions Part 1 + Part 2)
+- **`agents/dev-squad/frontend.md`** — drill-down row points to `saas-patterns (Part 2)` instead of separate skill
+- **`agents/dev-squad/designer.md`** — drill-down spec row points to `saas-patterns (Part 2 §26)` for the spec template
+- **`commands/build.md`** Phase 3.5 — references Part 2 Section 26 for drill-down-spec.md template
+
+### Removed
+
+- **`skills/drill-down-patterns/SKILL.md`** — content moved to saas-patterns Part 2
+- `skills/drill-down-patterns/` directory
+
+### Lesson saved to memory
+
+Saved feedback `Challenge user's premise before executing literally` — when user picks an option from AskUserQuestion, do one more deep-thinking pass before executing. If the option has structural problems (coupling, redundancy), push back with rationale instead of literal compliance. This release was a corrective application of that lesson.
+
+### Migration
+
+None. Auto-update via `auto-update.sh` on next session start. Anyone who already loaded the old `drill-down-patterns` skill will see "skill not found" — coordinator falls back to `saas-patterns` (Part 2 has the same content).
+
 ## [4.11.0] — SaaS-class scope: multi-tenancy, billing, drill-down dashboards
 
 **Why:** dev-squad's zero-to-ship workflow produced solid MVP web apps but lacked the patterns needed for SaaS-class applications: multi-tenancy, subscription billing, plan-based access control, API key management, outbound webhooks, audit logs, admin dashboards with drill-down. The user's target shifted to "selain zero-to-ship juga bisa membuat SaaS yang lengkap termasuk drill down" — and analysis of a production SaaS reference (lastsaas — 22 API handlers, 15 validated collections covering tenants/users/plans/billing/webhooks/audit) confirmed 18 SaaS subsystems were not covered by existing skills.

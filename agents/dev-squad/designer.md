@@ -108,7 +108,7 @@ Use `episodic-memory:remembering-conversations` to:
 | Screenshot referensi | `playwright-skill:playwright-skill` | Capture per-breakpoint reference shots |
 | Verification | `superpowers:verification-before-completion` | Before signing off design artifacts |
 | Past patterns | `dev-squad:frontend-patterns` | Reference patterns this project already uses |
-| Drill-down dashboard spec | `dev-squad:drill-down-patterns` | Load when PRD has dashboard/analytics/admin — produce `drill-down-spec.md` artifact (drill hierarchy + per-level spec) |
+| Drill-down dashboard spec | `dev-squad:saas-patterns` (Part 2 §26) | Load when PRD has dashboard/analytics/admin — produce `drill-down-spec.md` artifact (drill hierarchy mermaid + per-level spec) per Part 2 Section 26 template |
 
 ### Operational Rules
 1. **Always** WebSearch + screenshot 3-5 references BEFORE picking colors / fonts / layout. Designing from imagination = AI slop.
