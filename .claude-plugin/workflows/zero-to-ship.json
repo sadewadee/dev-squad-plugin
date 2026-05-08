@@ -1,9 +1,9 @@
 {
   "workflow_id": "zero-to-ship",
   "schema_version": "1.0",
-  "version": "4.9.0",
+  "version": "4.12.0",
   "name": "Zero-to-Ship",
-  "description": "Full project build from zero to shippable state. 9 phases with 1 user checkpoint (PRD approval after Phase 1). PDCA cycle: Plan (Phases 0-2) -> Do (Phases 3-4) -> Check (Phase 5) -> Act (Phases 6-8).",
+  "description": "Full project build from zero to shippable state. 9 phases with up to 2 user checkpoints (Phase 0 Step 2.5 SaaS-mode confirmation if triggered + Phase 1 PRD approval). PDCA cycle: Plan (Phases 0-2 + 3.5) -> Do (Phases 3-4) -> Check (Phase 5 with formal iteration loop) -> Act (Phases 6-7). v4.12.0: SaaS-mode detection (Phase 0 Step 2.5) + .claude/ pre-seed (Phase 6) + Phase 5 iteration loop with rollback + auto-reviewer 180s wait (Phase 6).",
   "trigger_command": "/dev-squad build",
   "phases": [
     {
@@ -16,11 +16,11 @@
         { "artifact": "user_description", "from": "user", "required": true }
       ],
       "outputs": [
-        { "artifact": ".dev-squad/master-plan.md", "to": "architect", "blocking": true, "description": "Stack pre-decisions + Evidence section with >=3 verified WebSearch/context7 lookups" }
+        { "artifact": ".dev-squad/master-plan.md", "to": "architect", "blocking": true, "description": "Stack pre-decisions + Evidence section (>=3 verified WebSearch/context7 lookups) + SaaS Mode section (Step 2.5: auto-detect from PRD keywords like 'subscription', 'tenant', 'billing', 'multi-tenant', 'admin panel', 'drill down' — if 2+ match OR --saas flag, AskUserQuestion confirms full-SaaS / no-drill-down / standard; locked once decided — retrofit = data leak risk)" }
       ],
       "blocking_gate": {
         "downstream_phase": "discover",
-        "check": "master-plan.md exists with non-empty Evidence section (>=3 lookups)",
+        "check": "master-plan.md exists with non-empty Evidence section (>=3 lookups) AND SaaS Mode section (active|inactive locked); if SaaS active, ADRs 001-004 must be produced in Phase 2 before backend codes",
         "verification_command": "test -f .dev-squad/master-plan.md && grep -c '^- ' .dev-squad/master-plan.md | awk '$1>=3'"
       },
       "estimated_complexity": "high",
@@ -29,6 +29,7 @@
         "preferred": [
           { "skill": "superpowers:brainstorming", "rationale": "Explores scope/risks before pre-decisions", "graceful_degrade": true, "invoked_by": "coordinator" },
           { "skill": "superpowers:writing-plans", "rationale": "Structures master-plan.md", "graceful_degrade": true, "invoked_by": "coordinator" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "Load on SaaS detection — informs Step 2.5 confirmation copy + Phase 2 ADR-001..004 mandate (tenancy/billing/plan/admin scope)", "graceful_degrade": false, "invoked_by": "coordinator" },
           { "skill": "gsd-new-project", "rationale": "Bootstraps PROJECT.md/REQUIREMENTS.md/ROADMAP.md/STATE.md if GSD installed", "graceful_degrade": true, "invoked_by": "coordinator" }
         ],
         "fallback": "Manual via WebSearch + context7 + sequential-thinking MCP"
@@ -93,7 +94,8 @@
       "external_skills": {
         "preferred": [
           { "skill": "gsd-plan-phase", "rationale": "Spec-driven planning with plan-checker loop", "graceful_degrade": true, "invoked_by": "architect" },
-          { "skill": "mermaid-mcp", "rationale": "C4 diagrams", "graceful_degrade": true, "invoked_by": "architect" }
+          { "skill": "mermaid-mcp", "rationale": "C4 diagrams + auth flow + threat surface diagrams", "graceful_degrade": true, "invoked_by": "architect" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "When SaaS mode active (per Phase 0 Step 2.5), architect MUST produce ADR-001 (tenancy strategy), ADR-002 (billing model), ADR-003 (plan structure), ADR-004 (admin scope) before backend can code — Part 1 of saas-patterns is the reference", "graceful_degrade": false, "invoked_by": "architect" }
         ],
         "fallback": "Manual via context7 + sequential-thinking + plain markdown for diagrams"
       },
@@ -114,18 +116,21 @@
       ],
       "outputs": [
         { "artifact": "apps/", "to": "backend,frontend", "blocking": true, "description": "Monorepo: apps/ + packages/ + infra/" },
+        { "artifact": "apps/backend/src/{tenants,plans,billing,webhooks,api-keys,audit-log,notifications,admin}/", "to": "backend", "blocking": false, "description": "SaaS module skeleton — produced ONLY when Phase 0 Step 2.5 set SaaS mode active. Module contracts per saas-patterns Part 1. For Go projects use internal/* equivalents." },
         { "artifact": ".dev-squad/scaffold-summary.md", "to": "designer,backend,frontend", "blocking": false }
       ],
       "blocking_gate": {
         "downstream_phase": "ui_design",
-        "check": "Monorepo structure exists; docker compose builds; make dev starts",
+        "check": "Monorepo structure exists; docker compose builds; make dev starts; SaaS modules scaffolded if mode active",
         "verification_command": "test -d apps && test -d packages && docker compose config --quiet"
       },
       "estimated_complexity": "medium",
       "rate_limit_tier": "sonnet",
       "external_skills": {
-        "preferred": [],
-        "fallback": "Direct scaffolding via devops + git-ops agent prompts"
+        "preferred": [
+          { "skill": "dev-squad:saas-patterns", "rationale": "When SaaS mode active, devops scaffolds 8 SaaS modules per Part 1 contracts (tenancy/plans/billing/webhooks/api-keys/audit/notifications/admin)", "graceful_degrade": false, "invoked_by": "devops" }
+        ],
+        "fallback": "Direct scaffolding via devops + git-ops agent prompts; no SaaS modules if mode inactive"
       },
       "references": {
         "prompt_source": "commands/build.md",
@@ -146,17 +151,19 @@
         { "artifact": ".dev-squad/design/design-tokens.md", "to": "frontend", "blocking": true, "description": "Color, typography, spacing, motion, shadow, radius - concrete values" },
         { "artifact": ".dev-squad/design/visual-spec.md", "to": "frontend", "blocking": true, "description": ">=3 reference URLs + screenshots, brand vibe, project-specific anti-pattern list" },
         { "artifact": ".dev-squad/design/component-inventory.md", "to": "frontend", "blocking": true, "description": "Every component x variants x states (loading/error/empty included)" },
-        { "artifact": ".dev-squad/design/responsive-spec.md", "to": "frontend", "blocking": true, "description": "Mermaid wireframes per page x mobile/tablet/desktop" }
+        { "artifact": ".dev-squad/design/responsive-spec.md", "to": "frontend", "blocking": true, "description": "Mermaid wireframes per page x mobile/tablet/desktop" },
+        { "artifact": ".dev-squad/design/drill-down-spec.md", "to": "frontend", "blocking": false, "description": "Drill-down hierarchy (mermaid graph) + per-level spec (KPI cards / time-series / segment table / entity detail / event detail) + filter model + anti-patterns. Produced ONLY when SaaS mode + dashboard scope. Template: saas-patterns Part 2 Section 26." }
       ],
       "blocking_gate": {
         "downstream_phase": "implement",
         "downstream_agent": "dev-squad:frontend",
-        "check": "All 4 design artifacts exist with concrete values (not TBD)",
+        "check": "All 4 base design artifacts exist with concrete values (not TBD); drill-down-spec.md exists if SaaS+dashboard",
         "verification_command": "test -f .dev-squad/design/design-tokens.md && test -f .dev-squad/design/visual-spec.md && test -f .dev-squad/design/component-inventory.md && test -f .dev-squad/design/responsive-spec.md"
       },
       "skip_conditions": [
-        { "flag": "--mvp-mode", "action": "slim", "fallback": "Slim deliverable: design-tokens.md + slim visual-spec.md (1 ref + anti-pattern list); skip component-inventory + responsive-spec" },
-        { "condition": "feature.has_ui == false", "action": "skip", "fallback": "Backend-only feature; designer not dispatched" }
+        { "flag": "--mvp-mode", "action": "slim", "fallback": "Slim deliverable: design-tokens.md + slim visual-spec.md (1 ref + anti-pattern list); skip component-inventory + responsive-spec + drill-down-spec" },
+        { "condition": "feature.has_ui == false", "action": "skip", "fallback": "Backend-only feature; designer not dispatched" },
+        { "condition": "saas_mode == false || feature.has_dashboard == false", "action": "slim", "fallback": "Skip drill-down-spec.md only — produce 4 base artifacts as normal" }
       ],
       "estimated_complexity": "medium",
       "rate_limit_tier": "sonnet",
@@ -164,6 +171,7 @@
         "preferred": [
           { "skill": "ui-ux-pro-max", "rationale": "Design intelligence: 161 product types, 161 palettes, 99 UX guidelines, 57 font pairings - generates design system that designer translates to 4 dev-squad artifacts", "graceful_degrade": true, "invoked_by": "designer" },
           { "skill": "frontend-design:frontend-design", "rationale": "Distinctive frontend design generation", "graceful_degrade": true, "invoked_by": "designer" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "Part 2 Section 26 contains the drill-down-spec.md template (drill hierarchy + per-level spec + filter model + anti-patterns) — designer fills this template when SaaS+dashboard", "graceful_degrade": false, "invoked_by": "designer" },
           { "skill": "superpowers-chrome:browsing", "rationale": "Inspect reference sites computed styles", "graceful_degrade": true, "invoked_by": "designer" },
           { "skill": "playwright-skill:playwright-skill", "rationale": "Screenshot references per breakpoint", "graceful_degrade": true, "invoked_by": "designer" }
         ],
@@ -204,6 +212,7 @@
         "preferred": [
           { "skill": "superpowers:test-driven-development", "rationale": "TDD enforced: tests before code", "graceful_degrade": true, "invoked_by": "backend,frontend" },
           { "skill": "superpowers:dispatching-parallel-agents", "rationale": "Parallel backend/frontend dispatch", "graceful_degrade": true, "invoked_by": "coordinator" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "When SaaS mode active: backend implements Part 1 (multi-tenancy/billing/webhooks/audit/api-keys/entitlements/hybrid validation/admin scope) and frontend implements Part 2 (URL state/breadcrumb/time-series brush/virtualized table/cross-filter/permission gating)", "graceful_degrade": false, "invoked_by": "backend,frontend" },
           { "skill": "gsd-execute-phase", "rationale": "Wave model + atomic commit per task", "graceful_degrade": true, "invoked_by": "coordinator" }
         ],
         "fallback": "Sequential dispatch via Agent tool with worktree isolation"
@@ -227,11 +236,12 @@
         { "artifact": ".dev-squad/functional-verification.md", "to": "coordinator", "blocking": false, "description": "qa-engineer Phase 5.5 + Visual Gate" },
         { "artifact": ".dev-squad/stability-report.md", "to": "coordinator", "blocking": false, "description": "auditor Phase 5.6 stability buckets A-E" },
         { "artifact": ".dev-squad/quality-metrics.md", "to": "coordinator", "blocking": false, "description": "auditor Phase 5.7 multi-language metrics" },
+        { "artifact": ".dev-squad/iteration-log.md", "to": "coordinator", "blocking": false, "description": "Phase 5 formal iteration loop log: per-iter fix attempts, verifications, rollbacks. Max 5 iterations. Anti-thrashing: skip to next escalation tier if iter N produces same failure as iter N-1. Rollback rule: if fix breaks an existing passing test, git restore immediately. Escalate to user if iter > 5 with unresolved P0/P1 (with: findings remaining, attempts log, blast radius, recommendation force-ship-with-exception OR pause-for-architect-redesign)." },
         { "artifact": ".dev-squad/phase5-metrics-report.md", "to": "coordinator", "blocking": true, "description": "reviewer synthesizes all 3 lanes" }
       ],
       "blocking_gate": {
         "downstream_phase": "ship",
-        "check": "All P0/P1 findings resolved across all 3 lanes",
+        "check": "All P0/P1 findings resolved across all 3 lanes via formal iteration loop (max 5 iter, rollback on regression, anti-thrashing). If iter > 5 unresolved, user escalation required before proceeding.",
         "verification_command": "test -f .dev-squad/phase5-metrics-report.md"
       },
       "estimated_complexity": "high",
@@ -264,12 +274,16 @@
       ],
       "outputs": [
         { "artifact": "staging deployment", "to": "user", "blocking": true, "description": "Health checks pass; monitoring active; alerts configured" },
-        { "artifact": "GitHub PR", "to": "user", "blocking": true, "description": "PR created with full summary" }
+        { "artifact": "GitHub PR", "to": "user", "blocking": true, "description": "PR created with full summary; mandatory 180s wait after creation for auto-reviewers (Gemini/Copilot/CodeRabbit) before checking comment threads; address all unresolved threads before merge" },
+        { "artifact": "CLAUDE.md", "to": "future_claude_sessions", "blocking": true, "description": ".claude/ pre-seed: project root CLAUDE.md (auto-loaded by Claude Code at session start) — overview, tech stack, how-to-run, where things live, references to .claude/ detail docs. Each future Claude session on this project loads this auto. Compound productivity gain. Cap ~200 LOC." },
+        { "artifact": ".claude/architecture.md", "to": "future_claude_sessions", "blocking": true, "description": "Entities + relationships, modules, data flow, auth flow (with mermaid). Sourced from architect's Phase 2 design doc." },
+        { "artifact": ".claude/conventions.md", "to": "future_claude_sessions", "blocking": true, "description": "Naming, file org, error handling, validation, testing, commit format. Sourced from reviewer's Phase 5 notes + ADRs." },
+        { "artifact": ".claude/gotchas.md", "to": "future_claude_sessions", "blocking": false, "description": "Known issues, footguns. Filtered from .dev-squad/gotchas.md to project-relevant only (drop dev-squad-internal)." }
       ],
       "blocking_gate": {
         "downstream_phase": "learn",
-        "check": "Staging deployed; health checks 200; reviewer final sign-off; PR open",
-        "verification_command": "gh pr list --state open --limit 1"
+        "check": "Staging deployed; health checks 200; reviewer final sign-off; PR open + 180s auto-reviewer wait completed + all unresolved comment threads addressed; .claude/ pre-seed complete (CLAUDE.md + architecture.md + conventions.md + gotchas.md)",
+        "verification_command": "gh pr list --state open --limit 1 && test -f CLAUDE.md && test -f .claude/architecture.md && test -f .claude/conventions.md"
       },
       "estimated_complexity": "medium",
       "rate_limit_tier": "sonnet",

@@ -111,6 +111,21 @@ Content Writer of the dev-squad team. You produce ALL textual content for the ap
 - **User guide**: step-by-step workflows for key features
 - **Contributing guide**: if open source
 
+### `.claude/` Pre-Seed (Phase 6 SHIP — Mandatory for Generated Apps)
+When Phase 6 SHIP runs, you collaborate with architect to pre-seed self-documenting context for future Claude sessions on the user's project. **Goal:** every future Claude session loads `CLAUDE.md` automatically and discovers detail docs in `.claude/` — no re-discovery on each session.
+
+Produce in user's project root:
+- **`CLAUDE.md`** (project root, auto-loaded) — 1-paragraph project overview, tech stack list, how-to-run commands, where things live (`apps/backend/`, `apps/frontend/`, `packages/`), references to `.claude/` detail docs. Cap ~200 LOC.
+- **`.claude/architecture.md`** — entities + relationships, key modules + responsibilities, data flow, auth flow (with mermaid). Sourced from architect's Phase 2 design doc.
+- **`.claude/conventions.md`** — naming, file org, error handling, validation, testing, commit format. Sourced from reviewer's Phase 5 notes + ADRs.
+- **`.claude/gotchas.md`** — known issues, footguns, things to be careful about. Filtered from `.dev-squad/gotchas.md` (drop dev-squad-internal entries).
+
+**Rules:**
+- Each doc capped at ~200 LOC — context, not exhaustive reference
+- Link to source code paths for details — don't duplicate
+- Use mermaid for flow diagrams (architect provides via mermaid-mcp)
+- Tone: terse, factual, written for Claude (the future reader), not for end-users
+
 ## Writing Principles
 
 ### Voice & Tone

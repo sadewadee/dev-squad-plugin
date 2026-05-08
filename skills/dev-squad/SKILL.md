@@ -1,6 +1,6 @@
 ---
 name: dev-squad
-description: Invoke the dev-squad agent swarm for collaborative development. Full-stack app building with 11 agents (coordinator, architect, designer, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer). Phase 3.5 DESIGN gate (designer) prevents AI-slop UI by producing design tokens + visual spec + component inventory + responsive spec BEFORE frontend codes. Supports feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, and runtime/stability/quality auditing.
+description: Invoke the dev-squad agent swarm for collaborative development. Full-stack app building with 11 agents (coordinator, architect, designer, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer). Phase 3.5 DESIGN gate (designer) prevents AI-slop UI by producing design tokens + visual spec + component inventory + responsive spec BEFORE frontend codes. Phase 0 Step 2.5 SaaS-mode auto-detect triggers full SaaS scope (multi-tenancy, billing, drill-down dashboards via saas-patterns Part 1+2). Phase 5 has formal iteration loop with rollback. Phase 6 SHIP pre-seeds .claude/ docs in generated apps + 180s auto-reviewer wait. PreToolUse security hook blocks 9 dangerous code patterns. Supports feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, runtime/stability/quality auditing, and SaaS-class application building.
 ---
 
 # Dev Squad - Agent Swarm
@@ -230,6 +230,9 @@ The `/dev-squad build <description>` command triggers a fully automated 7-phase 
     v
 Phase 0: ULTRAPLAN (Coordinator only — deep thinking, no dispatch)
     [Coordinator] → ultrathink: analyze scope, entities, tech stack, risks
+    [Coordinator] → Step 2.5: SaaS-mode auto-detect from PRD keywords (subscription/tenant/billing/multi-tenant/admin/drill down/...)
+                    if 2+ match OR --saas flag → AskUserQuestion confirms (full SaaS / no drill-down / standard)
+                    decision locked in master-plan.md SaaS Mode section
     [Coordinator] → Write .dev-squad/master-plan.md
     |
     v
@@ -240,44 +243,70 @@ Phase 1: DISCOVER
     v
 Phase 2: DESIGN
     [Architect] → Full architecture + C4 diagrams + API contracts + ADR
+    [Architect] → If SaaS mode: ADR-001 (tenancy) + ADR-002 (billing) + ADR-003 (plan structure) + ADR-004 (admin scope)
+                  REQUIRED before backend codes — retrofit = data leak risk
     [Reviewer]  → Threat model on proposed design
     |
     v
 Phase 3: SCAFFOLD (Monorepo)
     [DevOps]  → Monorepo: apps/(backend,frontend) + packages/(shared-types,shared-validators) + infra/ + Docker + CI/CD + monitoring
+    [DevOps]  → If SaaS mode: scaffold apps/backend/src/{tenants,plans,billing,webhooks,api-keys,audit-log,notifications,admin}/ per saas-patterns Part 1
     [Git-Ops] → Git init + .gitignore + branch protection + PR template
     |
     v
 Phase 3.5: DESIGN (BLOCKING anti-AI-slop gate; skip ONLY with --mvp-mode)
     [Designer] → design-tokens.md + visual-spec.md (≥3 refs + screenshots) + component-inventory.md + responsive-spec.md
+    [Designer] → If SaaS+dashboard: ALSO drill-down-spec.md (per saas-patterns Part 2 §26 template)
     [Designer] → uses WebSearch + grep-github + playwright + chrome-devtools to ground design in real references
     [Designer] → anti-pattern list: emoji-as-icon, default shadcn slate, AI-cliché gradients, missing responsive, missing motion (project-specific)
-    Frontend cannot start UI work until all 4 artifacts exist.
+    Frontend cannot start UI work until all artifacts exist.
     |
     v
 Phase 4: IMPLEMENT (Production-Grade)
     [Backend]  → Auth(JWT+RBAC) + health checks + rate limiting + validation + logging + API versioning + migrations (TDD)
-    [Frontend] → Read all 4 design artifacts → translate tokens → implement components per inventory → wire motion → respect responsive (TDD)
+    [Backend]  → If SaaS: implement Part 1 modules (tenancy/billing/webhooks/audit/api-keys/entitlements/admin)
+    [Frontend] → Read all design artifacts → translate tokens → implement components per inventory → wire motion → respect responsive (TDD)
+    [Frontend] → If SaaS+dashboard: Part 2 patterns (URL state/breadcrumb/time-series brush/virtualized table/cross-filter/permission gating)
     [Frontend] → SVG icons only (NO emoji), design tokens only (NO inline arbitrary values)
     [Shared]   → packages/shared-types + packages/shared-validators (Zod)
     (parallel via worktrees — NO type duplication, NO raw SQL, NO `any`, NO AI-slop)
+    + PreToolUse security hook blocks/warns 9 dangerous code patterns (eval/dangerouslySetInnerHTML/child_process.exec/pickle/os.system/etc.)
     |
     v
-Phase 5: REVIEW (Mandatory Quality Gate)
-    [Reviewer] → Security: threat model + OWASP + deps CVE + auth check
-    [Reviewer] → Performance: N+1 + indexes + pagination + bundle size
-    [Reviewer] → Quality: coverage >=80% + no `any` + structured logging + health checks
-    ALL P0-P1 MUST be fixed — reviewer has veto power
+Phase 5: REVIEW (Mandatory Quality Gate — 3-way parallel + formal iteration loop)
+    [Reviewer]    → Static: security threat model + OWASP + deps CVE + auth check + perf + spec + arch + design lint
+    [QA-Engineer] → Runtime (Phase 5.5): boot app + golden path via playwright + interactive elements + API smoke + console gate + Visual Gate (anti-AI-slop)
+    [Auditor]     → Automated (Phase 5.6 stability + Phase 5.7 quality metrics multi-language)
+    [Reviewer]    → Synthesize Phase 5 Metrics Report from all 3 lanes
+    [Coordinator] → Phase 5 Iteration Loop (formal):
+                    while findings_p0_or_p1 AND iter <= 5:
+                      group findings by responsible agent → dispatch fix → run verification (lane that flagged re-checks)
+                      if verify FAILS or test/build breaks: git restore + log iter to .dev-squad/iteration-log.md + retry
+                      anti-thrashing: same failure as prior iter → skip to next escalation tier
+                    if iter > 5 unresolved: escalate to user (findings + attempts + blast radius + recommendation)
+    ALL P0-P1 MUST be fixed — reviewer/qa-engineer/auditor each have veto
     |
     v
-Phase 6: SHIP (Verified Deploy)
+Phase 6: SHIP (Verified Deploy + Self-Documenting)
     [DevOps]   → Staging deploy + health checks + monitoring + alerts + TLS + rollback plan
-    [Git-Ops]  → PR creation with full summary + release tag
+    [Git-Ops]  → PR creation with full summary
+    [Git-Ops]  → MANDATORY 180s auto-reviewer wait (Gemini/Copilot/CodeRabbit) + address unresolved threads before merge
     [Reviewer] → Final sign-off
-    Completion report to user
+    [Writer + Architect] → Pre-seed .claude/ docs in user's project:
+                  CLAUDE.md (project root, auto-loaded) + .claude/architecture.md + .claude/conventions.md + .claude/gotchas.md
+                  → every future Claude session on this project loads these auto = compound productivity gain
+    |
+    v
+Phase 7: LEARN (PDCA Act — Retrospective)
+    [Reviewer]    → Generate .dev-squad/retrospective.md (what worked → playbook, what didn't → fix-it backlog, metric gaps)
+    [Coordinator] → Append wins to .dev-squad/playbook.md (defaults for future builds)
+    [Coordinator] → Append gaps to docs/next-iteration.md (fix-it tickets)
+    [Coordinator] → Update CLAUDE.md with newly-standardized conventions
+    [Coordinator] → Write lessons to agent-memory + episodic memory
+    Completion report to user — only NOW workflow is done
 ```
 
-Only one user checkpoint exists -- after PRD generation in Phase 1. All other phases execute autonomously.
+**User checkpoints:** up to 2 — Phase 0 Step 2.5 SaaS confirmation (only if SaaS keywords detected) + Phase 1 PRD approval. All other phases run autonomously.
 
 ## Workflow: Database Tasks (Primary Focus)
 
@@ -463,6 +492,12 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | Recovering past context | `episodic-memory:remembering-conversations` | Search conversation history |
 | Updating project knowledge | `claude-md-management:revise-claude-md` | Update CLAUDE.md with learnings |
 | Looking for new capabilities | `find-skills` | Discover installable skills |
+| **Building SaaS scope** (multi-tenant + billing + admin dashboard) | `dev-squad:saas-patterns` | Full-stack reference: Part 1 backend (multi-tenancy/Stripe/webhooks/audit/api-keys/entitlements/admin) + Part 2 frontend admin drill-down (URL state/breadcrumb/time-series brush/virtualized table/cross-filter). Loaded conditionally when Phase 0 Step 2.5 sets SaaS mode. |
+| Backend pattern reference | `dev-squad:backend-patterns` | RESTful, repository, service, middleware, caching, JWT+RBAC, rate limit, jobs, logging |
+| Frontend pattern reference | `dev-squad:frontend-patterns` | Composition, hooks, state mgmt, perf, forms, error boundaries, animations, a11y |
+| Postgres / RLS reference | `dev-squad:postgres-patterns` | Index types, data types, common queries, anti-patterns, RLS, tuning |
+| Go pattern + testing reference | `dev-squad:golang-patterns` + `dev-squad:golang-testing` | Idiomatic Go + table-driven tests, parallel, mocking, benchmarks |
+| TDD workflow + security review | `dev-squad:tdd-workflow` + `dev-squad:security-review` | 7-step TDD + 10-area security checklist |
 
 ### MCP Servers (call directly) — USE FOR: External Data & Actions
 MCP tools fetch real-time data from external services. Call them directly — no Skill wrapper needed.

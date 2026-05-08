@@ -2,6 +2,50 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.12.1] — Drift consistency audit (workflow JSON sync + agent prompt sync)
+
+**Why:** v4.10.0 → v4.12.0 added many features (MCP utilization, SaaS scope, security hook, .claude/ pre-seed, Phase 5 iteration, auto-reviewer wait) but the canonical contract (`.claude-plugin/workflows/zero-to-ship.json`) and the skill description (`skills/dev-squad/SKILL.md`) drifted from the implementation. Coordinator reads the JSON at workflow start as dispatch source-of-truth — if JSON was stale, dispatch would not reflect new behavior. Agent prompts (devops, writer) didn't know about their new responsibilities (SaaS scaffold, `.claude/` pre-seed) — they only had implicit references via Skill Selection Matrix.
+
+This release closes those gaps. **No new features. No new files. Pure consistency.**
+
+### Changed — `.claude-plugin/workflows/zero-to-ship.json` (canonical contract)
+
+Bumped workflow `version` 4.9.0 → 4.12.0 (matches plugin version that introduced the changes). Updates per phase:
+
+- **Phase 0 (ULTRAPLAN)** — output description now mentions Step 2.5 SaaS Mode auto-detect + AskUserQuestion confirmation. blocking_gate.check requires SaaS Mode section locked. external_skills adds `dev-squad:saas-patterns` (graceful_degrade: false) when SaaS detected.
+- **Phase 2 (DESIGN Architecture)** — external_skills adds `dev-squad:saas-patterns` for ADR-001..004 mandate when SaaS active.
+- **Phase 3 (SCAFFOLD)** — outputs adds `apps/backend/src/{tenants,plans,billing,webhooks,api-keys,audit-log,notifications,admin}/` (conditional on SaaS mode). external_skills adds `dev-squad:saas-patterns` (devops invokes for module contracts).
+- **Phase 3.5 (UI/UX DESIGN)** — outputs adds `.dev-squad/design/drill-down-spec.md` (conditional on SaaS+dashboard). skip_conditions adds rule for non-SaaS-non-dashboard projects. external_skills adds `dev-squad:saas-patterns` (Part 2 §26 = drill-down-spec template).
+- **Phase 4 (IMPLEMENT)** — external_skills adds `dev-squad:saas-patterns` (backend Part 1 + frontend Part 2 when SaaS active).
+- **Phase 5 (REVIEW)** — outputs adds `.dev-squad/iteration-log.md` describing formal iteration loop semantics (max 5 iter, anti-thrashing, rollback on regression, escalate on exhaustion). blocking_gate.check encodes iteration loop discipline.
+- **Phase 6 (SHIP)** — outputs adds 4 `.claude/` pre-seed artifacts (CLAUDE.md, .claude/architecture.md, .claude/conventions.md, .claude/gotchas.md) all blocking. PR description encodes 180s auto-reviewer wait. blocking_gate.check verifies pre-seed + auto-reviewer wait completion.
+
+JSON validates against `_schema.json` (additionalProperties: false strict mode).
+
+### Changed — `skills/dev-squad/SKILL.md` (skill discovery / routing)
+
+- Frontmatter `description` rewritten to mention SaaS-mode detection, saas-patterns Part 1+2, Phase 5 iteration loop, Phase 6 .claude/ pre-seed, security hook.
+- Workflow diagram updated end-to-end:
+  - Phase 0 now shows Step 2.5 SaaS detection + locked decision in master-plan.md
+  - Phase 2 shows ADR-001..004 mandate when SaaS
+  - Phase 3 shows SaaS module scaffold conditional
+  - Phase 3.5 shows drill-down-spec.md conditional
+  - Phase 4 shows Backend Part 1 + Frontend Part 2 when SaaS + PreToolUse security hook coverage
+  - Phase 5 shows formal iteration loop with rollback + anti-thrashing + escalation
+  - Phase 6 shows .claude/ pre-seed (Writer + Architect collaboration) + 180s auto-reviewer wait
+  - **Phase 7 LEARN added** (was missing entirely from SKILL.md though present in JSON + build.md)
+- "Only one user checkpoint" → "up to 2 — Phase 0 Step 2.5 SaaS confirmation (if triggered) + Phase 1 PRD approval"
+- Skills table extended: `dev-squad:saas-patterns` row + 5 other dev-squad pattern skills (backend-patterns / frontend-patterns / postgres-patterns / golang-patterns / golang-testing / tdd-workflow / security-review) explicitly cataloged
+
+### Changed — `agents/dev-squad/devops.md` + `agents/dev-squad/writer.md`
+
+- **devops.md** — added `dev-squad:saas-patterns` row to Skill Selection Matrix (was missing — only 5 of 11 agents had it; devops scaffolds the SaaS modules, must reference Part 1 contracts)
+- **writer.md** — added new section "**`.claude/` Pre-Seed (Phase 6 SHIP — Mandatory for Generated Apps)**" with 4 artifact specs + rules (cap ~200 LOC each, link to source for details, mermaid for flows, terse tone for Claude-as-future-reader)
+
+### Migration
+
+None. Auto-update via `auto-update.sh` on next session start. The drift fix is internal — no new behavior to opt in/out of, just makes existing v4.12.0 features reach coordinator's dispatch reliably.
+
 ## [4.12.0] — Production discipline hardening (security hook + .claude/ pre-seed + Phase 5 iteration + auto-reviewer wait)
 
 **Why:** Analysis of `security-guidance`, `audit-project`, `ship`, and `memberstack` plugins identified 4 production-shipping disciplines dev-squad lacked. Each addresses a real friction or risk in shipping production code from generated builds. Zero new MCP/plugin installs.
