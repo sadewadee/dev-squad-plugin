@@ -2,6 +2,62 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.13.1] — Drift consistency audit round 2 (config.json + 3 workflow JSONs)
+
+**Why:** v4.12.1 audit only synced `zero-to-ship.json` and `skills/dev-squad/SKILL.md`. The other 3 workflow JSONs (`feature-development`, `bug-fix`, `refactoring`) and `skills/dev-squad/config.json` (agent declarative manifest) were still vintage v4.9.0. Worse: `config.json` was missing 4 of 11 agents entirely (designer, qa-engineer, auditor, writer) — they exist as agent prompt files but had no declarative entry.
+
+This release closes those gaps. **No new features. No new files. Pure consistency.**
+
+### Changed — `skills/dev-squad/config.json` (agent manifest, major sync)
+
+- **Added 4 missing members:**
+  - `designer` (Phase 3.5 anti-AI-slop gate, sonnet think_harder, priority 3) with frontend-design + ui-ux-pro-max + brainstorming + saas-patterns auto-skills
+  - `qa-engineer` (Phase 5.5 functional verification + Investigation Mode, sonnet) with playwright + chrome + tdd-workflow auto-skills
+  - `auditor` (Phase 5.6 stability + Phase 5.7 quality metrics, sonnet) with postgres-patterns + golang-patterns + golang-testing + backend-patterns + security-review + saas-patterns auto-skills
+  - `writer` (page copy + microcopy + legal + .claude/ pre-seed, sonnet) with claude-md-management + verification auto-skills
+- **`reviewer` role updated:** "Code Reviewer/QA" → "Security Lead + Code Reviewer + Phase 5 Synthesizer"; capabilities expanded with threat_modeling + owasp_top_10_enforcement + phase5_metrics_synthesis + saas_readiness_security_audit; auto_skills extended with brainstorming + security-review + postgres-patterns + saas-patterns
+- **`saas-patterns` added to auto_skills** for: coordinator, architect, backend, frontend, designer, devops (Part 3 ownership). Loaded conditionally when SaaS mode active.
+- **`requesting-code-review` added to git-ops auto_skills** (was added to git-ops.md frontmatter in v4.10.0 but not config.json)
+- **`mermaid-mcp` + `ide diagnostics` added to relevant auto_mcp lists** matching v4.10.0 MCP utilization expansion (writer, frontend, designer, reviewer, devops)
+- **`workflows.zero_to_ship` updated 6 → 9 phases** describing Phase 0 ULTRAPLAN + Step 2.5 SaaS detection + Phase 3.5 designer + Phase 7 LEARN; mentions iteration loop + readiness gate + .claude/ pre-seed + 180s auto-reviewer wait
+- **`workflows.feature_development` updated** to mention designer Phase 3.5 + Section 34 readiness audit for existing SaaS + iteration loop + security hook + 180s auto-reviewer wait
+- **`workflows.bug_fix` updated** to mention qa-engineer Investigation Mode + iteration loop with rollback + security hook awareness
+- **`workflows.refactoring` updated** to mention auditor before/after metrics + qa-engineer per-batch smoke + atomic rollback + security hook
+- **New workflow added: `workflows.saas_readiness_audit`** (parallel reviewer/auditor/architect → architect synthesis → BLOCK if P0 > 0)
+
+### Changed — `.claude-plugin/workflows/feature-development.json`
+
+- Bumped `version` 4.9.0 → 4.13.0
+- `description` updated to mention security hook (auto-blocks 9 dangerous patterns) + Phase 4 iteration loop + Section 34 readiness audit trigger for SaaS-touch features
+- Phase 1 scope_assessment output extended with `SaaS-touch flag` (true if scope touches multi-tenancy/billing/webhooks/audit/api-keys/admin)
+- Phase 3 implement: `dev-squad:saas-patterns` added to external_skills (load when scope touches SaaS); description mentions PreToolUse hook
+- Phase 4 review: new `iteration-log.md` artifact + iteration loop semantics in description
+- Phase 5 deploy: 180s auto-reviewer wait encoded in artifact description
+
+### Changed — `.claude-plugin/workflows/bug-fix.json`
+
+- Bumped `version` 4.9.0 → 4.13.0
+- `description` updated to mention security hook + Phase 4 iteration loop with rollback
+- Phase 3 fix: `saas-patterns` added (load for SaaS-subsystem bugs: cross-tenant leak, billing webhook idempotency, API key revocation race) + security hook awareness in artifact description
+- Phase 4 verify: iteration loop semantics encoded in artifact description
+
+### Changed — `.claude-plugin/workflows/refactoring.json`
+
+- Bumped `version` 4.9.0 → 4.13.0
+- `description` updated to mention security hook + per-batch atomic rollback discipline
+- Phase 3 incremental_refactor: `saas-patterns` added (preserve cross-tenant isolation/idempotency/audit integrity if refactoring SaaS code) + security hook awareness
+- Phase 4 smoke_verify: atomic rollback per batch encoded in artifact description
+
+### Changed — `.claude-plugin/workflows/zero-to-ship.json`
+
+- Bumped `version` 4.12.0 → 4.13.0 (was already updated in v4.13.0 with Phase 6 readiness gate; version field now matches)
+
+All 4 workflow JSONs validate strict-mode (additionalProperties: false) against `_schema.json`.
+
+### Migration
+
+None. Auto-update via `auto-update.sh` on next session start. The drift fix is internal — no new behavior to opt in/out of, just makes existing v4.10-13 features reach coordinator's dispatch reliably for ALL workflows (not just zero-to-ship).
+
 ## [4.13.0] — saas-patterns Part 3: Operational & Compliance Discipline (close ship-readiness blind spot)
 
 **Why:** Audit of an existing dev-squad-built SaaS (wacrm) revealed 9 P0 ship-blockers + 18 P1 launch-risks. Despite solid architecture (multi-tenancy verified, Stripe sig + bcrypt + CSP hardened), the project couldn't ship because of operational and compliance gaps: no backup automation, no CI/CD pipeline, `LOG_LEVEL=debug` PII leak, Stripe Tax not enabled, welcome email never sent, no GDPR data export/erasure, no status page, no trial expiry cron, etc.

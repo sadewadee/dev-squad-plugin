@@ -33,7 +33,8 @@
         "episodic-memory:remembering-conversations",
         "issuetracker",
         "find-skills",
-        "claude-md-management:revise-claude-md"
+        "claude-md-management:revise-claude-md",
+        "dev-squad:saas-patterns"
       ],
       "auto_mcp": [
         "mermaid-mcp",
@@ -63,7 +64,8 @@
         "superpowers:brainstorming",
         "superpowers:writing-plans",
         "episodic-memory:remembering-conversations",
-        "claude-md-management:revise-claude-md"
+        "claude-md-management:revise-claude-md",
+        "dev-squad:saas-patterns"
       ],
       "auto_mcp": [
         "context7",
@@ -97,12 +99,16 @@
         "superpowers:receiving-code-review",
         "simplify",
         "issuetracker",
-        "episodic-memory:remembering-conversations"
+        "episodic-memory:remembering-conversations",
+        "dev-squad:backend-patterns",
+        "dev-squad:postgres-patterns",
+        "dev-squad:saas-patterns"
       ],
       "auto_mcp": [
         "context7",
         "grep-github",
         "ide diagnostics",
+        "mermaid-mcp",
         "episodic-memory"
       ]
     },
@@ -132,44 +138,183 @@
         "simplify",
         "playwright-skill:playwright-skill",
         "superpowers-chrome:browsing",
-        "episodic-memory:remembering-conversations"
+        "episodic-memory:remembering-conversations",
+        "dev-squad:frontend-patterns",
+        "dev-squad:saas-patterns"
       ],
       "auto_mcp": [
         "context7",
         "grep-github",
         "chrome-devtools",
         "playwright",
+        "mermaid-mcp",
+        "ide diagnostics",
+        "episodic-memory"
+      ]
+    },
+    {
+      "id": "designer",
+      "role": "UI/UX Designer (Phase 3.5 Anti-AI-Slop Gate)",
+      "model": "sonnet",
+      "think_harder": true,
+      "capabilities": [
+        "design_tokens",
+        "visual_specification",
+        "component_inventory",
+        "responsive_wireframes",
+        "anti_ai_slop_authority",
+        "drill_down_spec",
+        "reference_grounding"
+      ],
+      "priority": 3,
+      "context_focus": ["design_tokens", "visual_quality", "responsive", "component_states", "anti_patterns"],
+      "auto_skills": [
+        "frontend-design:frontend-design",
+        "ui-ux-pro-max",
+        "superpowers:brainstorming",
+        "superpowers:verification-before-completion",
+        "superpowers-chrome:browsing",
+        "playwright-skill:playwright-skill",
+        "dev-squad:frontend-patterns",
+        "dev-squad:saas-patterns"
+      ],
+      "auto_mcp": [
+        "context7",
+        "grep-github",
+        "chrome-devtools",
+        "playwright",
+        "mermaid-mcp",
+        "episodic-memory"
+      ]
+    },
+    {
+      "id": "qa-engineer",
+      "role": "QA Engineer (Phase 5.5 Functional Verification + Investigation Mode)",
+      "model": "sonnet",
+      "capabilities": [
+        "functional_verification",
+        "golden_path_testing",
+        "interactive_element_audit",
+        "api_smoke_testing",
+        "browser_console_gate",
+        "visual_gate_runtime_check",
+        "investigation_mode_fresh_eyes",
+        "cross_boundary_trace"
+      ],
+      "context_focus": ["runtime_behavior", "regressions", "browser_state", "api_contracts"],
+      "auto_skills": [
+        "superpowers:systematic-debugging",
+        "superpowers:verification-before-completion",
+        "playwright-skill:playwright-skill",
+        "superpowers-chrome:browsing",
+        "dev-squad:tdd-workflow"
+      ],
+      "auto_mcp": [
+        "playwright",
+        "chrome-devtools",
+        "context7",
+        "grep-github",
+        "ide diagnostics",
+        "episodic-memory"
+      ]
+    },
+    {
+      "id": "auditor",
+      "role": "Auditor (Phase 5.6 Stability Execution + Phase 5.7 Code Quality Metrics)",
+      "model": "sonnet",
+      "capabilities": [
+        "stability_execution",
+        "config_drift_detection",
+        "db_performance_audit",
+        "endpoint_hammering",
+        "failure_injection",
+        "api_pattern_compliance",
+        "code_quality_metrics",
+        "multi_language_tool_runner",
+        "saas_readiness_operational_audit"
+      ],
+      "context_focus": ["measured_metrics", "stability", "code_quality", "operational_readiness"],
+      "auto_skills": [
+        "superpowers:verification-before-completion",
+        "superpowers:systematic-debugging",
+        "gsd-verify-work",
+        "gsd-audit-milestone",
+        "dev-squad:postgres-patterns",
+        "dev-squad:golang-patterns",
+        "dev-squad:golang-testing",
+        "dev-squad:backend-patterns",
+        "dev-squad:security-review",
+        "dev-squad:saas-patterns"
+      ],
+      "auto_mcp": [
+        "context7",
+        "grep-github",
+        "ide diagnostics",
+        "episodic-memory"
+      ]
+    },
+    {
+      "id": "writer",
+      "role": "Content Writer (page copy + microcopy + legal + SEO + .claude/ pre-seed)",
+      "model": "sonnet",
+      "capabilities": [
+        "page_copy",
+        "microcopy",
+        "legal_pages",
+        "seo_metadata",
+        "documentation",
+        "claude_md_pre_seed",
+        "email_lifecycle_templates"
+      ],
+      "context_focus": ["voice_tone", "brand_consistency", "compliance_copy", "claude_pre_seed"],
+      "auto_skills": [
+        "superpowers:verification-before-completion",
+        "claude-md-management:revise-claude-md"
+      ],
+      "auto_mcp": [
+        "context7",
+        "grep-github",
+        "mermaid-mcp",
         "episodic-memory"
       ]
     },
     {
       "id": "reviewer",
-      "role": "Code Reviewer/QA",
+      "role": "Security Lead + Code Reviewer + Phase 5 Synthesizer",
       "model": "sonnet",
       "capabilities": [
         "code_review",
         "code_simplification",
         "security_analysis",
+        "threat_modeling",
+        "owasp_top_10_enforcement",
         "test_validation",
         "quality_metrics",
         "issue_tracking",
         "dependency_auditing",
         "performance_profiling",
         "compliance_checking",
-        "architecture_conformance"
+        "architecture_conformance",
+        "phase5_metrics_synthesis",
+        "saas_readiness_security_audit"
       ],
-      "context_focus": ["quality_standards", "security_patterns", "best_practices", "compliance", "performance"],
+      "context_focus": ["quality_standards", "security_patterns", "best_practices", "compliance", "performance", "phase5_synthesis"],
       "auto_skills": [
         "code-review:code-review",
+        "superpowers:brainstorming",
         "simplify",
         "superpowers:systematic-debugging",
         "superpowers:verification-before-completion",
         "issuetracker",
-        "episodic-memory:remembering-conversations"
+        "episodic-memory:remembering-conversations",
+        "dev-squad:security-review",
+        "dev-squad:postgres-patterns",
+        "dev-squad:saas-patterns"
       ],
       "auto_mcp": [
         "grep-github",
         "context7",
+        "mermaid-mcp",
         "ide diagnostics",
         "episodic-memory"
       ]
@@ -197,11 +342,14 @@
         "superpowers:verification-before-completion",
         "superpowers:writing-plans",
         "superpowers:systematic-debugging",
-        "episodic-memory:remembering-conversations"
+        "episodic-memory:remembering-conversations",
+        "dev-squad:saas-patterns"
       ],
       "auto_mcp": [
         "context7",
         "grep-github",
+        "mermaid-mcp",
+        "ide diagnostics",
         "episodic-memory"
       ]
     },
@@ -224,6 +372,7 @@
       "context_focus": ["git_state", "workflows", "conventions", "release_strategy"],
       "auto_skills": [
         "superpowers:verification-before-completion",
+        "superpowers:requesting-code-review",
         "superpowers:finishing-a-development-branch",
         "superpowers:using-git-worktrees",
         "episodic-memory:remembering-conversations"
@@ -236,19 +385,19 @@
   ],
   "workflows": {
     "feature_development": [
-      "coordinator → architect (design review + ADR)",
-      "architect → backend + frontend (parallel implementation with worktrees)",
-      "backend + frontend → reviewer (code review + security scan)",
-      "reviewer → devops (deployment config + staging)",
-      "devops → git-ops (branch/PR management)",
-      "git-ops → coordinator (completion report)"
+      "coordinator → scope assessment (Diff-Scope Heuristic) → tier",
+      "If new-ui-surface: architect (delta design + ADR if structural) → designer (delta tokens + component inventory + drill-down-spec.md if SaaS+dashboard)",
+      "coordinator → backend + frontend (parallel with worktrees + TDD); PreToolUse security hook auto-blocks dangerous code patterns",
+      "If existing project + SaaS scope touched: trigger Section 34 readiness audit pattern before completion",
+      "reviewer + qa-engineer + auditor + designer (3-4 way parallel based on diff scope) → iteration loop with rollback on regression",
+      "devops → git-ops (PR with 180s auto-reviewer wait) → coordinator (completion)"
     ],
     "bug_fix": [
-      "coordinator → reviewer (root cause via issuetracker + systematic-debugging)",
-      "reviewer → backend|frontend (fix implementation with TDD)",
-      "backend|frontend → reviewer (validation + regression check)",
-      "reviewer → git-ops (PR creation + hotfix if critical)",
-      "git-ops → coordinator (completion)"
+      "coordinator → qa-engineer (Investigation Mode: reproduce + cross-boundary trace + LOOKUP audit + hypothesis via sequential-thinking) → root cause + recommended fix (NOT applied)",
+      "coordinator → severity triage (P0 hotfix path vs P1-P3 standard)",
+      "coordinator → backend|frontend (fix implementation with regression test FIRST); PreToolUse security hook prevents accidental dangerous patterns",
+      "qa-engineer (re-verify) + reviewer (regression diff) + auditor (if stability/perf area) → iteration loop with rollback if verify fails",
+      "git-ops (PR + hotfix branch if P0) → coordinator (completion)"
     ],
     "infrastructure_change": [
       "coordinator → architect (design validation + impact analysis)",
@@ -258,11 +407,12 @@
     ],
     "refactoring": [
       "coordinator → architect (target architecture + migration strategy)",
-      "architect → reviewer (review current code quality metrics)",
-      "reviewer → backend|frontend (incremental refactor with TDD)",
-      "backend|frontend → reviewer (verify no regression + improved metrics)",
-      "reviewer → git-ops (staged PRs)",
-      "git-ops → coordinator (completion)"
+      "auditor → BEFORE metrics (cyclomatic, duplication, dead code, type-escape, file/function size)",
+      "If has_visual_change: designer (component update spec)",
+      "coordinator → backend|frontend (incremental refactor in small batches with TDD); PreToolUse security hook prevents introducing dangerous patterns",
+      "qa-engineer → smoke verify per batch (golden path still works); if fails → rollback batch",
+      "auditor → AFTER metrics + delta vs baseline; refactor without measurable improvement = wasted effort flagged",
+      "reviewer (intent preserved + no behavioral drift + design token discipline if UI) → git-ops (staged PRs)"
     ],
     "security_audit": [
       "coordinator → reviewer (full security scan + OWASP check)",
@@ -294,13 +444,24 @@
       "reviewer → git-ops (repo setup + branch protection + PR templates)",
       "git-ops → coordinator (project ready)"
     ],
+    "saas_readiness_audit": [
+      "coordinator → reviewer (parallel: docs/saas-readiness-security.md — auth gaps + compliance + CVE + CSP/HSTS)",
+      "coordinator → auditor (parallel: docs/saas-readiness-operational.md — backup automation + CI/CD + observability + migration safety)",
+      "coordinator → architect (parallel: docs/saas-readiness-business.md — trial enforcement + Stripe Tax + plan downgrade + onboarding lifecycle + status page + annual billing)",
+      "architect synthesizes → docs/saas-readiness-master-report.md (Combined P0/P1/P2 + day-by-day pre-launch sprint + Phase 7/v2 backlog)",
+      "If P0 count > 0: BLOCK new feature work AND BLOCK Phase 6 SHIP until P0 cleared (override via .dev-squad/ship-exceptions.md)",
+      "Pattern: saas-patterns Part 3 Section 34 — applies to existing-project feature work + Phase 6 SHIP gate"
+    ],
     "zero_to_ship": [
-      "Phase 1 DISCOVER: coordinator → architect (brainstorm + research + PRD generation) → USER CHECKPOINT",
-      "Phase 2 DESIGN: coordinator → architect (architecture + C4 diagrams + ADR) → reviewer (threat model)",
-      "Phase 3 SCAFFOLD: coordinator → devops (project structure + Docker + CI/CD) + git-ops (repo init + branch protection)",
-      "Phase 4 IMPLEMENT: coordinator → backend + frontend (parallel implementation with worktrees + TDD)",
-      "Phase 5 REVIEW: coordinator → reviewer (full code review + OWASP audit + dependency scan + performance check)",
-      "Phase 6 SHIP: coordinator → devops (staging deploy) + git-ops (PR creation) → reviewer (final sign-off) → coordinator (completion report)"
+      "Phase 0 ULTRAPLAN: coordinator (deep thinking, master-plan.md) + Step 2.5 SaaS-mode auto-detect from PRD keywords + AskUserQuestion confirm → locked in master-plan.md",
+      "Phase 1 DISCOVER: coordinator → architect (brainstorm + research + PRD generation) → USER CHECKPOINT (PRD approval)",
+      "Phase 2 DESIGN: coordinator → architect (architecture + C4 + ADR-001..005 if SaaS: tenancy/billing/plan/admin/compliance) → reviewer (threat model parallel)",
+      "Phase 3 SCAFFOLD: coordinator → devops (monorepo + Docker + CI/CD + monitoring) + git-ops (repo init + branch protection); If SaaS: scaffold backend modules tenants/plans/billing/webhooks/api-keys/audit-log/notifications/admin",
+      "Phase 3.5 DESIGN (UI/UX, BLOCKING anti-AI-slop gate): coordinator → designer (4 artifacts: design-tokens + visual-spec + component-inventory + responsive-spec) + drill-down-spec.md if SaaS+dashboard",
+      "Phase 4 IMPLEMENT: coordinator → writer (content) FIRST → backend + frontend (parallel with worktrees + TDD); SaaS: backend Part 1 + frontend Part 2 + PreToolUse security hook auto-blocks 9 dangerous code patterns",
+      "Phase 5 REVIEW (3-way parallel + formal iteration loop): reviewer (static security/perf/spec/arch) + qa-engineer (Phase 5.5 functional + Visual Gate) + auditor (Phase 5.6 stability + 5.7 quality metrics) → reviewer synthesizes Phase5 Metrics Report; iteration loop max 5 with rollback on regression",
+      "Phase 6 SHIP: If SaaS: BLOCKING readiness gate (reviewer+auditor+architect parallel readiness reports → master report → BLOCK if P0>0). devops (staging deploy + backup + CI/CD + status page if SaaS) + git-ops (PR + 180s auto-reviewer wait) → reviewer (final sign-off). Pre-seed CLAUDE.md + .claude/architecture.md + .claude/conventions.md + .claude/gotchas.md",
+      "Phase 7 LEARN (PDCA Act): reviewer (retrospective.md) → coordinator (playbook.md + next-iteration.md + CLAUDE.md update + episodic memory write)"
     ]
   },
   "guardrails": {

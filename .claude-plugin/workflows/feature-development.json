@@ -1,9 +1,9 @@
 {
   "workflow_id": "feature-development",
   "schema_version": "1.0",
-  "version": "4.9.0",
+  "version": "4.13.0",
   "name": "Feature Development",
-  "description": "Add a new feature to existing project. Diff-scope-aware: dispatch tier varies by scope. Coordinator applies Diff-Scope Heuristic to choose lanes.",
+  "description": "Add a new feature to existing project. Diff-scope-aware: dispatch tier varies by scope. Coordinator applies Diff-Scope Heuristic to choose lanes. PreToolUse security hook auto-blocks 9 dangerous code patterns (eval, dangerouslySetInnerHTML, child_process.exec, pickle, etc.). Phase 4 review uses formal iteration loop with rollback on regression. If existing project is SaaS-class and feature touches SaaS subsystems, Section 34 readiness audit may be triggered before completion.",
   "trigger_command": "/dev-squad feature",
   "phases": [
     {
@@ -16,7 +16,7 @@
         { "artifact": "user_description", "from": "user", "required": true }
       ],
       "outputs": [
-        { "artifact": ".dev-squad/scope-tier.json", "to": "coordinator", "blocking": true, "description": "Diff-scope tier: trivial | tiny | new-endpoint | new-interactive-ui | new-ui-surface | db-change | auth-change | refactor | bug-fix | hotfix" }
+        { "artifact": ".dev-squad/scope-tier.json", "to": "coordinator", "blocking": true, "description": "Diff-scope tier: trivial | tiny | new-endpoint | new-interactive-ui | new-ui-surface | db-change | auth-change | refactor | bug-fix | hotfix. Plus SaaS-touch flag: true if feature touches multi-tenancy/billing/webhooks/audit/api-keys/admin scope (triggers Section 34 readiness check before completion)." }
       ],
       "estimated_complexity": "low",
       "rate_limit_tier": "haiku",
@@ -103,13 +103,14 @@
         { "artifact": ".dev-squad/design/feature-component-inventory.md", "from": "designer", "required": false }
       ],
       "outputs": [
-        { "artifact": "feature commits", "to": "review", "blocking": true, "description": "Code + tests on feature branch" }
+        { "artifact": "feature commits", "to": "review", "blocking": true, "description": "Code + tests on feature branch. PreToolUse hook (guard-unsafe-code.py) auto-blocks dangerous code patterns during Edit/Write/MultiEdit." }
       ],
       "estimated_complexity": "medium",
       "rate_limit_tier": "sonnet",
       "external_skills": {
         "preferred": [
-          { "skill": "superpowers:test-driven-development", "rationale": "TDD enforced", "graceful_degrade": true, "invoked_by": "backend,frontend" }
+          { "skill": "superpowers:test-driven-development", "rationale": "TDD enforced", "graceful_degrade": true, "invoked_by": "backend,frontend" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "Load when scope-tier touches SaaS subsystems (multi-tenancy/billing/webhooks/audit/api-keys/admin) — backend Part 1 + frontend Part 2 contracts", "graceful_degrade": false, "invoked_by": "backend,frontend" }
         ],
         "fallback": "Direct dispatch via Agent tool with worktree isolation"
       },
@@ -130,7 +131,8 @@
       ],
       "outputs": [
         { "artifact": ".dev-squad/dispatch-log.md", "to": "future_audit", "blocking": false, "description": "Heuristic dispatch log entry" },
-        { "artifact": "review verdict", "to": "git-ops", "blocking": true }
+        { "artifact": ".dev-squad/iteration-log.md", "to": "coordinator", "blocking": false, "description": "Phase 4 iteration loop log: per-iter fix attempts, verifications, rollbacks. Max 5 iterations. Anti-thrashing: skip to escalation if same failure as prior iter. Rollback rule: if fix breaks existing passing test → git restore immediately. Smaller scale than zero-to-ship Phase 5 but same discipline." },
+        { "artifact": "review verdict", "to": "git-ops", "blocking": true, "description": "P0/P1 must be resolved before merge. If iter > 5 unresolved → escalate to user with blast radius assessment." }
       ],
       "skip_conditions": [
         { "condition": "scope.tier == 'trivial'", "action": "slim", "fallback": "Reviewer light pass only; skip qa-engineer + auditor + designer" }
@@ -156,7 +158,7 @@
       "parallel_agents": ["dev-squad:git-ops"],
       "trigger": "review.complete",
       "outputs": [
-        { "artifact": "GitHub PR + staging deploy", "to": "user", "blocking": true }
+        { "artifact": "GitHub PR + staging deploy", "to": "user", "blocking": true, "description": "PR creation includes mandatory 180s wait for auto-reviewers (Gemini/Copilot/CodeRabbit) before checking comment threads; address all unresolved threads before merge." }
       ],
       "estimated_complexity": "low",
       "rate_limit_tier": "sonnet",

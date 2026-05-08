@@ -1,9 +1,9 @@
 {
   "workflow_id": "refactoring",
   "schema_version": "1.0",
-  "version": "4.9.0",
+  "version": "4.13.0",
   "name": "Refactoring",
-  "description": "Restructure code without behavior change. Auditor before/after metrics prove improvement. Refactor without measurable improvement = wasted effort.",
+  "description": "Restructure code without behavior change. Auditor before/after metrics prove improvement. Refactor without measurable improvement = wasted effort. PreToolUse security hook prevents introducing dangerous patterns during refactor. Phase 4 smoke verify per batch enables rollback if regression introduced.",
   "trigger_command": "/dev-squad refactor",
   "phases": [
     {
@@ -82,13 +82,14 @@
       "parallel_agents": ["dev-squad:backend", "dev-squad:frontend"],
       "trigger": "baseline_metrics.complete",
       "outputs": [
-        { "artifact": "refactor commits (small batches)", "to": "smoke_verify", "blocking": true }
+        { "artifact": "refactor commits (small batches)", "to": "smoke_verify", "blocking": true, "description": "Each batch is its own commit (atomic rollback unit). PreToolUse security hook prevents accidentally introducing dangerous patterns (eval/dangerouslySetInnerHTML/exec/pickle/etc.) during refactor — refactor with security regression = unwanted behavior change." }
       ],
       "estimated_complexity": "medium",
       "rate_limit_tier": "sonnet",
       "external_skills": {
         "preferred": [
-          { "skill": "superpowers:test-driven-development", "rationale": "TDD enforced; tests guarantee no behavior drift", "graceful_degrade": true, "invoked_by": "backend,frontend" }
+          { "skill": "superpowers:test-driven-development", "rationale": "TDD enforced; tests guarantee no behavior drift", "graceful_degrade": true, "invoked_by": "backend,frontend" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "Load if refactor touches SaaS subsystems (multi-tenancy/billing/webhooks/audit) — preserve cross-tenant isolation guarantees, idempotency, audit trail integrity", "graceful_degrade": false, "invoked_by": "backend,frontend" }
         ],
         "fallback": "Direct via implementer agents"
       },
@@ -103,7 +104,7 @@
       "lead_agent": "dev-squad:qa-engineer",
       "trigger": "incremental_refactor.batch_complete",
       "outputs": [
-        { "artifact": ".dev-squad/refactor-smoke.md", "to": "coordinator", "blocking": false, "description": "Golden path still works; no regression in interactive flows" }
+        { "artifact": ".dev-squad/refactor-smoke.md", "to": "coordinator", "blocking": false, "description": "Golden path still works; no regression in interactive flows. If smoke FAILS for a batch → git restore that batch (atomic rollback) + log to .dev-squad/iteration-log.md + investigate root cause before next batch. Iteration discipline: don't accumulate broken refactor batches." }
       ],
       "estimated_complexity": "low",
       "rate_limit_tier": "sonnet",

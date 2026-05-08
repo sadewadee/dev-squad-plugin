@@ -1,7 +1,7 @@
 {
   "workflow_id": "zero-to-ship",
   "schema_version": "1.0",
-  "version": "4.12.0",
+  "version": "4.13.0",
   "name": "Zero-to-Ship",
   "description": "Full project build from zero to shippable state. 9 phases with up to 2 user checkpoints (Phase 0 Step 2.5 SaaS-mode confirmation if triggered + Phase 1 PRD approval). PDCA cycle: Plan (Phases 0-2 + 3.5) -> Do (Phases 3-4) -> Check (Phase 5 with formal iteration loop) -> Act (Phases 6-7). v4.12.0: SaaS-mode detection (Phase 0 Step 2.5) + .claude/ pre-seed (Phase 6) + Phase 5 iteration loop with rollback + auto-reviewer 180s wait (Phase 6).",
   "trigger_command": "/dev-squad build",

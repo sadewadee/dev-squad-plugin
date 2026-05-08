@@ -1,9 +1,9 @@
 {
   "workflow_id": "bug-fix",
   "schema_version": "1.0",
-  "version": "4.9.0",
+  "version": "4.13.0",
   "name": "Bug Fix",
-  "description": "Reproduce -> root cause -> fix -> verify. qa-engineer Investigation Mode for cross-boundary or runtime bugs.",
+  "description": "Reproduce -> root cause -> fix -> verify. qa-engineer Investigation Mode for cross-boundary or runtime bugs. PreToolUse security hook prevents accidental introduction of dangerous patterns during fix. Phase 4 verify uses iteration loop pattern: if regression introduced by fix, rollback + retry.",
   "trigger_command": "/dev-squad fix",
   "phases": [
     {
@@ -63,13 +63,14 @@
         { "artifact": ".dev-squad/bug-investigation.md", "from": "qa-engineer", "required": true }
       ],
       "outputs": [
-        { "artifact": "fix commits + regression test", "to": "review", "blocking": true }
+        { "artifact": "fix commits + regression test", "to": "review", "blocking": true, "description": "Regression test added FIRST (TDD), then fix. PreToolUse security hook prevents introducing eval/dangerouslySetInnerHTML/exec/etc. accidentally during fix." }
       ],
       "estimated_complexity": "medium",
       "rate_limit_tier": "sonnet",
       "external_skills": {
         "preferred": [
-          { "skill": "superpowers:test-driven-development", "rationale": "Regression test before fix", "graceful_degrade": true, "invoked_by": "backend,frontend" }
+          { "skill": "superpowers:test-driven-development", "rationale": "Regression test before fix", "graceful_degrade": true, "invoked_by": "backend,frontend" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "Load when bug touches SaaS subsystems (multi-tenancy/billing/webhooks/audit/api-keys/admin) — e.g. cross-tenant leak, billing webhook idempotency, API key revocation race", "graceful_degrade": false, "invoked_by": "backend,frontend" }
         ],
         "fallback": "Direct fix via implementer agent prompt"
       },
@@ -85,7 +86,7 @@
       "parallel_agents": ["dev-squad:reviewer", "dev-squad:auditor"],
       "trigger": "fix.complete",
       "outputs": [
-        { "artifact": "verify report", "to": "git-ops", "blocking": true, "description": "qa-engineer re-verifies; reviewer regression diff check; auditor (if stability/quality area)" }
+        { "artifact": "verify report", "to": "git-ops", "blocking": true, "description": "qa-engineer re-verifies; reviewer regression diff check; auditor (if stability/quality area). Iteration loop: if verify FAILS or fix introduces regression in another test → git restore + retry (max 5 iter, anti-thrashing). Escalate to user if iter > 5 unresolved." }
       ],
       "skip_conditions": [
         { "condition": "severity != 'P0'", "action": "slim", "fallback": "Skip auditor unless DB/perf area touched" }
