@@ -2,6 +2,49 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.13.0] — saas-patterns Part 3: Operational & Compliance Discipline (close ship-readiness blind spot)
+
+**Why:** Audit of an existing dev-squad-built SaaS (wacrm) revealed 9 P0 ship-blockers + 18 P1 launch-risks. Despite solid architecture (multi-tenancy verified, Stripe sig + bcrypt + CSP hardened), the project couldn't ship because of operational and compliance gaps: no backup automation, no CI/CD pipeline, `LOG_LEVEL=debug` PII leak, Stripe Tax not enabled, welcome email never sent, no GDPR data export/erasure, no status page, no trial expiry cron, etc.
+
+These weren't wacrm-specific bugs — they were patterns dev-squad's `saas-patterns` skill didn't cover. Part 1 (15 sections) and Part 2 (11 sections) gave a working architecture. **Neither stopped you from shipping it broken.**
+
+This release adds Part 3: 8 sections covering operational + compliance + lifecycle discipline. Patterns derived from real-world readiness audits.
+
+### Added — `skills/saas-patterns/SKILL.md` Part 3 (sections 27–34, ~630 LOC)
+
+- **Section 27. Pre-Launch Readiness Checklist** — P0 (ship-blocker) / P1 (launch-risk) / P2 (post-launch backlog) categorized matrix covering Security, Operational, Business. Phase 6 SHIP gate: BLOCK if P0 count > 0.
+- **Section 28. Backup & Disaster Recovery** — Postgres pg-backup service + S3 lifecycle, Redis AOF, ClickHouse coverage, mandatory quarterly restore drill (backups you've never restored ARE NOT BACKUPS).
+- **Section 29. CI/CD Pipeline Requirements for SaaS** — Min: tsc/test/lint/build/security-scan blocking PRs. Migration safety gate (NOT NULL + DROP COLUMN + non-CONCURRENTLY index detection). Deploy gates (green CI + tagged + staging-verified + manual approval on breaking changes).
+- **Section 30. Compliance Lifecycle (Data Subject Rights)** — GDPR / PDP / CCPA / LGPD obligations matrix. Data export endpoint (async via queue, JSON/NDJSON, 30-day SLA). Data erasure endpoint (anonymize PII, retain financial 7y). Cookie consent banner (don't load analytics until consent="all"). DPA template guidance.
+- **Section 31. Customer Onboarding Email Lifecycle** — Day 0 verify → welcome → activation milestone (only when first key action) → trial-warning -3d → trial-expired → re-engagement drip 30/60/90d. Implementation pattern with BullMQ queue + daily cron. Anti-pattern list (silence after verify, generic re-engagement, mixing transactional+marketing on same domain).
+- **Section 32. Status Page & Incident Communication** — Tooling matrix (BetterStack / Atlassian / Cachet / static). Sev 0-3 classification with response SLA. Postmortem template (timeline, root cause, what went well/poorly, action items).
+- **Section 33. Payment Compliance & Pricing Tiers** — Stripe Tax mandatory (`automatic_tax: true` + dashboard config). Tax invoice / kwitansi generation (Indonesia e-Faktur PPN, EU VAT, US sales tax). Annual + monthly pricing (15-20% discount = 30-50% ARR uplift). Failed payment dunning (Stripe smart retries + tenant status updates). Refund policy.
+- **Section 34. Pre-Existing Project Audit Pattern** — When extending existing SaaS: dispatch reviewer + auditor + architect in parallel for 3 readiness reports → architect synthesizes master report → BLOCK feature work until P0 cleared. Audit categories per agent. Synthesize report template.
+
+Plus updates:
+- **Anti-patterns table** extended with 15 new ops/compliance/lifecycle anti-patterns (backup never restored, LOG_LEVEL=debug PII leak, Stripe Tax false, missing welcome email, silent trial expiry, hot-deploy without CI, hardcoded plan IDs, manual GDPR export, cookie banner that loads analytics on dismiss, drip without unsubscribe, mixing transactional+marketing on same domain, no status page, adding features over unresolved P0, refund without revoking entitlements, erasure that deletes financial records).
+- **Bootstrap Context** extended: ADR-005 compliance scope mandate; readiness checklist mandate before Phase 6; Section 34 mandate for pre-existing project work; section ownership matrix (devops/architect/backend/writer).
+- **Frontmatter description** rewritten to reflect 3 parts.
+
+Total saas-patterns size: 1771 → 2402 LOC.
+
+### Changed — agent prompts + commands
+
+- **`agents/dev-squad/devops.md`** — saas-patterns row updated to call out Part 3 ownership (Sections 28 backup, 29 CI/CD, 32 status page). DevOps blocks Phase 6 SHIP if any P0 ops item unresolved.
+- **`agents/dev-squad/architect.md`** — saas-patterns row updated: ADR-001..**005** (added compliance scope) + Section 34 audit synthesis ownership.
+- **`commands/build.md`** — Phase 6 SHIP now has explicit BLOCKING readiness gate when SaaS mode active. Coordinator dispatches reviewer + auditor + architect in parallel for 3 readiness reports, architect synthesizes master report, BLOCK ship if P0 > 0 (override via `.dev-squad/ship-exceptions.md`). DevOps checklist extended with backup automation + CI/CD + status page verification when SaaS. Phase 0 Step 2.5 mention extended to ADR-005.
+- **`.claude-plugin/workflows/zero-to-ship.json`** — Phase 6 outputs adds `docs/saas-readiness-master-report.md` blocking artifact (SaaS only). blocking_gate.check encodes P0 = 0 OR documented exception. Phase 0 + Phase 2 mentions updated to ADR-001..005.
+
+### Reference architecture credit
+
+Section 27, 30, 31, 32, 33 patterns derived from real audit findings of dev-squad-built SaaS (wacrm — multi-tenant CRM with Stripe + dual-provider WhatsApp). Patterns are general SaaS, not wacrm-specific. See `docs/saas-readiness-master-report.md` template (Section 34.3) for synthesis format.
+
+### Migration
+
+None. Auto-update on next session start. Existing SaaS projects benefit retroactively — coordinator can dispatch readiness audit (Section 34 pattern) on existing project before Phase 6 SHIP.
+
+To opt out of readiness gate (not recommended): explicit user override per ship attempt via `.dev-squad/ship-exceptions.md`.
+
 ## [4.12.1] — Drift consistency audit (workflow JSON sync + agent prompt sync)
 
 **Why:** v4.10.0 → v4.12.0 added many features (MCP utilization, SaaS scope, security hook, .claude/ pre-seed, Phase 5 iteration, auto-reviewer wait) but the canonical contract (`.claude-plugin/workflows/zero-to-ship.json`) and the skill description (`skills/dev-squad/SKILL.md`) drifted from the implementation. Coordinator reads the JSON at workflow start as dispatch source-of-truth — if JSON was stale, dispatch would not reflect new behavior. Agent prompts (devops, writer) didn't know about their new responsibilities (SaaS scaffold, `.claude/` pre-seed) — they only had implicit references via Skill Selection Matrix.

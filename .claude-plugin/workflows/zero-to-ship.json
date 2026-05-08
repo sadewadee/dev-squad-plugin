@@ -20,7 +20,7 @@
       ],
       "blocking_gate": {
         "downstream_phase": "discover",
-        "check": "master-plan.md exists with non-empty Evidence section (>=3 lookups) AND SaaS Mode section (active|inactive locked); if SaaS active, ADRs 001-004 must be produced in Phase 2 before backend codes",
+        "check": "master-plan.md exists with non-empty Evidence section (>=3 lookups) AND SaaS Mode section (active|inactive locked); if SaaS active, ADRs 001-005 must be produced in Phase 2 before backend codes (ADR-001 tenancy / 002 billing / 003 plan / 004 admin scope / 005 compliance scope = which regulations apply)",
         "verification_command": "test -f .dev-squad/master-plan.md && grep -c '^- ' .dev-squad/master-plan.md | awk '$1>=3'"
       },
       "estimated_complexity": "high",
@@ -95,7 +95,7 @@
         "preferred": [
           { "skill": "gsd-plan-phase", "rationale": "Spec-driven planning with plan-checker loop", "graceful_degrade": true, "invoked_by": "architect" },
           { "skill": "mermaid-mcp", "rationale": "C4 diagrams + auth flow + threat surface diagrams", "graceful_degrade": true, "invoked_by": "architect" },
-          { "skill": "dev-squad:saas-patterns", "rationale": "When SaaS mode active (per Phase 0 Step 2.5), architect MUST produce ADR-001 (tenancy strategy), ADR-002 (billing model), ADR-003 (plan structure), ADR-004 (admin scope) before backend can code — Part 1 of saas-patterns is the reference", "graceful_degrade": false, "invoked_by": "architect" }
+          { "skill": "dev-squad:saas-patterns", "rationale": "When SaaS mode active (per Phase 0 Step 2.5), architect MUST produce ADR-001 (tenancy strategy), ADR-002 (billing model), ADR-003 (plan structure), ADR-004 (admin scope), ADR-005 (compliance scope: GDPR/PDP/CCPA/LGPD/sectoral — drives Part 3 Section 30 obligations) before backend can code — Part 1 of saas-patterns is the reference", "graceful_degrade": false, "invoked_by": "architect" }
         ],
         "fallback": "Manual via context7 + sequential-thinking + plain markdown for diagrams"
       },
@@ -275,6 +275,7 @@
       "outputs": [
         { "artifact": "staging deployment", "to": "user", "blocking": true, "description": "Health checks pass; monitoring active; alerts configured" },
         { "artifact": "GitHub PR", "to": "user", "blocking": true, "description": "PR created with full summary; mandatory 180s wait after creation for auto-reviewers (Gemini/Copilot/CodeRabbit) before checking comment threads; address all unresolved threads before merge" },
+        { "artifact": "docs/saas-readiness-master-report.md", "to": "user", "blocking": true, "description": "SaaS-mode only: synthesized readiness report (Part 3 Section 27 + 34) covering Combined P0 Ship-Blockers + P1 Launch-Risks + P2 Backlog. P0 count > 0 BLOCKS ship unless explicit user override logged in .dev-squad/ship-exceptions.md. Architect synthesizes from reviewer + auditor + architect parallel readiness reports (security, operational, business)." },
         { "artifact": "CLAUDE.md", "to": "future_claude_sessions", "blocking": true, "description": ".claude/ pre-seed: project root CLAUDE.md (auto-loaded by Claude Code at session start) — overview, tech stack, how-to-run, where things live, references to .claude/ detail docs. Each future Claude session on this project loads this auto. Compound productivity gain. Cap ~200 LOC." },
         { "artifact": ".claude/architecture.md", "to": "future_claude_sessions", "blocking": true, "description": "Entities + relationships, modules, data flow, auth flow (with mermaid). Sourced from architect's Phase 2 design doc." },
         { "artifact": ".claude/conventions.md", "to": "future_claude_sessions", "blocking": true, "description": "Naming, file org, error handling, validation, testing, commit format. Sourced from reviewer's Phase 5 notes + ADRs." },
@@ -282,7 +283,7 @@
       ],
       "blocking_gate": {
         "downstream_phase": "learn",
-        "check": "Staging deployed; health checks 200; reviewer final sign-off; PR open + 180s auto-reviewer wait completed + all unresolved comment threads addressed; .claude/ pre-seed complete (CLAUDE.md + architecture.md + conventions.md + gotchas.md)",
+        "check": "Staging deployed; health checks 200; reviewer final sign-off; PR open + 180s auto-reviewer wait completed + all unresolved comment threads addressed; .claude/ pre-seed complete (CLAUDE.md + architecture.md + conventions.md + gotchas.md). If SaaS mode: readiness master report exists AND combined P0 count = 0 OR explicit user override logged in .dev-squad/ship-exceptions.md.",
         "verification_command": "gh pr list --state open --limit 1 && test -f CLAUDE.md && test -f .claude/architecture.md && test -f .claude/conventions.md"
       },
       "estimated_complexity": "medium",

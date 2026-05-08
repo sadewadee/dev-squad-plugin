@@ -1,6 +1,6 @@
 ---
 name: saas-patterns
-description: SaaS-class architecture patterns for dev-squad agents — full-stack reference covering BACKEND (multi-tenancy with RLS + isolation testing, Stripe billing lifecycle, entitlements, API keys, signed outbound webhooks with retry+DLQ, audit logs, in-app notifications, transactional email, hybrid validation, admin scope, usage metering, runtime config, SSO, white-label) and FRONTEND admin dashboard with drill-down (URL state, breadcrumb preservation, time-series brush+zoom, virtualized tables, cross-filter coordination, per-level empty/loading/error states, permission-aware items, real-time updates, perf, designer drill-down spec). Reference architecture inspired by production SaaS codebases. TypeScript/Node.js + Go examples.
+description: SaaS-class architecture + operational discipline reference for dev-squad agents — 3 parts. PART 1 BACKEND (multi-tenancy with RLS + isolation testing, Stripe billing, entitlements, API keys, signed outbound webhooks with retry+DLQ, audit logs, notifications, transactional email, hybrid validation, admin scope, usage metering, runtime config, SSO, white-label). PART 2 FRONTEND admin dashboard with drill-down (URL state, breadcrumb, time-series brush+zoom, virtualized tables, cross-filter, permission-aware items). PART 3 OPERATIONAL & COMPLIANCE DISCIPLINE (pre-launch readiness checklist with P0/P1/P2 categorized, backup + DR automation, CI/CD requirements, GDPR/PDP/CCPA compliance lifecycle with data export+erasure, customer onboarding email lifecycle, status page + incident comms, payment compliance Stripe Tax + tax invoice + annual billing, pre-existing project audit pattern). Patterns derived from production SaaS audits. TypeScript/Node.js + Go examples. Covers what dev-squad-built SaaS apps need to actually ship without P0 readiness blockers.
 ---
 
 # SaaS Patterns — Production-Class SaaS Reference for Dev Squad
@@ -11,11 +11,12 @@ Load these patterns when dev-squad agents are building, reviewing, or architecti
 
 **Critical rule:** Multi-tenancy is an architectural decision, not a feature. Retrofit later = cross-tenant data leak (P0 security incident). Architect MUST decide tenancy strategy in Phase 2 ADR before any data model is written.
 
-This skill is in TWO parts:
+This skill is in THREE parts:
 - **Part 1 (sections 1–15):** Backend patterns — data model, billing, auth, validation, isolation
 - **Part 2 (sections 16–26):** Frontend admin dashboard with drill-down
+- **Part 3 (sections 27–34):** Operational & compliance discipline — pre-launch readiness, backup, CI/CD, GDPR/PDP/CCPA compliance, onboarding email lifecycle, status page, payment compliance, pre-existing project audit pattern
 
-Backend and frontend are coupled in SaaS scope — this skill is loaded as a unit.
+Backend, frontend, and operational discipline are coupled in SaaS scope — this skill is loaded as a unit. Part 1 + Part 2 give you a working SaaS architecture. Part 3 stops you from shipping it broken.
 
 ---
 
@@ -1717,6 +1718,610 @@ This spec feeds:
 
 ---
 
+# Part 3: Operational & Compliance Discipline (Pre-Launch + Lifecycle)
+
+Part 1 and Part 2 give you a working SaaS architecture. **Part 3 is what stops you from shipping it broken.** A multi-tenant SaaS with perfect tenancy isolation but no backup automation, no Stripe Tax, no GDPR data export, no welcome email — that's a launch-blocker. Or worse: a customer-trust failure mode within the first month.
+
+Patterns in this part are derived from real-world readiness audits of dev-squad-built SaaS apps. Every item here was a gap discovered AFTER architecture was solid — so cover them BEFORE Phase 6 SHIP, not after.
+
+---
+
+## 27. Pre-Launch Readiness Checklist
+
+Before Phase 6 SHIP, verify every item below. Categorize remaining gaps as P0 (ship-blocker), P1 (launch-risk), P2 (post-launch backlog).
+
+### 27.1 P0 — Ship-blockers (cannot launch with even 1 customer until resolved)
+
+**Security:**
+- [ ] Password reset flow exists end-to-end (UI + API + DB model + email)
+- [ ] Per-account lockout after N failed logins (default: 5 → 15 min lock)
+- [ ] No `LOG_LEVEL=debug` default in production (PII leak via Prisma query logs)
+- [ ] All Stripe webhook receivers verify signatures
+- [ ] Multi-tenant isolation runtime test passes (Section 1.5)
+- [ ] No hardcoded secrets in repo / Docker images / compose files
+- [ ] HSTS + CSP strict + helmet wired
+
+**Operational:**
+- [ ] Database backup automation (cron + S3 + restore drill verified) — Section 28
+- [ ] CI/CD pipeline blocking PRs on tsc/test/lint — Section 29
+- [ ] `/health` + `/ready` endpoints respond 200
+- [ ] Migrations run on container start (`prisma migrate deploy`)
+- [ ] Status page exists (even static) — Section 32
+
+**Business:**
+- [ ] Trial expiry enforcement cron — Section 31
+- [ ] Stripe Tax enabled (`automatic_tax: { enabled: true }`) — Section 33
+- [ ] Welcome email sent after email verification — Section 31
+- [ ] Tax invoice / kwitansi generation works for completed payments — Section 33
+
+### 27.2 P1 — Launch-risks (should fix before public marketing launch)
+
+**Security:**
+- [ ] Refresh token rotation endpoint
+- [ ] CORS production guard (reject localhost when `NODE_ENV=production`)
+- [ ] GDPR/PDP data export + erasure endpoints — Section 30
+- [ ] Cookie consent banner (ePrivacy + PDP requirement)
+- [ ] 2FA/TOTP for tenant admins
+- [ ] Plan downgrade contact + seat enforcement (Section 3)
+
+**Operational:**
+- [ ] Pino redact PII paths (email, phone, address, SSN, JWT, etc.)
+- [ ] Prometheus `/metrics` endpoint
+- [ ] Sentry / error tracking (frontend + backend)
+- [ ] Backup automation for ALL stateful services (Postgres + Redis + ClickHouse + ...)
+- [ ] Stripe placeholder rejection in staging (not just production)
+
+**Business:**
+- [ ] Annual billing pricing tier (15-20% discount vs monthly) — Section 33
+- [ ] Help center / docs site exists at advertised URL
+- [ ] Prisma connection pool sized appropriately for expected workers
+- [ ] Multi-region or DB failover plan
+- [ ] Signup funnel + activation milestone tracking
+
+### 27.3 P2 — Post-launch backlog (acceptable to defer beyond launch but track)
+
+- [ ] Drip cadence emails (re-engagement at 30/60/90 day dormancy) — Section 31
+- [ ] IP/domain warmup logic (for transactional email senders)
+- [ ] DMARC rua aggregation pipeline
+- [ ] Email-to-ticket gateway for support
+- [ ] Test coverage instrumentation (c8 / coverage thresholds in CI)
+- [ ] Code quality tools install (jscpd, madge, ts-prune)
+- [ ] BullMQ worker for queued operations (when sync hits scale)
+
+### 27.4 Phase 6 SHIP gate
+
+**Coordinator MUST run this checklist before approving Phase 6 SHIP.** Block if any P0 unresolved. Allow with explicit user override if P1 unresolved (with documented exception in `.dev-squad/ship-exceptions.md`). P2 always allowed (track in `docs/next-iteration.md`).
+
+---
+
+## 28. Backup & Disaster Recovery
+
+Architecture without backup automation = ship-blocker. First DB corruption = total data loss.
+
+### 28.1 Postgres backup
+
+```yaml
+# docker-compose.yml — add pg-backup service
+services:
+  pg-backup:
+    image: prodrigestivill/postgres-backup-local:16
+    restart: always
+    volumes:
+      - ./backups:/backups
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_EXTRA_OPTS: '-Z 9 --schema=public --blobs'
+      SCHEDULE: '@daily'
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 12
+    depends_on:
+      - postgres
+```
+
+Plus S3 upload via sidecar or cron:
+
+```bash
+# scripts/backup-to-s3.sh
+aws s3 cp backups/daily/$(ls -t backups/daily/ | head -1) \
+  s3://my-app-backups/postgres/$(date +%Y%m%d)/
+# Lifecycle policy on bucket: glacier after 30d, delete after 365d
+```
+
+### 28.2 Redis backup
+
+For BullMQ queue state or sessions:
+
+```yaml
+redis:
+  image: redis:7-alpine
+  command: redis-server --save 60 1000 --appendonly yes
+  volumes:
+    - redis_data:/data
+```
+
+For ClickHouse / other stateful: each has its own backup pattern. Don't assume "Postgres backup covers everything".
+
+### 28.3 Restore drill (mandatory quarterly)
+
+**Backups you've never restored ARE NOT BACKUPS.**
+
+```bash
+# scripts/restore-drill.sh
+docker run -d --name drill-db postgres:16
+gunzip -c latest.sql.gz | docker exec -i drill-db psql -U postgres
+docker exec drill-db psql -U postgres -c "
+  SELECT count(*) FROM users;
+  SELECT count(*) FROM organizations;
+"
+# Document drill in docs/ops-runbook.md with date + result
+docker rm -f drill-db
+```
+
+Restore failure or row counts unexpected → P0 incident — investigate immediately.
+
+---
+
+## 29. CI/CD Pipeline Requirements for SaaS
+
+Watchtower-style hot-deploys without test gates = broken builds reach prod silently.
+
+### 29.1 Required gates per PR
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - name: Type check
+        run: pnpm tsc --noEmit
+      - name: Lint
+        run: pnpm lint
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pnpm audit --audit-level=high
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+```
+
+### 29.2 Migration safety gate
+
+Block PR merge if migration is unsafe:
+- Adding NOT NULL column without default on table > 1M rows
+- DROP COLUMN / DROP TABLE without staging verification
+- CREATE INDEX without CONCURRENTLY on hot table
+- ACCESS EXCLUSIVE locks during long transactions
+
+Custom migration linter or manual review checklist enforced in CI.
+
+### 29.3 Deploy gates
+
+Production deploy ONLY on:
+- Green CI on `main`
+- Tagged release (semantic version)
+- Migration deployed to staging first + verified
+- Manual approval if changing breaking interfaces
+
+Deploy script reads `prisma migrate status` to ensure DB is up-to-date before swapping containers.
+
+---
+
+## 30. Compliance Lifecycle (Data Subject Rights)
+
+Multi-tenant SaaS that handles user data must comply with regional data protection law. Architect MUST decide ADR-005 (compliance scope: which regulations apply) alongside ADR-001..004.
+
+| Regulation | Region | Key obligations |
+|---|---|---|
+| **GDPR** | EU | Right to access, erasure, portability, rectification; cookie consent (ePrivacy); DPA contract with subprocessors |
+| **PDP** (UU PDP) | Indonesia | Right to access, erasure, withdrawal of consent; data localization for some sectors |
+| **CCPA / CPRA** | California | Right to know, delete, opt-out of sale; verifiable consumer requests |
+| **LGPD** | Brazil | Similar to GDPR — access, erasure, portability |
+
+### 30.1 Data export endpoint (Right to access)
+
+```typescript
+// apps/api/src/modules/compliance/exportData.ts
+export async function exportUserData(userId: string): Promise<Buffer> {
+  const user = await userRepo.findById(userId);
+  const data = {
+    user: omit(user, ['passwordHash', 'refreshTokenHash']),
+    organizations: await orgRepo.findByUser(userId),
+    contacts: await contactRepo.findByUser(userId),
+    auditTrail: await auditRepo.findByUser(userId),
+    apiKeys: (await apiKeyRepo.findByUser(userId)).map(k => ({ ...k, keyHash: undefined })),
+    // ... every collection scoped to this user
+  };
+  return Buffer.from(JSON.stringify(data, null, 2));
+}
+
+// Route — async via queue (large data, email when ready):
+router.post('/api/v1/me/data-export', authenticate, async (req, res) => {
+  await emailQueue.enqueue('data-export', { userId: req.user.id });
+  res.status(202).json({ status: 'queued', notify_via: 'email' });
+});
+```
+
+Format: machine-readable (JSON or NDJSON). Time bound: deliver within 30 days (GDPR requirement).
+
+### 30.2 Data erasure endpoint (Right to be forgotten)
+
+```typescript
+export async function eraseUser(userId: string): Promise<void> {
+  await userRepo.update(userId, {
+    email: `erased-${userId}@deleted.local`,
+    name: '[ERASED]',
+    phone: null,
+    avatarUrl: null,
+    passwordHash: null,
+    erasedAt: new Date(),
+  });
+  await auditRepo.anonymizeUser(userId);
+  await apiKeyRepo.revokeAll(userId);
+  await refreshTokenRepo.deleteAll(userId);
+  // Don't delete content user authored that other users consume — anonymize attribution
+}
+```
+
+**Critical:** retain financial records (invoices, transactions) for legally-mandated period (7 years US/EU). Anonymize user's name/email in them but keep the record. Document in privacy policy.
+
+### 30.3 Cookie consent banner
+
+```tsx
+// apps/web/src/components/CookieConsent.tsx
+'use client';
+export function CookieConsent() {
+  const [shown, setShown] = useState(true);
+  useEffect(() => setShown(!localStorage.getItem('cookie-consent')), []);
+  if (!shown) return null;
+  return (
+    <div className="fixed bottom-0 inset-x-0 bg-background border-t p-4 flex items-center gap-4">
+      <p className="text-sm">We use essential cookies. Analytics with consent. <Link href="/privacy">Privacy</Link>.</p>
+      <Button onClick={() => { localStorage.setItem('cookie-consent', 'all'); setShown(false); }}>Accept all</Button>
+      <Button variant="outline" onClick={() => { localStorage.setItem('cookie-consent', 'essential'); setShown(false); }}>Essential only</Button>
+    </div>
+  );
+}
+```
+
+Don't load analytics scripts until consent is "all". For "essential only", limit to auth + CSRF cookies.
+
+### 30.4 DPA (Data Processing Agreement)
+
+When you process B2B customer data, customers can ask for a DPA. Template ready at `docs/legal/data-processing-agreement.md` covering: subprocessors list (hosting + email + analytics), data locations, security measures, breach notification SLA, sub-processor change notice period.
+
+---
+
+## 31. Customer Onboarding Email Lifecycle
+
+Welcome silence after signup = customer thinks app is broken. First impression = lifelong impression.
+
+### 31.1 Standard email lifecycle for SaaS
+
+```
+Day 0  signup       → email-verify (immediate, transactional)
+Day 0  verify       → welcome (immediate, friendly intro + 1 CTA)
+Day 1-3            → onboarding tip 1 (only if user has NOT completed first key action)
+Day 5-7            → activation milestone (sent ONLY when user reaches first value moment)
+Day -3 to expiry   → trial-warning (3 days before trial ends, with upgrade CTA)
+Day 0  expiry      → trial-expired (immediate, with grace + upgrade option)
+Day 30 dormant     → re-engagement drip 1
+Day 60 dormant     → re-engagement drip 2 (with offer)
+Day 90 dormant     → win-back / cancel
+```
+
+### 31.2 Implementation pattern
+
+```typescript
+export async function onUserSignup(userId: string) {
+  await emailQueue.enqueue('verify-email', { userId, delay: 0 });
+}
+
+export async function onEmailVerified(userId: string) {
+  await emailQueue.enqueue('welcome', { userId, delay: 0 });
+  await emailQueue.enqueue('check-activation', { userId, delay: 24 * 3600 * 1000 });
+}
+
+export async function checkActivationMilestone(userId: string) {
+  const milestone = await activationRepo.find(userId);
+  if (milestone?.firstKeyAction && !milestone?.activationEmailSent) {
+    await emailQueue.enqueue('activation-milestone', { userId });
+    await activationRepo.mark(userId, { activationEmailSent: true });
+  }
+}
+
+// Daily cron (BullMQ scheduled or Postgres cron):
+export async function trialExpiryCheck() {
+  const expiringSoon = await tenantRepo.findExpiringTrials({ within: '3d' });
+  for (const tenant of expiringSoon) {
+    if (!tenant.trialWarningSent) {
+      await emailQueue.enqueue('trial-warning', { tenantId: tenant.id });
+      await tenantRepo.markWarned(tenant.id);
+    }
+  }
+  const expired = await tenantRepo.findExpiredTrials();
+  for (const tenant of expired) {
+    await tenantRepo.update(tenant.id, { planStatus: 'TRIAL_EXPIRED' });
+    await emailQueue.enqueue('trial-expired', { tenantId: tenant.id });
+  }
+}
+```
+
+Each email has its own template (writer agent produces — see writer.md `.claude/` Pre-Seed responsibilities + template patterns).
+
+### 31.3 Anti-patterns
+
+- Email verification but no welcome → customer assumes broken
+- Trial expires silently → customer surprise + trust loss
+- Generic re-engagement template → looks like spam
+- Re-engagement drip without unsubscribe link → CAN-SPAM / GDPR violation
+- Mixing transactional (verify, reset) and marketing (drip) on same domain → deliverability tanks
+
+---
+
+## 32. Status Page & Incident Communication
+
+When app is down, customers blame YOU regardless of cause. Public status page = first line of defense.
+
+### 32.1 Tooling options
+
+| Tool | Pros | Cons | Cost |
+|---|---|---|---|
+| BetterStack | Polished, good SLA tracking | Subscription | $29+/mo |
+| Atlassian Statuspage | Industry standard, integrations | Pricier | $79+/mo |
+| Cachet (self-host) | Free, full control | Operational overhead | Free + hosting |
+| Static page | Pre-launch placeholder | No real-time | Free |
+
+Pre-launch: even a static "All systems operational" page on `status.yourapp.com` is better than nothing.
+
+### 32.2 Incident severity classification
+
+| Sev | Definition | Response |
+|---|---|---|
+| **Sev 0** | Critical — full outage, data loss, security breach | Page oncall in 5min; status page UPDATE in 15min; customer email in 1h |
+| **Sev 1** | Major — feature broken for many users | Page oncall in 15min; status page UPDATE in 30min |
+| **Sev 2** | Minor — degraded perf, single feature flaky | Investigate business hours; status page note if customer-impacting |
+| **Sev 3** | Cosmetic — UI bug, edge case | Backlog ticket |
+
+### 32.3 Postmortem template (for Sev 0/1)
+
+```markdown
+docs/postmortems/{YYYY-MM-DD}-{slug}.md
+
+# Postmortem: {title}
+**Status:** Resolved
+**Severity:** Sev 0 / 1
+**Duration:** {start} → {end}
+**Affected:** {customers / regions / features}
+
+## Timeline (UTC)
+- HH:MM — Alert fired
+- HH:MM — Oncall paged
+- HH:MM — Investigation began
+- HH:MM — Root cause identified
+- HH:MM — Mitigation applied
+- HH:MM — Verified resolved
+
+## Root cause
+{Be technical and honest}
+
+## Impact
+{Customer-facing: what didn't work, how long, how many}
+
+## What went well
+- {Detection time, response time, communication}
+
+## What went poorly
+- {Slow detection, missed alerts, comms gaps}
+
+## Action items
+- [ ] {Specific fix} — owner, due date
+- [ ] {Process improvement} — owner, due date
+- [ ] {Test/monitoring addition} — owner, due date
+```
+
+Publish externally if customer-impacting (transparency builds trust).
+
+---
+
+## 33. Payment Compliance & Pricing Tiers
+
+Stripe core (Section 2) is necessary but not sufficient. Tax, invoicing, and pricing strategy are launch-blockers.
+
+### 33.1 Stripe Tax (mandatory)
+
+```typescript
+await stripe.checkout.sessions.create({
+  mode: 'subscription',
+  customer: tenant.stripeCustomerId,
+  line_items: [{ price: plan.pricing.stripePriceIdMonthly, quantity: 1 }],
+
+  // MANDATORY for compliance:
+  automatic_tax: { enabled: true },
+  customer_update: { address: 'auto', name: 'auto' },
+  tax_id_collection: { enabled: true },
+
+  success_url: ...,
+  cancel_url: ...,
+  metadata: { tenantId, planId },
+});
+```
+
+Plus configure Stripe dashboard:
+- Tax registrations (Indonesia PPN 11%, EU VAT, US states sales tax)
+- Tax codes per product (digital service vs SaaS vs services)
+- Reverse charge for B2B EU customers
+
+Without Stripe Tax = compliance violation in many jurisdictions on day 1.
+
+### 33.2 Tax invoice / receipt generation
+
+Stripe generates basic invoice. Many regions require localized format:
+
+**Indonesia (e-Faktur PPN):**
+- Tax ID (NPWP) collected
+- Invoice in IDR
+- Format compatible with Coretax (DJP)
+- B2B: tax invoice; B2C: receipt
+
+**EU (VAT invoice):**
+- VAT number on invoice for B2B (reverse charge)
+- VAT amount itemized
+
+```typescript
+export async function generateLocalizedInvoice(invoiceId: string) {
+  const inv = await stripe.invoices.retrieve(invoiceId, { expand: ['customer'] });
+  const tenant = await tenantRepo.findByStripeCustomer(inv.customer);
+  const region = tenant.billingAddress?.country;
+  if (region === 'ID') return generateIndonesianInvoice(inv, tenant);
+  if (['DE', 'FR', 'NL', 'IT', 'ES'].includes(region)) return generateEUVATInvoice(inv, tenant);
+  return generateDefaultInvoice(inv, tenant);
+}
+```
+
+Store generated invoices in S3, link in billing portal.
+
+### 33.3 Pricing — annual + monthly
+
+Annual = 15-20% discount = 30-50% potential ARR uplift.
+
+```typescript
+export interface Plan {
+  pricing: {
+    monthlyAmountCents: number;
+    yearlyAmountCents: number;          // typically monthly * 10 (15-17% discount)
+    currency: string;
+    stripePriceIdMonthly?: string;
+    stripePriceIdYearly?: string;
+  };
+}
+```
+
+UI:
+```tsx
+<RadioGroup value={cycle} onChange={setCycle}>
+  <Radio value="monthly">$29/mo</Radio>
+  <Radio value="yearly">
+    $290/year
+    <Badge variant="success">Save 17% — 2 months free</Badge>
+  </Radio>
+</RadioGroup>
+```
+
+### 33.4 Failed payment retry / dunning
+
+```typescript
+async function handlePaymentFailed(invoice: Stripe.Invoice) {
+  const tenant = await tenantRepo.findByStripeCustomer(invoice.customer);
+  const attempt = invoice.attempt_count;
+  if (attempt === 1) await emailQueue.enqueue('payment-failed-1st', { tenantId: tenant.id });
+  else if (attempt === 2) await emailQueue.enqueue('payment-failed-2nd', { tenantId: tenant.id });
+  else if (attempt >= 3) {
+    await emailQueue.enqueue('payment-failed-final', { tenantId: tenant.id });
+    await tenantRepo.update(tenant.id, { planStatus: 'PAST_DUE' });
+  }
+}
+```
+
+Stripe handles retries (smart retries config in dashboard). Your job: notify + update status. Don't reinvent.
+
+### 33.5 Refund policy
+
+- Document publicly (legal page)
+- Stripe refund via dashboard or API (`stripe.refunds.create`)
+- Update internal records: revoke entitlements, audit log, email confirmation
+- Don't reverse usage events (they happened)
+
+---
+
+## 34. Pre-Existing Project Audit Pattern
+
+When extending an EXISTING SaaS (not building zero-to-ship):
+
+### 34.1 Run readiness audit BEFORE adding features
+
+If project hasn't done a SaaS readiness audit, do it first:
+
+1. Dispatch reviewer + auditor + architect in parallel for 3 readiness reports:
+   - `docs/saas-readiness-security.md` (reviewer)
+   - `docs/saas-readiness-operational.md` (auditor)
+   - `docs/saas-readiness-business.md` (architect)
+2. Synthesize into `docs/saas-readiness-master-report.md` with:
+   - Combined P0 / P1 / P2 categorized
+   - Day-by-day pre-launch hardening sprint plan
+   - Phase 7 / v2 backlog
+3. **Block new feature work until P0 items resolved.** Adding features to a leaky foundation = compounding tech debt.
+
+### 34.2 Audit categories (each agent owns)
+
+**Reviewer (Security/Compliance):** auth flow gaps, compliance gaps, CVE exposure, CSP/HSTS/secrets scan
+
+**Auditor (Operational/Tooling):** backup automation, CI/CD existence + gates, observability, migration safety, connection pool
+
+**Architect (Business/Scalability):** trial enforcement, Stripe Tax + tax invoice, plan downgrade enforcement, customer onboarding lifecycle, status page, annual billing, help center, signup funnel
+
+### 34.3 Synthesize report format
+
+```markdown
+# {Project} — SaaS-Readiness Master Report
+
+Date: {YYYY-MM-DD}
+
+## Executive Verdict
+{🟢 READY / 🟡 NOT YET / 🔴 SIGNIFICANT GAPS}
+
+| Stage | Status | Items remaining |
+|---|---|---|
+| Internal demo | {✅/⚠/❌} | {n} |
+| Soft-launch (1-10 invited) | {✅/⚠/❌} | {n} |
+| Public marketing launch | {✅/⚠/❌} | {n} |
+| Scale beyond 50 customers | {✅/⚠/❌} | {n} |
+
+## Combined P0 — Ship-Blockers ({n})
+### Security/Compliance
+### Operational/Tooling
+### Business/Scalability
+
+## Combined P1 — Launch-Risk ({n})
+[Same categorization]
+
+## Notable PASS items (verified during audit)
+
+## Recommended Pre-Launch Hardening Sprint
+### Day 1 — Critical P0s
+### Day 2 — Remaining P0s + critical P1s
+### Day 3 — High-impact P1s
+
+## Phase 7 / v2 Backlog (P2 + nice-to-haves)
+
+## Final Verdict
+{Action with timeline}
+```
+
+### 34.4 Block-ship rule
+
+Coordinator MUST NOT advance to Phase 6 SHIP if combined P0 count > 0. User can override with explicit "ship with documented exception" — each exception logged in `.dev-squad/ship-exceptions.md` with sign-off + remediation deadline.
+
+---
+
 ## Anti-patterns (NEVER do these in SaaS)
 
 ### Backend anti-patterns
@@ -1747,6 +2352,25 @@ This spec feeds:
 | Storing modal/scroll/hover state in URL | URL bloat, history pollution | Component state for transient UI |
 | Permission gating via 403 after click | Bad UX — discover-then-block | PermissionGate hides or shows locked state |
 
+### Operational / Compliance / Lifecycle anti-patterns
+| Anti-pattern | Why it's wrong | Right way |
+|---|---|---|
+| Backup script that's never restored | Backup that doesn't restore = no backup | Quarterly restore drill with documented row counts (Section 28.3) |
+| `LOG_LEVEL=debug` in production | PII leak via Prisma query logs (emails/phones in stdout) | LOG_LEVEL=info default; Zod refine reject debug when prod |
+| Stripe Tax `automatic_tax: false` | PPN/VAT/sales tax compliance violation | `enabled: true` + Stripe Tax dashboard config (Section 33.1) |
+| No welcome email after email verify | Customer thinks app is broken — silence kills first impression | Enqueue welcome email immediately on email verify (Section 31) |
+| Trial expires silently | Customer surprise + trust loss + churn | Trial-warning 3d before + trial-expired immediately (Section 31.2) |
+| Hot-deploy without CI gates | Broken builds reach prod silently | Min: tsc/test/lint blocking PRs + security scan (Section 29) |
+| Hardcoded plan IDs in code | Plan change = code deploy | Plan as table, queried by slug (Section 2) |
+| GDPR data export = "we'll do it manually" | Doesn't scale; legal exposure (30d SLA) | Implement /me/data-export + erasure endpoints (Section 30) |
+| Cookie banner that loads analytics on dismiss | ePrivacy / PDP violation | Don't load analytics until consent="all" (Section 30.3) |
+| Drip email without unsubscribe link | CAN-SPAM / GDPR violation | Every marketing email has visible unsubscribe |
+| Mixing transactional + marketing on same domain | Deliverability tanks; transactional emails go to spam | Separate domains (`mail.app.com` vs `marketing.app.com`) |
+| No status page | Customer blames YOU for cloud outages | Even static page beats nothing; upgrade post-launch (Section 32) |
+| Adding features to project with unresolved P0 readiness | Compounding tech debt; foundation gets leakier | Audit-first, block features until P0 cleared (Section 34) |
+| Refund without revoking entitlements | Customer keeps paid features after refund | After refund: revoke entitlements + audit log + email confirmation |
+| Erasure that also deletes financial records | Legal violation (7-year retention required) | Anonymize PII in financial records but keep them; document in privacy |
+
 ---
 
 ## Companion skills
@@ -1765,7 +2389,14 @@ Architect MUST decide and document in ADRs (Phase 2) before backend codes:
 - ADR-002 Billing model (per-seat, per-usage, hybrid)
 - ADR-003 Plan structure (free trial? plan tiers? entitlement keys?)
 - ADR-004 Admin scope (root-tenant key vs dedicated admin_users table)
+- **ADR-005 Compliance scope** (which regulations apply: GDPR / PDP / CCPA / LGPD / sectoral) — drives Section 30 obligations
 
-Without these ADRs, backend will retrofit multi-tenancy = data leak risk.
+Without ADR-001..005, backend will retrofit = data leak risk + compliance debt.
 
 Designer (Phase 3.5) MUST produce `drill-down-spec.md` (Part 2 Section 26 template) BEFORE frontend codes any admin dashboard. Without explicit drill spec, frontend will improvise — usually skipping breadcrumb state preservation, virtualization, or permission gating.
+
+**Coordinator + Reviewer + Auditor + Architect MUST run readiness checklist (Section 27) BEFORE Phase 6 SHIP.** P0 items block ship. P1 documented as pre-launch hardening sprint plan (Section 34.3 template). P2 to `docs/next-iteration.md`.
+
+For pre-existing SaaS projects (not zero-to-ship): coordinator MUST run readiness audit (Section 34) BEFORE adding features. Adding features to project with unresolved P0 = compounding tech debt anti-pattern.
+
+**Devops owns Section 28 (backup), Section 29 (CI/CD), Section 32 (status page).** Architect owns Section 30 ADR-005 + Section 34 master synthesis. Backend owns Section 30 implementation + Section 33 (payment compliance). Writer owns Section 31 email lifecycle templates.

@@ -79,7 +79,7 @@ Agent tool with:
         - "No, just standard app" → skip both skills, standard zero-to-ship
       ```
     - Record decision in `.dev-squad/master-plan.md` under section "SaaS Mode" — once locked, do not retrofit (multi-tenancy retrofit = data leak risk)
-    - If SaaS mode active, architect MUST produce ADR-001 to ADR-004 (tenancy strategy, billing model, plan structure, admin scope) in Phase 2 BEFORE backend codes
+    - If SaaS mode active, architect MUST produce ADR-001 to **ADR-005** in Phase 2 BEFORE backend codes: tenancy strategy, billing model, plan structure, admin scope, and **compliance scope** (which regulations apply: GDPR / PDP / CCPA / LGPD / sectoral — drives saas-patterns Part 3 Section 30 obligations)
 
     **Step 3: Write Master Plan** — Create `.dev-squad/master-plan.md`:
     ```markdown
@@ -306,6 +306,15 @@ Agent tool with:
     ### Phase 6: SHIP (Verification-Before-Completion)
     - Before ANY completion claim: IDENTIFY command → RUN fresh → READ output → VERIFY → ONLY THEN claim
     - SELF-HEALING: After `docker compose up` check health endpoints — if fails, diagnose → fix → retry (max 5)
+    - **If SaaS mode active: BLOCKING readiness gate** (saas-patterns Part 3 Section 27)
+      - Dispatch reviewer + auditor + architect in parallel to produce 3 readiness reports:
+        - `docs/saas-readiness-security.md` (reviewer)
+        - `docs/saas-readiness-operational.md` (auditor)
+        - `docs/saas-readiness-business.md` (architect)
+      - Architect synthesizes `docs/saas-readiness-master-report.md` per Section 34.3 template
+      - **BLOCK Phase 6 if combined P0 count > 0.** User can override with explicit "ship with documented exception" — log to `.dev-squad/ship-exceptions.md` with sign-off + remediation deadline
+      - P1 items captured as Day 1-3 pre-launch hardening sprint (already in master report)
+      - P2 items appended to `docs/next-iteration.md`
     - Dispatch devops for staging deployment:
       - [ ] docker compose up succeeds
       - [ ] All health checks passing
@@ -315,6 +324,9 @@ Agent tool with:
       - [ ] TLS configured
       - [ ] Secrets injected via env (not in image/compose)
       - [ ] Rollback procedure documented
+      - [ ] **If SaaS: backup automation verified (pg_dump cron + S3 + restore drill done)** — saas-patterns Section 28
+      - [ ] **If SaaS: CI/CD pipeline blocking PRs on tsc/test/lint** — saas-patterns Section 29
+      - [ ] **If SaaS: status page exists (even static)** — saas-patterns Section 32
     - Dispatch git-ops for PR creation with full description
     - Dispatch reviewer for final sign-off
     - **Pre-seed self-documenting context for future Claude sessions** (mandatory): writer + architect collaborate to produce in user's project root:

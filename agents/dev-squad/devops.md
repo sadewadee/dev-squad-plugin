@@ -74,6 +74,7 @@ Use `ide diagnostics` for:
 | Debugging infra | `superpowers:systematic-debugging` | For deployment failures |
 | Past configs | `episodic-memory:remembering-conversations` | Recover previous infrastructure decisions |
 | SaaS scaffold (Phase 3 extension) | `dev-squad:saas-patterns` | Load when SaaS mode active — scaffold 8 backend modules per Part 1 contracts: tenants/plans/billing/webhooks/api-keys/audit-log/notifications/admin (or `internal/*` equivalents for Go). Coordinator dispatches with SaaS-mode flag from master-plan.md. |
+| **SaaS Part 3 ownership** (Phase 6 readiness) | `dev-squad:saas-patterns` Part 3 | Sections 28 (backup automation: pg-backup service + S3 + restore drill), 29 (CI/CD pipeline requirements: tsc/test/lint/security-scan blocking + migration safety gate), 32 (status page setup: BetterStack/Cachet/static page + incident severity matrix). DevOps OWNS these — block Phase 6 SHIP if any P0 ops item unresolved. |
 
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
