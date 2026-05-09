@@ -131,7 +131,8 @@ Use `mermaid-mcp` for:
 | Code review feedback | `superpowers:receiving-code-review` | When receiving review suggestions |
 | Bug detection | `issuetracker` | On build errors or compilation issues |
 | Past solutions | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
-| SaaS-class backend work | `dev-squad:saas-patterns` | Load when SaaS mode active — multi-tenancy, billing, webhooks, audit logs, API keys, entitlements |
+| SaaS-class backend code-write | `dev-squad:saas-patterns` | Load during Phase 4 IMPLEMENT when SaaS mode active — Part 1 multi-tenancy, billing, webhooks, audit logs, API keys, entitlements, hybrid validation, admin scope |
+| SaaS readiness sprint execution | `dev-squad:saas-readiness` | Load during Phase 6 sub-phase work (6-A billing replatform / 6-B user mgmt / 6-C invoicing / 6-D plan / 6-E API / 6-F compliance) — Sections 10.1-10.6 execution templates, Section 21 provider abstraction, Section 22 regional patterns |
 
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |

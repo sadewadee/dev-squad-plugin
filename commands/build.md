@@ -306,14 +306,15 @@ Agent tool with:
     ### Phase 6: SHIP (Verification-Before-Completion)
     - Before ANY completion claim: IDENTIFY command → RUN fresh → READ output → VERIFY → ONLY THEN claim
     - SELF-HEALING: After `docker compose up` check health endpoints — if fails, diagnose → fix → retry (max 5)
-    - **If SaaS mode active: BLOCKING readiness gate** (saas-patterns Part 3 Section 27)
+    - **If SaaS mode active: BLOCKING readiness gate** (saas-readiness Section 1 + Section 8)
       - Dispatch reviewer + auditor + architect in parallel to produce 3 readiness reports:
         - `docs/saas-readiness-security.md` (reviewer)
         - `docs/saas-readiness-operational.md` (auditor)
         - `docs/saas-readiness-business.md` (architect)
-      - Architect synthesizes `docs/saas-readiness-master-report.md` per Section 34.3 template
+      - Architect synthesizes `docs/saas-readiness-master-report.md` per saas-readiness Section 8.3 template
       - **BLOCK Phase 6 if combined P0 count > 0.** User can override with explicit "ship with documented exception" — log to `.dev-squad/ship-exceptions.md` with sign-off + remediation deadline
-      - P1 items captured as Day 1-3 pre-launch hardening sprint (already in master report)
+      - **If 10+ P0+P1 items across 4+ domains:** invoke `/dev-squad readiness` workflow (6-A→6-H sub-phase decomposition per saas-readiness Section 9) instead of 3-day sprint. Coordinator orchestrates 8 sub-phases parallelizable when independent.
+      - P1 items captured as Day 1-3 pre-launch hardening sprint OR sub-phase plan (in master report)
       - P2 items appended to `docs/next-iteration.md`
     - Dispatch devops for staging deployment:
       - [ ] docker compose up succeeds
@@ -324,9 +325,9 @@ Agent tool with:
       - [ ] TLS configured
       - [ ] Secrets injected via env (not in image/compose)
       - [ ] Rollback procedure documented
-      - [ ] **If SaaS: backup automation verified (pg_dump cron + S3 + restore drill done)** — saas-patterns Section 28
-      - [ ] **If SaaS: CI/CD pipeline blocking PRs on tsc/test/lint** — saas-patterns Section 29
-      - [ ] **If SaaS: status page exists (even static)** — saas-patterns Section 32
+      - [ ] **If SaaS: backup automation verified (pg_dump cron + S3 + restore drill done)** — saas-readiness Section 2
+      - [ ] **If SaaS: CI/CD pipeline blocking PRs on tsc/test/lint** — saas-readiness Section 3
+      - [ ] **If SaaS: status page exists (even static)** — saas-readiness Section 6
     - Dispatch git-ops for PR creation with full description
     - Dispatch reviewer for final sign-off
     - **Pre-seed self-documenting context for future Claude sessions** (mandatory): writer + architect collaborate to produce in user's project root:

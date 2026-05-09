@@ -34,7 +34,8 @@
         "issuetracker",
         "find-skills",
         "claude-md-management:revise-claude-md",
-        "dev-squad:saas-patterns"
+        "dev-squad:saas-patterns",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "mermaid-mcp",
@@ -65,7 +66,8 @@
         "superpowers:writing-plans",
         "episodic-memory:remembering-conversations",
         "claude-md-management:revise-claude-md",
-        "dev-squad:saas-patterns"
+        "dev-squad:saas-patterns",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "context7",
@@ -102,7 +104,8 @@
         "episodic-memory:remembering-conversations",
         "dev-squad:backend-patterns",
         "dev-squad:postgres-patterns",
-        "dev-squad:saas-patterns"
+        "dev-squad:saas-patterns",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "context7",
@@ -140,7 +143,8 @@
         "superpowers-chrome:browsing",
         "episodic-memory:remembering-conversations",
         "dev-squad:frontend-patterns",
-        "dev-squad:saas-patterns"
+        "dev-squad:saas-patterns",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "context7",
@@ -176,7 +180,8 @@
         "superpowers-chrome:browsing",
         "playwright-skill:playwright-skill",
         "dev-squad:frontend-patterns",
-        "dev-squad:saas-patterns"
+        "dev-squad:saas-patterns",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "context7",
@@ -244,7 +249,8 @@
         "dev-squad:golang-testing",
         "dev-squad:backend-patterns",
         "dev-squad:security-review",
-        "dev-squad:saas-patterns"
+        "dev-squad:saas-patterns",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "context7",
@@ -269,7 +275,8 @@
       "context_focus": ["voice_tone", "brand_consistency", "compliance_copy", "claude_pre_seed"],
       "auto_skills": [
         "superpowers:verification-before-completion",
-        "claude-md-management:revise-claude-md"
+        "claude-md-management:revise-claude-md",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "context7",
@@ -309,7 +316,8 @@
         "episodic-memory:remembering-conversations",
         "dev-squad:security-review",
         "dev-squad:postgres-patterns",
-        "dev-squad:saas-patterns"
+        "dev-squad:saas-patterns",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "grep-github",
@@ -343,7 +351,8 @@
         "superpowers:writing-plans",
         "superpowers:systematic-debugging",
         "episodic-memory:remembering-conversations",
-        "dev-squad:saas-patterns"
+        "dev-squad:saas-patterns",
+        "dev-squad:saas-readiness"
       ],
       "auto_mcp": [
         "context7",
@@ -447,10 +456,24 @@
     "saas_readiness_audit": [
       "coordinator → reviewer (parallel: docs/saas-readiness-security.md — auth gaps + compliance + CVE + CSP/HSTS)",
       "coordinator → auditor (parallel: docs/saas-readiness-operational.md — backup automation + CI/CD + observability + migration safety)",
-      "coordinator → architect (parallel: docs/saas-readiness-business.md — trial enforcement + Stripe Tax + plan downgrade + onboarding lifecycle + status page + annual billing)",
-      "architect synthesizes → docs/saas-readiness-master-report.md (Combined P0/P1/P2 + day-by-day pre-launch sprint + Phase 7/v2 backlog)",
+      "coordinator → architect (parallel: docs/saas-readiness-business.md — trial enforcement + tax engine + plan downgrade + onboarding lifecycle + status page + annual billing + product-surface 10 domains)",
+      "architect synthesizes → docs/saas-readiness-master-report.md (Combined P0/P1/P2 + sprint plan recommendation: 3-day OR 6-A→6-H decomposition based on scope)",
       "If P0 count > 0: BLOCK new feature work AND BLOCK Phase 6 SHIP until P0 cleared (override via .dev-squad/ship-exceptions.md)",
-      "Pattern: saas-patterns Part 3 Section 34 — applies to existing-project feature work + Phase 6 SHIP gate"
+      "Pattern: saas-readiness Section 8 — applies to existing-project feature work + Phase 6 SHIP gate"
+    ],
+    "saas_readiness_sprint": [
+      "Triggered when readiness audit reveals 10+ P0+P1 across 4+ domains (3-day sprint unrealistic)",
+      "Phase 0 audit: coordinator → reviewer + auditor + architect parallel readiness reports → architect synthesis",
+      "Phase 6-A Billing replatform: backend (lead) + writer + frontend; provider abstraction (saas-readiness Section 21)",
+      "Phase 6-B User mgmt hardening: backend (lead) + frontend + writer + designer; self-service profile/password/email/account-deletion + 2FA + bulk invite + lockout + audit log",
+      "Phase 6-C Invoicing + tax: backend + writer; depends on 6-A; Faktur Pajak / VAT / receipt per region",
+      "Phase 6-D Plan management: backend + frontend; depends on 6-A; trial cron + annual + coupons + downgrade",
+      "Phase 6-E API + integrations (parallel-independent): backend + writer; OpenAPI + customer API keys + customer webhooks",
+      "Phase 6-F Compliance lifecycle: backend + frontend + writer; data export + erasure + cookie + DPA",
+      "Phase 6-G Operational hardening (final): devops (lead) + auditor; depends on 6-A..6-F; backup + CI/CD + status page + Sentry + Prometheus",
+      "Phase 6-H Customer success (final): writer (lead) + backend + frontend; depends on 6-A + 6-B; welcome + activation + trial-warn + drip + help center",
+      "Phase 7 Ship: devops + git-ops; PR + 180s auto-reviewer wait; final readiness verdict",
+      "Pattern: saas-readiness Section 9 sprint decomposition + Section 10 per-sub-phase execution templates. Trigger: /dev-squad readiness"
     ],
     "zero_to_ship": [
       "Phase 0 ULTRAPLAN: coordinator (deep thinking, master-plan.md) + Step 2.5 SaaS-mode auto-detect from PRD keywords + AskUserQuestion confirm → locked in master-plan.md",

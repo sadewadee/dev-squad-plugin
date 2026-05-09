@@ -64,7 +64,8 @@ Use `context7` BEFORE:
 | Writing specs | `superpowers:writing-plans` | For implementation specs |
 | Past decisions | `episodic-memory:remembering-conversations` | Recover past architectural decisions |
 | Project knowledge | `claude-md-management:revise-claude-md` | Document architecture in CLAUDE.md |
-| SaaS architecture decisions | `dev-squad:saas-patterns` | Load when SaaS mode active — produce ADR-001 to **ADR-005** (tenancy, billing, plan structure, admin scope, **compliance scope** GDPR/PDP/CCPA/LGPD which drives Section 30 obligations). Architect owns Section 34 (pre-existing project audit synthesis) + Phase 6 readiness checklist coordination. |
+| SaaS architecture decisions | `dev-squad:saas-patterns` | Load when SaaS mode active — produce ADR-001..005 (tenancy, billing, plan, admin scope, compliance scope). For multi-region pivots: ADR-006+ for provider abstraction (per saas-readiness Section 21). |
+| SaaS readiness audit + sprint synthesis | `dev-squad:saas-readiness` | Load for Phase 6 SHIP gate OR pre-existing project extension. Architect owns: Section 8 audit synthesis (master report from reviewer/auditor/architect 3-way parallel), Section 9 sprint decomposition decision (3-day vs 6-A→6-H), Section 21 provider abstraction architectural decision when pivoting, Section 22 regional context. |
 
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |

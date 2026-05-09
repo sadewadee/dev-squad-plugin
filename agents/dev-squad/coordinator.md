@@ -78,7 +78,8 @@ Use `context7` to:
 | Bug detection | `issuetracker` | On build errors or on-demand scans |
 | Discover skills | `find-skills` | When team needs capability not yet installed |
 | Project knowledge | `claude-md-management:revise-claude-md` | Update CLAUDE.md with project learnings |
-| SaaS scope dispatch | `dev-squad:saas-patterns` | Load when Phase 0 Step 2.5 detects SaaS mode — guide architect/backend through SaaS subsystems (Part 1: multi-tenancy, billing, webhooks, audit, entitlements) AND designer/frontend through admin dashboard with drill-down (Part 2: URL state, breadcrumb, time-series brush, virtualized table, cross-filter) |
+| SaaS scope dispatch (architecture / code-write) | `dev-squad:saas-patterns` | Load during Phase 4 IMPLEMENT when SaaS mode active — guide architect/backend through Part 1 subsystems (multi-tenancy, billing, webhooks, audit, entitlements) AND designer/frontend through Part 2 admin dashboard (URL state, breadcrumb, time-series brush, virtualized table, cross-filter) |
+| SaaS readiness audit + sprint dispatch | `dev-squad:saas-readiness` | Load during Phase 5+ audit, Phase 6 SHIP gate, OR pre-existing project extension. Sibling skill covering pre-launch readiness (P0/P1/P2 checklist), backup/CI/CD/compliance/onboarding/status-page/payment-compliance, sprint decomposition (6-A→6-H), product-surface gap audit (10 domains), provider abstraction, regional patterns. Coordinator dispatches via `/dev-squad readiness` workflow. |
 
 ### MCP Servers (use directly)
 | Tool | Purpose |

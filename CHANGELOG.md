@@ -2,6 +2,69 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.14.0] — Split saas-patterns Part 3 → new sibling skill saas-readiness + new workflow saas-readiness-sprint
+
+**Why:** Continued observation of wacrm SaaS project surfaced patterns beyond what saas-patterns Part 3 (added v4.13.0) captured. Wacrm extracted 27 readiness items across 10 product-surface domains and decomposed Phase 6 into 8 sub-phases (6-A through 6-H). User suggested splitting SaaS into separate skill or plugin. After deep-think (per `feedback_premise_challenge` memory): split into sibling skill is justified — Part 1+2 architectural patterns (load during Phase 4 IMPLEMENT, code-write context) and Part 3 readiness/execution discipline (load during Phase 5+ audit, Phase 6 SHIP gate, pre-existing project extension) have **distinct load contexts**. Plugin-level split rejected as premature (N=1 wacrm data).
+
+This release splits saas-patterns Part 3 into a sibling skill, adds new content extracted from wacrm pivot, and introduces a new workflow JSON for the 6-A→6-H sprint pattern.
+
+### Added — `skills/saas-readiness/SKILL.md` (new sibling skill, 1342 LOC)
+
+4 parts:
+
+- **Part 1 (sections 1–8):** Pre-launch readiness checklist + operational discipline. Migrated from saas-patterns Part 3 sections 27–34 (renumbered 1–8). Covers P0/P1/P2 categorized checklist, backup + DR, CI/CD requirements, GDPR/PDP/CCPA compliance lifecycle (data export + erasure + cookie + DPA), customer onboarding email lifecycle, status page + incident, payment compliance, pre-existing project audit pattern.
+- **Part 2 (sections 9–10):** Sprint execution. NEW content. 6-A→6-H domain decomposition pattern (8 sub-phases parallelizable when independent, sequenced when dependent) + per-sub-phase execution templates with agents/artifacts/exit criteria for each (6-A billing replatform, 6-B user mgmt, 6-C invoicing+tax, 6-D plan mgmt, 6-E API+integrations, 6-F compliance, 6-G operational, 6-H customer success). Pattern extracted from wacrm Indonesia-first pivot.
+- **Part 3 (sections 11–20):** Product-surface gap audit (10 domains A-J). NEW content. Completeness checklist beyond architectural readiness: A. User Mgmt, B. Plan Mgmt, C. Payment, D. Invoicing, E. API + Integrations, F. Customization + White-label, G. Notifications + Comms, H. Customer-facing Analytics, I. Workspace + Sub-tenancy, J. Compliance + Legal. Each domain enumerates Core/P0/P1/P2/Enterprise features with notes.
+- **Part 4 (sections 21–24):** Real-world patterns. NEW content. Provider abstraction pattern (interface + registry + per-org selection + cross-provider conformance tests, derived from wacrm WaProvider + PaymentProvider applications), regional considerations (Indonesia + EU + US specifics: Faktur Pajak, NPWP, QRIS, manual bank transfer + admin verify pattern; GDPR + ePrivacy; state sales tax + CCPA), re-platform discipline (graceful provider deprecation, legacy directory pattern, schema migration), case study (wacrm Indonesia-first pivot with extracted lessons).
+
+### Changed — `skills/saas-patterns/SKILL.md`
+
+- Removed Part 3 (sections 27–34) — content moved to saas-readiness
+- Removed Operational/Compliance/Lifecycle anti-patterns subsection (covered in saas-readiness anti-patterns)
+- Frontmatter `description` updated: 3 parts → 2 parts; emphasizes "code-write patterns" + cross-references saas-readiness for ship/harden discipline
+- Intro updated: distinct load contexts explained
+- Companion skills + Bootstrap Context updated to reference saas-readiness as sibling
+- Total size: 2402 → 1777 LOC
+
+### Added — `.claude-plugin/workflows/saas-readiness-sprint.json` (new workflow, 10 phases)
+
+Canonical contract for Phase 6-A→6-H sprint decomposition. Trigger: `/dev-squad readiness`. Phases:
+
+- **0 audit** — coordinator dispatches reviewer + auditor + architect parallel for 3 readiness reports → architect synthesizes master report
+- **6-A billing replatform** — backend + writer + frontend; provider abstraction
+- **6-B user management hardening** — backend + frontend + writer + designer
+- **6-C invoicing + tax** — backend + writer; depends on 6-A
+- **6-D plan management** — backend + frontend; depends on 6-A
+- **6-E API + integrations** — backend + writer; parallel-independent
+- **6-F compliance lifecycle** — backend + frontend + writer
+- **6-G operational hardening** — devops + auditor; depends on all 6-A..6-F
+- **6-H customer success** — writer + backend + frontend; depends on 6-A + 6-B
+- **7 ship** — devops + git-ops; PR + 180s auto-reviewer wait + final readiness verdict
+
+JSON validates strict-mode against `_schema.json`.
+
+### Changed — agent prompts + commands + workflow JSONs
+
+- **`agents/dev-squad/coordinator.md`** — Skill Selection Matrix split: saas-patterns (architecture/code-write, Phase 4) + saas-readiness (audit/sprint, Phase 5+ + Phase 6 SHIP + pre-existing extension)
+- **`agents/dev-squad/architect.md`** — saas-patterns row references ADR-001..005; new saas-readiness row covers Section 8 audit synthesis + Section 9 sprint decomposition decision + Section 21 provider abstraction + Section 22 regional context
+- **`agents/dev-squad/backend.md`** — saas-readiness row added covering Sections 10.1–10.6 sub-phase execution templates + Section 21 provider abstraction + Section 22 regional patterns
+- **`agents/dev-squad/devops.md`** — Part 3 ownership row updated: saas-readiness Sections 2 (backup), 3 (CI/CD), 6 (status page), 10.7 (6-G sub-phase) — DevOps blocks Phase 6 SHIP if any P0 ops item unresolved
+- **`agents/dev-squad/writer.md`** — new section "Customer Onboarding Email Lifecycle (saas-readiness Section 5 / Phase 6-H)" with 7-stage lifecycle (verify → welcome → activation → trial-warn → trial-expired → re-engagement → win-back) + each-template rules
+- **`commands/build.md`** Phase 6 SHIP — readiness gate references saas-readiness Sections 1 + 8; if 10+ items across 4+ domains, recommend `/dev-squad readiness` workflow (6-A→6-H decomposition); checklist references updated to saas-readiness Sections 2/3/6
+- **`.claude-plugin/workflows/zero-to-ship.json`** — Phase 6 readiness master report description references saas-readiness Section 1 + 8 + 9 + recommends saas-readiness-sprint workflow for large scope
+- **`skills/dev-squad/SKILL.md`** — skills table extended with saas-readiness row alongside saas-patterns (distinct load contexts explained)
+- **`skills/dev-squad/config.json`** — saas-readiness added to auto_skills for 9 of 11 agents (coordinator/architect/backend/frontend/designer/devops/auditor/writer/reviewer); new `workflows.saas_readiness_sprint` entry; existing `workflows.saas_readiness_audit` updated to reference saas-readiness Section 8
+
+### Reference architecture credit
+
+Section 9 sprint decomposition + Sections 21–24 patterns extracted from wacrm Indonesia-first pivot (multi-tenant SaaS CRM with PayPal + Xendit + Manual triple-provider billing per ADR-006 + ADR-006a). Provider abstraction pattern proven across two domains (WhatsApp dual-provider per ADR-004; payment triple-provider per ADR-006). Regional Indonesia patterns (Faktur Pajak, NPWP, manual bank transfer + admin verify) are wacrm-specific but represent broader Asian B2B SaaS reality.
+
+### Migration
+
+None. Auto-update on next session start. saas-patterns existing references (Sections 27–34) automatically migrate to saas-readiness Sections 1–8 — content preserved, just relocated. Agents that referenced saas-patterns will continue to load it for Part 1+2 (architecture); agents that need Part 3 content load saas-readiness instead.
+
+For users with existing dev-squad-built SaaS projects: invoke `/dev-squad readiness` to run Section 8 audit + Section 9 sprint decomposition recommendation.
+
 ## [4.13.1] — Drift consistency audit round 2 (config.json + 3 workflow JSONs)
 
 **Why:** v4.12.1 audit only synced `zero-to-ship.json` and `skills/dev-squad/SKILL.md`. The other 3 workflow JSONs (`feature-development`, `bug-fix`, `refactoring`) and `skills/dev-squad/config.json` (agent declarative manifest) were still vintage v4.9.0. Worse: `config.json` was missing 4 of 11 agents entirely (designer, qa-engineer, auditor, writer) — they exist as agent prompt files but had no declarative entry.

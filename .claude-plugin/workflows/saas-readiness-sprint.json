@@ -1,0 +1,282 @@
+{
+  "workflow_id": "saas-readiness-sprint",
+  "schema_version": "1.0",
+  "version": "4.14.0",
+  "name": "SaaS Pre-Launch Readiness Sprint",
+  "description": "Domain-decomposed sprint for hardening existing SaaS to ship-ready. 8 sub-phases (6-A through 6-H) covering billing/user-mgmt/invoicing/plan/api/compliance/operational/customer-success. Run when SaaS readiness audit (saas-readiness Section 8) reveals 10+ P0/P1 gaps across 4+ domains where 3-day sprint is unrealistic. Sub-phases parallelizable when independent (6-B+6-C+6-D), sequenced when dependent (6-A→6-C, 6-A→6-D, all→6-G+6-H). Each sub-phase ships incrementally with own commit/PR, doesn't wait for whole sprint. Pattern extracted from real-world wacrm Indonesia-first pivot.",
+  "trigger_command": "/dev-squad readiness",
+  "phases": [
+    {
+      "id": "audit",
+      "number": "0",
+      "name": "Readiness Audit",
+      "lead_agent": "dev-squad:coordinator",
+      "parallel_agents": ["dev-squad:reviewer", "dev-squad:auditor", "dev-squad:architect"],
+      "trigger": "workflow_start",
+      "inputs": [
+        { "artifact": "existing project codebase", "from": "user", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "docs/saas-readiness-security.md", "to": "architect", "blocking": true, "description": "Reviewer audits: auth flow gaps, compliance gaps, CVE exposure, CSP/HSTS/secrets" },
+        { "artifact": "docs/saas-readiness-operational.md", "to": "architect", "blocking": true, "description": "Auditor audits: backup automation, CI/CD existence + gates, observability, migration safety, connection pool" },
+        { "artifact": "docs/saas-readiness-business.md", "to": "architect", "blocking": true, "description": "Architect audits: trial enforcement, tax engine + tax invoice, plan downgrade enforcement, customer onboarding lifecycle, status page, annual billing, help center, signup funnel + product-surface gap (10 domains A-J per saas-readiness Part 3)" },
+        { "artifact": "docs/saas-readiness-master-report.md", "to": "user", "blocking": true, "description": "Architect synthesizes 3 reports: Combined P0/P1/P2 categorized + sprint plan recommendation (3-day OR 6-A→6-H decomposition based on scope) + Phase 7/v2 backlog. P0 count > 0 BLOCKS feature work + Phase 6 SHIP." }
+      ],
+      "blocking_gate": {
+        "downstream_phase": "phase_6a",
+        "check": "Master report exists; sub-phase decomposition recommendation made; user approved sprint plan",
+        "verification_command": "test -f docs/saas-readiness-master-report.md"
+      },
+      "estimated_complexity": "high",
+      "rate_limit_tier": "opus",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-readiness", "rationale": "Section 8 pre-existing project audit pattern + Part 3 product-surface gap audit (10 domains) + Section 1 readiness checklist", "graceful_degrade": false, "invoked_by": "coordinator,reviewer,auditor,architect" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "Reference architecture against which gaps are measured", "graceful_degrade": false, "invoked_by": "architect" }
+        ],
+        "fallback": "Manual via 3 parallel agent dispatches; architect synthesizes manually"
+      },
+      "references": {
+        "prompt_source": "skills/saas-readiness/SKILL.md#section-8",
+        "agent_prompt": "agents/dev-squad/coordinator.md"
+      }
+    },
+    {
+      "id": "phase_6a_billing_replatform",
+      "number": "6-A",
+      "name": "Billing Replatform",
+      "lead_agent": "dev-squad:backend",
+      "parallel_agents": ["dev-squad:writer", "dev-squad:frontend"],
+      "trigger": "audit.complete && readiness.has_billing_gap",
+      "inputs": [
+        { "artifact": "docs/saas-readiness-master-report.md", "from": "architect", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "apps/api/src/modules/billing/payment-provider.interface.ts", "to": "downstream", "blocking": true, "description": "Provider abstraction interface (saas-readiness Section 21)" },
+        { "artifact": "apps/api/src/modules/billing/{provider}/", "to": "downstream", "blocking": true, "description": "Per-provider implementations (Stripe / Xendit / PayPal / Manual based on ADR-006+)" },
+        { "artifact": "apps/api/src/modules/billing/legacy-{old-provider}/", "to": "downstream", "blocking": false, "description": "Legacy provider moved with deprecation timer if pivoting (saas-readiness Section 23)" },
+        { "artifact": "schema migration: provider-neutral columns", "to": "downstream", "blocking": true, "description": "Replace provider-specific columns" },
+        { "artifact": "ADR-006 (or successor)", "to": "downstream", "blocking": true, "description": "Architect decision on provider choice + rationale" }
+      ],
+      "skip_conditions": [
+        { "condition": "readiness.has_billing_gap == false", "action": "skip", "fallback": "Skip if existing billing satisfies target market" }
+      ],
+      "estimated_complexity": "high",
+      "rate_limit_tier": "opus",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-patterns", "rationale": "Section 2 billing core + Section 21 provider abstraction reference", "graceful_degrade": false, "invoked_by": "backend" },
+          { "skill": "dev-squad:saas-readiness", "rationale": "Section 21 provider abstraction pattern + Section 22 regional + Section 23 graceful deprecation", "graceful_degrade": false, "invoked_by": "backend,architect" }
+        ],
+        "fallback": "Manual via backend agent prompt + saas-patterns Section 2 reference"
+      },
+      "references": {
+        "prompt_source": "skills/saas-readiness/SKILL.md#section-10-1",
+        "agent_prompt": "agents/dev-squad/backend.md"
+      }
+    },
+    {
+      "id": "phase_6b_user_mgmt",
+      "number": "6-B",
+      "name": "User Management Hardening",
+      "lead_agent": "dev-squad:backend",
+      "parallel_agents": ["dev-squad:frontend", "dev-squad:writer", "dev-squad:designer"],
+      "trigger": "audit.complete && readiness.has_user_mgmt_gaps",
+      "outputs": [
+        { "artifact": "PATCH /api/v1/me + /me/password + /me/email-change", "to": "downstream", "blocking": true, "description": "Self-service profile/password/email change" },
+        { "artifact": "DELETE /api/v1/me", "to": "downstream", "blocking": true, "description": "Account deletion (GDPR/PDP)" },
+        { "artifact": "POST /api/v1/me/avatar", "to": "downstream", "blocking": false, "description": "Avatar upload" },
+        { "artifact": "TenantAuditLog model + endpoints", "to": "downstream", "blocking": true, "description": "Per-tenant audit log (separate from platform audit)" },
+        { "artifact": "2FA/TOTP enrollment flow", "to": "downstream", "blocking": false, "description": "P1 from readiness checklist" },
+        { "artifact": "Account lockout after N failed logins", "to": "downstream", "blocking": true, "description": "P0 from readiness checklist" },
+        { "artifact": "Bulk user import (CSV)", "to": "downstream", "blocking": false, "description": "P1 — customers w/ existing teams" }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-patterns", "rationale": "Section 1 multi-tenancy + Section 4 API keys", "graceful_degrade": false, "invoked_by": "backend" },
+          { "skill": "dev-squad:saas-readiness", "rationale": "Section 11 product-surface User Management gap categories", "graceful_degrade": false, "invoked_by": "backend" }
+        ],
+        "fallback": "Manual via backend + saas-patterns Section 1"
+      },
+      "references": {
+        "prompt_source": "skills/saas-readiness/SKILL.md#section-10-2"
+      }
+    },
+    {
+      "id": "phase_6c_invoicing_tax",
+      "number": "6-C",
+      "name": "Invoicing + Tax",
+      "lead_agent": "dev-squad:backend",
+      "parallel_agents": ["dev-squad:writer"],
+      "trigger": "phase_6a_billing_replatform.complete && readiness.has_invoicing_gap",
+      "inputs": [
+        { "artifact": "billing payment provider interface", "from": "phase_6a", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "Tax engine enabled (Stripe Tax / Xendit native)", "to": "downstream", "blocking": true },
+        { "artifact": "NPWP / VAT number capture at checkout", "to": "downstream", "blocking": true, "description": "B2B requirement per region" },
+        { "artifact": "Localized invoice generation", "to": "downstream", "blocking": true, "description": "Faktur Pajak (Indonesia e-Faktur PPN), VAT invoice (EU), receipt (B2C)" },
+        { "artifact": "Invoice S3 storage + customer billing portal links", "to": "downstream", "blocking": false }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-readiness", "rationale": "Section 7 payment compliance + Section 22 regional invoice formats", "graceful_degrade": false, "invoked_by": "backend" }
+        ],
+        "fallback": "Manual via backend + Stripe/Xendit docs"
+      }
+    },
+    {
+      "id": "phase_6d_plan_mgmt",
+      "number": "6-D",
+      "name": "Plan Management",
+      "lead_agent": "dev-squad:backend",
+      "parallel_agents": ["dev-squad:frontend"],
+      "trigger": "phase_6a_billing_replatform.complete && readiness.has_plan_mgmt_gap",
+      "outputs": [
+        { "artifact": "Trial expiry enforcement cron", "to": "downstream", "blocking": true, "description": "P0 — daily check trialEndsAt" },
+        { "artifact": "Annual billing pricing tier", "to": "downstream", "blocking": false, "description": "P1 — 15-20% discount" },
+        { "artifact": "Coupon / promo code at checkout", "to": "downstream", "blocking": false, "description": "allow_promotion_codes: true" },
+        { "artifact": "Plan downgrade contact + seat enforcement", "to": "downstream", "blocking": false, "description": "P1 — over-cap handling" },
+        { "artifact": "Plan history audit trail", "to": "downstream", "blocking": false }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-patterns", "rationale": "Section 2 billing + Section 3 entitlements", "graceful_degrade": false, "invoked_by": "backend" },
+          { "skill": "dev-squad:saas-readiness", "rationale": "Section 12 Plan Management product-surface gap", "graceful_degrade": false, "invoked_by": "backend" }
+        ],
+        "fallback": "Manual via backend agent"
+      }
+    },
+    {
+      "id": "phase_6e_api_integrations",
+      "number": "6-E",
+      "name": "API & Integrations",
+      "lead_agent": "dev-squad:backend",
+      "parallel_agents": ["dev-squad:writer"],
+      "trigger": "audit.complete && readiness.has_api_gap",
+      "outputs": [
+        { "artifact": "OpenAPI spec auto-generated", "to": "downstream", "blocking": false },
+        { "artifact": "Customer-facing API key management UI", "to": "downstream", "blocking": false },
+        { "artifact": "Customer webhook subscriptions", "to": "downstream", "blocking": false },
+        { "artifact": "API rate limiting per tenant", "to": "downstream", "blocking": false },
+        { "artifact": "API docs site (Swagger UI / Redoc)", "to": "downstream", "blocking": false }
+      ],
+      "skip_conditions": [
+        { "condition": "readiness.has_api_gap == false", "action": "skip", "fallback": "Skip if API not customer-facing" }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-patterns", "rationale": "Section 4 API keys + Section 5 webhooks architectural patterns", "graceful_degrade": false, "invoked_by": "backend" },
+          { "skill": "dev-squad:saas-readiness", "rationale": "Section 15 API & Integrations product-surface gap", "graceful_degrade": false, "invoked_by": "backend" }
+        ],
+        "fallback": "Manual via backend agent"
+      }
+    },
+    {
+      "id": "phase_6f_compliance",
+      "number": "6-F",
+      "name": "Compliance Lifecycle",
+      "lead_agent": "dev-squad:backend",
+      "parallel_agents": ["dev-squad:frontend", "dev-squad:writer"],
+      "trigger": "audit.complete && (readiness.has_compliance_gap || compliance.scope_includes_gdpr_or_pdp_or_ccpa)",
+      "outputs": [
+        { "artifact": "POST /api/v1/me/data-export", "to": "downstream", "blocking": true, "description": "GDPR/PDP/CCPA — async via queue" },
+        { "artifact": "DELETE /api/v1/me (erasure)", "to": "downstream", "blocking": true, "description": "Anonymize PII, retain financial 7y" },
+        { "artifact": "Cookie consent banner", "to": "downstream", "blocking": true, "description": "ePrivacy + PDP" },
+        { "artifact": "docs/legal/data-processing-agreement.md", "to": "downstream", "blocking": false, "description": "DPA template" },
+        { "artifact": "Sub-processors list page (public)", "to": "downstream", "blocking": false }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-readiness", "rationale": "Section 4 compliance lifecycle + Section 20 J. Compliance/Legal product-surface gap", "graceful_degrade": false, "invoked_by": "backend,frontend,writer" }
+        ],
+        "fallback": "Manual via backend + writer"
+      }
+    },
+    {
+      "id": "phase_6g_operational",
+      "number": "6-G",
+      "name": "Operational Hardening",
+      "lead_agent": "dev-squad:devops",
+      "parallel_agents": ["dev-squad:auditor"],
+      "trigger": "phase_6a_billing_replatform.complete && phase_6b_user_mgmt.complete && phase_6c_invoicing_tax.complete && phase_6d_plan_mgmt.complete && phase_6e_api_integrations.complete && phase_6f_compliance.complete",
+      "outputs": [
+        { "artifact": "Postgres backup automation (pg-backup + S3 + restore drill done)", "to": "downstream", "blocking": true, "description": "saas-readiness Section 2" },
+        { "artifact": "CI/CD pipeline blocking PRs (tsc/test/lint/security-scan)", "to": "downstream", "blocking": true, "description": "saas-readiness Section 3" },
+        { "artifact": "Status page setup (BetterStack/Cachet/static)", "to": "downstream", "blocking": true, "description": "saas-readiness Section 6" },
+        { "artifact": "Sentry error tracking (frontend + backend)", "to": "downstream", "blocking": false },
+        { "artifact": "Prometheus /metrics + Grafana dashboards", "to": "downstream", "blocking": false },
+        { "artifact": "Pino redact PII paths", "to": "downstream", "blocking": false }
+      ],
+      "estimated_complexity": "high",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-readiness", "rationale": "Sections 2 + 3 + 6 operational hardening", "graceful_degrade": false, "invoked_by": "devops" }
+        ],
+        "fallback": "Manual via devops agent"
+      },
+      "references": {
+        "prompt_source": "skills/saas-readiness/SKILL.md#section-10-7"
+      }
+    },
+    {
+      "id": "phase_6h_customer_success",
+      "number": "6-H",
+      "name": "Customer Success",
+      "lead_agent": "dev-squad:writer",
+      "parallel_agents": ["dev-squad:backend", "dev-squad:frontend"],
+      "trigger": "phase_6a_billing_replatform.complete && phase_6b_user_mgmt.complete",
+      "outputs": [
+        { "artifact": "Welcome email (after email verify)", "to": "downstream", "blocking": true, "description": "saas-readiness Section 5" },
+        { "artifact": "Activation milestone email", "to": "downstream", "blocking": true, "description": "After first key action" },
+        { "artifact": "Trial-warning + trial-expired emails", "to": "downstream", "blocking": true },
+        { "artifact": "Re-engagement drip 30/60/90 day", "to": "downstream", "blocking": false },
+        { "artifact": "Help center / docs site", "to": "downstream", "blocking": false },
+        { "artifact": "Signup funnel + activation tracking", "to": "downstream", "blocking": false }
+      ],
+      "estimated_complexity": "medium",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "dev-squad:saas-readiness", "rationale": "Section 5 customer onboarding email lifecycle", "graceful_degrade": false, "invoked_by": "writer,backend" }
+        ],
+        "fallback": "Manual via writer"
+      }
+    },
+    {
+      "id": "ship",
+      "number": "7",
+      "name": "Ship",
+      "lead_agent": "dev-squad:devops",
+      "parallel_agents": ["dev-squad:git-ops"],
+      "trigger": "phase_6g_operational.complete && phase_6h_customer_success.complete",
+      "outputs": [
+        { "artifact": "GitHub PR + staging deploy", "to": "user", "blocking": true, "description": "Mandatory 180s wait for auto-reviewers; address all unresolved threads" },
+        { "artifact": "Final readiness verdict", "to": "user", "blocking": true, "description": "Coordinator confirms all P0 from master report resolved before approving production deploy" }
+      ],
+      "blocking_gate": {
+        "check": "All 6-A through 6-H sub-phases complete; combined P0 = 0 from master report; PR open with auto-reviewer wait done",
+        "verification_command": "gh pr list --state open --limit 1"
+      },
+      "estimated_complexity": "low",
+      "rate_limit_tier": "sonnet",
+      "external_skills": {
+        "preferred": [
+          { "skill": "superpowers:finishing-a-development-branch", "rationale": "Structured PR finalization", "graceful_degrade": true, "invoked_by": "git-ops" }
+        ],
+        "fallback": "Manual via gh CLI + devops agent"
+      }
+    }
+  ]
+}

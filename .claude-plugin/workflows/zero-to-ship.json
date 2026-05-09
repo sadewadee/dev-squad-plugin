@@ -1,7 +1,7 @@
 {
   "workflow_id": "zero-to-ship",
   "schema_version": "1.0",
-  "version": "4.13.0",
+  "version": "4.14.0",
   "name": "Zero-to-Ship",
   "description": "Full project build from zero to shippable state. 9 phases with up to 2 user checkpoints (Phase 0 Step 2.5 SaaS-mode confirmation if triggered + Phase 1 PRD approval). PDCA cycle: Plan (Phases 0-2 + 3.5) -> Do (Phases 3-4) -> Check (Phase 5 with formal iteration loop) -> Act (Phases 6-7). v4.12.0: SaaS-mode detection (Phase 0 Step 2.5) + .claude/ pre-seed (Phase 6) + Phase 5 iteration loop with rollback + auto-reviewer 180s wait (Phase 6).",
   "trigger_command": "/dev-squad build",
@@ -275,7 +275,7 @@
       "outputs": [
         { "artifact": "staging deployment", "to": "user", "blocking": true, "description": "Health checks pass; monitoring active; alerts configured" },
         { "artifact": "GitHub PR", "to": "user", "blocking": true, "description": "PR created with full summary; mandatory 180s wait after creation for auto-reviewers (Gemini/Copilot/CodeRabbit) before checking comment threads; address all unresolved threads before merge" },
-        { "artifact": "docs/saas-readiness-master-report.md", "to": "user", "blocking": true, "description": "SaaS-mode only: synthesized readiness report (Part 3 Section 27 + 34) covering Combined P0 Ship-Blockers + P1 Launch-Risks + P2 Backlog. P0 count > 0 BLOCKS ship unless explicit user override logged in .dev-squad/ship-exceptions.md. Architect synthesizes from reviewer + auditor + architect parallel readiness reports (security, operational, business)." },
+        { "artifact": "docs/saas-readiness-master-report.md", "to": "user", "blocking": true, "description": "SaaS-mode only: synthesized readiness report (saas-readiness Section 1 checklist + Section 8 audit + Section 9 sprint decomposition recommendation) covering Combined P0 Ship-Blockers + P1 Launch-Risks + P2 Backlog. P0 count > 0 BLOCKS ship unless explicit user override logged in .dev-squad/ship-exceptions.md. Architect synthesizes from reviewer + auditor + architect parallel readiness reports (security, operational, business). If 10+ items across 4+ domains, recommend /dev-squad readiness workflow (6-A→6-H sub-phase decomposition) instead of 3-day sprint." },
         { "artifact": "CLAUDE.md", "to": "future_claude_sessions", "blocking": true, "description": ".claude/ pre-seed: project root CLAUDE.md (auto-loaded by Claude Code at session start) — overview, tech stack, how-to-run, where things live, references to .claude/ detail docs. Each future Claude session on this project loads this auto. Compound productivity gain. Cap ~200 LOC." },
         { "artifact": ".claude/architecture.md", "to": "future_claude_sessions", "blocking": true, "description": "Entities + relationships, modules, data flow, auth flow (with mermaid). Sourced from architect's Phase 2 design doc." },
         { "artifact": ".claude/conventions.md", "to": "future_claude_sessions", "blocking": true, "description": "Naming, file org, error handling, validation, testing, commit format. Sourced from reviewer's Phase 5 notes + ADRs." },

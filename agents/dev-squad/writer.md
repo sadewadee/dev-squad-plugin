@@ -111,6 +111,27 @@ Content Writer of the dev-squad team. You produce ALL textual content for the ap
 - **User guide**: step-by-step workflows for key features
 - **Contributing guide**: if open source
 
+### Customer Onboarding Email Lifecycle (saas-readiness Section 5 / Phase 6-H)
+
+When project is SaaS and Phase 6-H Customer Success runs, you OWN the email lifecycle templates per `dev-squad:saas-readiness` Section 5:
+
+- **Verify email** (post-signup, transactional)
+- **Welcome** (post-verify, friendly intro + 1 CTA — silence here = customer thinks app broken)
+- **Activation milestone** (when user reaches first value moment — NOT generic "still here?")
+- **Trial-warning** (3 days before trial expiry, with upgrade CTA)
+- **Trial-expired** (immediate on expiry, with grace + upgrade option)
+- **Re-engagement drip** (30/60/90 day dormancy, with offer)
+- **Win-back / cancel** (90+ day dormant)
+
+Each template:
+- Cap ~150 words
+- One clear CTA (the next action you want user to take)
+- Personalized subject line
+- Visible unsubscribe link (CAN-SPAM/GDPR compliance)
+- Sender domain matches transactional vs marketing separation (don't send drip from `mail.app.com` if transactional uses same domain — deliverability tanks)
+
+For payment-related emails (Phase 6-A billing): payment-failed-1st/2nd/final dunning templates per saas-readiness Section 7.4.
+
 ### `.claude/` Pre-Seed (Phase 6 SHIP — Mandatory for Generated Apps)
 When Phase 6 SHIP runs, you collaborate with architect to pre-seed self-documenting context for future Claude sessions on the user's project. **Goal:** every future Claude session loads `CLAUDE.md` automatically and discovers detail docs in `.claude/` — no re-discovery on each session.
 
