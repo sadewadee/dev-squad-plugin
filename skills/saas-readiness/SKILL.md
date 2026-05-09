@@ -41,6 +41,8 @@ Before Phase 6 SHIP, verify every item below. Categorize remaining gaps as P0 (s
 - [ ] Multi-tenant isolation runtime test passes (saas-patterns Section 1.5)
 - [ ] No hardcoded secrets in repo / Docker images / compose files
 - [ ] HSTS + CSP strict + helmet wired
+- [ ] **OAuth 2.1 with PKCE** (no static client secrets) — 2026 baseline if exposing API to customer apps
+- [ ] **AES-256 encryption at rest + TLS 1.2+ in transit** (TLS 1.3 preferred; older SSL disabled)
 
 **Operational:**
 - [ ] Database backup automation (cron + S3 + restore drill verified) — Section 2
@@ -78,6 +80,7 @@ Before Phase 6 SHIP, verify every item below. Categorize remaining gaps as P0 (s
 - [ ] Database connection pool sized for expected workers
 - [ ] Multi-region or DB failover plan
 - [ ] Signup funnel + activation milestone tracking
+- [ ] **LTV/CAC ratio > 3:1 + payback < 12 months target** — sustainable growth metric (2026 industry standard)
 
 ### 1.3 P2 — Post-launch backlog (acceptable to defer beyond launch but track)
 
@@ -230,12 +233,15 @@ Deploy script reads `prisma migrate status` to ensure DB is up-to-date before sw
 
 Multi-tenant SaaS handling user data must comply with regional law. Architect MUST decide ADR-005 (compliance scope) alongside ADR-001..004 (saas-patterns Bootstrap Context).
 
-| Regulation | Region | Key obligations |
-|---|---|---|
-| **GDPR** | EU | Right to access, erasure, portability, rectification; cookie consent (ePrivacy); DPA contract with subprocessors |
-| **PDP** (UU PDP) | Indonesia | Right to access, erasure, withdrawal of consent; data localization for some sectors |
-| **CCPA / CPRA** | California | Right to know, delete, opt-out of sale; verifiable consumer requests |
-| **LGPD** | Brazil | Similar to GDPR — access, erasure, portability |
+| Regulation | Region | Effective | Key obligations |
+|---|---|---|---|
+| **GDPR** | EU | In force | Right to access, erasure, portability, rectification; cookie consent (ePrivacy); DPA contract with subprocessors |
+| **PDP** (UU PDP) | Indonesia | In force | Right to access, erasure, withdrawal of consent; data localization for some sectors |
+| **CCPA / CPRA** | California | In force | Right to know, delete, opt-out of sale; verifiable consumer requests |
+| **LGPD** | Brazil | In force | Similar to GDPR — access, erasure, portability |
+| **EU AI Act** | EU (extraterritorial) | **Aug 2026** | If SaaS uses AI (LLM, recommendation, content moderation, etc.) AND serves EU customers: conformity assessment + transparency disclosures. Penalties up to **7% global annual turnover**. Even AI-free SaaS may need disclosures if processing EU customer data. |
+| **EU CRA** (Cyber Resilience Act) | EU | **Vuln reporting Sep 11 2026 / full Dec 11 2027** | Pure SaaS exempt — but installable components (browser extensions, desktop/mobile apps, agent software, SDKs, CLI tools) are IN scope. Required: documented vulnerability handling + ENISA reporting channel + SBOM. Penalties up to **€15M or 2.5% global turnover**. |
+| **DORA** (Digital Operational Resilience Act) | EU financial sector | **Jan 2026** | Applies to financial institutions + their IT service providers (incl. SaaS). Required: severe ICT incident notification within hours, threat-led penetration testing, third-party risk management. Verify scope if serving EU financial customers. |
 
 ### 4.1 Data export endpoint (Right to access)
 
@@ -836,8 +842,9 @@ The 10 domains (A-J) extracted from real-world wacrm gap audit. Each domain has 
 | **User activity log (per-tenant)** | P1 | Distinct from platform audit (admin-scope) |
 | Force logout / session management | P1 | Can't kick a compromised user without this |
 | Last sign-in tracking | P1 | `User.lastLoginAt` |
-| **SSO (Google / Microsoft / SAML)** | P2 (Enterprise) | Blocker for >$1k/mo deals |
-| **SCIM provisioning** | P2 (Enterprise) | Enterprise IT requirement |
+| **SSO (Google / Microsoft / SAML / OIDC)** | P2 (Enterprise) | Blocker for >$1k/mo deals. Use OAuth 2.1 with PKCE baseline (2026). |
+| **JIT provisioning** (Just-in-Time) | P2 (Enterprise) | SSO with role auto-mapping — user signs in via IdP first time → SaaS provisions account + assigns role per IdP claim |
+| **SCIM provisioning** | P2 (Enterprise) | Enterprise IT requirement for centralized lifecycle (provision / update / deprovision via IdP) |
 
 ---
 
@@ -987,9 +994,13 @@ Most projects don't need this. Only enterprise tier customers ask for it.
 | DPA (data processing agreement) | P1 (B2B) | B2B customers will ask |
 | Sub-processors list (public) | P1 | DPA addendum |
 | Acceptable use policy | P2 | If user-generated content |
-| SOC 2 readiness | P2 (Enterprise) | Enterprise blocker for $10k+/mo deals |
+| **SOC 2 Type 1** (snapshot of design) | P2 (Enterprise) | Faster — weeks. Quick win for enterprise sales conversation. |
+| **SOC 2 Type 2** (proof over 3-12 months) | P2 (Enterprise) | Required for $10k+/mo enterprise deals. Path: Type 1 first, then Type 2 readiness. |
 | PCI DSS scope (if storing card) | Core IF storing cards | Use Stripe / provider tokenization to STAY OUT of scope |
 | GDPR breach notification SLA (72h) | P1 (regional) | Document procedure |
+| **DORA incident reporting** | P1 (regional EU financial) | Severe ICT incident notification within hours; threat-led pen-test; third-party risk mgmt. Effective Jan 2026. |
+| **EU AI Act conformity** | P1 (regional EU + AI features) | Aug 2026 enforceable. Conformity assessment + transparency disclosures if SaaS uses AI. Penalties up to 7% global turnover. |
+| **CRA SBOM + vuln reporting** | P1 (regional EU + installable component) | If SaaS has browser extension / desktop app / mobile app / agent / SDK / CLI: SBOM + ENISA reporting channel. Sep 11 2026 / Dec 11 2027. |
 | Data residency (region selection) | P2 (Enterprise) | EU customers want EU data |
 
 ---

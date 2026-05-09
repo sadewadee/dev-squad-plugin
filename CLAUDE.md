@@ -75,7 +75,16 @@ Markdown rule files with YAML frontmatter (`description`, `globs`). These are su
 
 ## Skills (`skills/`)
 
-`skills/dev-squad/` is the plugin's main skill (the entrypoint). Other folders under `skills/` (`backend-patterns`, `frontend-patterns`, `golang-patterns`, `golang-testing`, `postgres-patterns`, `security-review`, `tdd-workflow`) are **pattern reference skills** loaded by individual agents via their `skills:` frontmatter. Each is a `SKILL.md` with frontmatter and content.
+`skills/dev-squad/` is the plugin's main skill (the entrypoint). Other folders under `skills/` are **pattern reference skills** loaded by individual agents via their `skills:` frontmatter or via Skill Selection Matrix in agent body.
+
+**SaaS sibling-pair (distinct load contexts):**
+- `skills/saas-patterns/` — architectural patterns (code-write context, Phase 4 IMPLEMENT). Part 1 backend + Part 2 frontend admin/drill-down.
+- `skills/saas-readiness/` — pre-launch readiness + sprint execution + product-surface audit + provider abstraction + regional + case studies. Load during Phase 5+ audit / Phase 6 SHIP gate / pre-existing project extension.
+
+**Pattern reference skills:**
+- `backend-patterns`, `frontend-patterns`, `golang-patterns`, `golang-testing`, `postgres-patterns`, `security-review`, `tdd-workflow`
+
+**Canonical SaaS reference:** `docs/saas-build-checklist.md` — single end-to-end checklist mapping every SaaS-class requirement to dev-squad phase + agent + skill section. Reference this BEFORE invoking `/dev-squad build` for SaaS scope, or during pre-existing SaaS audit. Synthesizes saas-patterns + saas-readiness + 2026 industry sources (WorkOS, IOMETE, Scytale, Zylo, EU regulations).
 
 ## Testing changes
 

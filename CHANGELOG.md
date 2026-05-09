@@ -2,6 +2,85 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.14.1] — Canonical SaaS build checklist doc + 2026 compliance updates
+
+**Why:** SaaS-relevant content was scattered across saas-patterns + saas-readiness + workflow JSONs + agent prompts + commands/build.md. No single document gave "here's the canonical end-to-end SaaS build checklist + minimum requirements". Plus user's WebSearch suggestion surfaced 2026 EU regulations (AI Act, CRA, DORA) and 2026 industry baselines (OAuth 2.1 PKCE, AES-256/TLS 1.2+, SOC 2 Type 1 vs Type 2 distinction, JIT provisioning) not yet covered.
+
+This release adds a consolidated reference doc and updates saas-readiness with verified 2026 items.
+
+### Added — `docs/saas-build-checklist.md` (single canonical reference)
+
+Single end-to-end SaaS build checklist mapping every SaaS-class requirement to:
+- Which dev-squad phase covers it (0 ULTRAPLAN → 7 LEARN)
+- Which agent owns it
+- Which skill section has the pattern (saas-patterns or saas-readiness)
+
+Sections:
+- "What is SaaS-class?" — 4 properties test (multi-tenancy / subscription billing / plan-based access / self-service onboarding)
+- Phase Map — table mapping checklist items to dev-squad phases
+- Phase 0 SaaS mode detection
+- Phase 1 PRD with SaaS specifics (target market, B2B/B2C, plan tiers, trial policy, usage metering, compliance scope, LTV/CAC + payback targets)
+- Phase 2 ADRs 001-005 (+ 006 provider abstraction if multi-region)
+- Phase 3 backend module scaffold (12 standard SaaS modules)
+- Phase 3.5 design tokens + drill-down spec
+- Phase 4 implementation per module (cross-references saas-patterns Sections)
+- Phase 5 3-way review
+- Phase 6 pre-launch readiness gate (P0/P1/P2 categorized)
+- Product-surface 10 domains (A-J) — completeness audit
+- 2026 compliance updates section (NEW): EU AI Act + CRA + DORA + SOC 2 Type 1/2 + OAuth 2.1 PKCE + encryption baseline
+- Region-specific addendum (Indonesia / EU / US / LATAM / India / China / Africa)
+- Phase 7 retrospective + playbook
+- Sources & references — 11 cited 2026 industry sources (WorkOS, Storylane, Peiko, TechExactly, Voxturr, Scytale, Zylo, IOMETE, VinciWorks, European CRA guide, AI Act Tools)
+
+### Changed — `skills/saas-readiness/SKILL.md` (2026 compliance items)
+
+Section 1.1 P0 Security checklist:
+- Added: OAuth 2.1 with PKCE (no static client secrets) — 2026 baseline if exposing API to customer apps
+- Added: AES-256 encryption at rest + TLS 1.2+ in transit (TLS 1.3 preferred; older SSL disabled)
+
+Section 1.2 P1 Business checklist:
+- Added: LTV/CAC ratio > 3:1 + payback < 12 months target (sustainable growth metric)
+
+Section 4 Compliance Lifecycle table extended:
+- Added: EU AI Act (Aug 2026 enforceable, extraterritorial, 7% global turnover penalty)
+- Added: EU CRA Cyber Resilience Act (Sep 11 2026 vuln reporting / Dec 11 2027 full; €15M or 2.5% turnover; pure SaaS exempt but installable components in scope)
+- Added: DORA (Jan 2026, EU financial sector, severe ICT incident reporting + threat-led pen-test + third-party risk mgmt)
+
+Section 11 (User Mgmt Part 3 product-surface):
+- SSO row updated: SAML/OIDC + OAuth 2.1 PKCE baseline
+- New row: JIT (Just-in-Time) provisioning — sign-in via IdP first time → provision account + role per IdP claim
+- SCIM row clarified: centralized lifecycle (provision/update/deprovision via IdP)
+
+Section 20 (Compliance/Legal Part 3 product-surface):
+- SOC 2 split: Type 1 (snapshot, weeks) vs Type 2 (proof over 3-12 months, $10k+/mo enterprise blocker)
+- Added rows: DORA incident reporting, EU AI Act conformity, CRA SBOM + vuln reporting
+
+### Changed — `CLAUDE.md`
+
+Skills section restructured to highlight:
+- SaaS sibling-pair (saas-patterns vs saas-readiness with distinct load contexts)
+- Pattern reference skills list
+- Canonical SaaS reference: `docs/saas-build-checklist.md`
+
+### Sources cited
+
+WebSearch ground evidence (May 2026):
+- WorkOS — 10 enterprise features every B2B SaaS needs (2026)
+- Storylane — 2026 SaaS product launch checklist
+- Peiko — SaaS Security Checklist Before Launch (2026)
+- TechExactly — Designing Multi-Tenant SaaS Applications (2026)
+- Voxturr — Go-to-Market Checklist B2B SaaS (2026)
+- Scytale — Ultimate SOC 2 Checklist for SaaS Companies
+- Zylo — Essential SaaS Compliance Checklist for 2026
+- IOMETE — Data Sovereignty Compliance 2026 (DORA, AI Act)
+- VinciWorks — 2026 Digital Compliance Playbook
+- European Cyber Resilience Act guide
+- AI Act Compliance for SaaS Companies (AI Act Tools)
+
+### Migration
+
+None. Auto-update on next session start. New doc is reference-only — agents continue to use saas-patterns + saas-readiness skills directly. Users can read `docs/saas-build-checklist.md` before invoking `/dev-squad build` to evaluate scope + minimum requirements.
+
 ## [4.14.0] — Split saas-patterns Part 3 → new sibling skill saas-readiness + new workflow saas-readiness-sprint
 
 **Why:** Continued observation of wacrm SaaS project surfaced patterns beyond what saas-patterns Part 3 (added v4.13.0) captured. Wacrm extracted 27 readiness items across 10 product-surface domains and decomposed Phase 6 into 8 sub-phases (6-A through 6-H). User suggested splitting SaaS into separate skill or plugin. After deep-think (per `feedback_premise_challenge` memory): split into sibling skill is justified — Part 1+2 architectural patterns (load during Phase 4 IMPLEMENT, code-write context) and Part 3 readiness/execution discipline (load during Phase 5+ audit, Phase 6 SHIP gate, pre-existing project extension) have **distinct load contexts**. Plugin-level split rejected as premature (N=1 wacrm data).
