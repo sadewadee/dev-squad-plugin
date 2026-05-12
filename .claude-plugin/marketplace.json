@@ -8,7 +8,7 @@
     {
       "name": "dev-squad",
       "description": "Full-stack dev team agent swarm with 11 specialized agents + SaaS-class scope split into 2 sibling skills: saas-patterns (architecture/code-write) + saas-readiness (pre-launch readiness + 6-A→6-H sprint decomposition + product-surface 10-domain audit + provider abstraction + regional patterns) + production discipline hardening (security hook, .claude/ pre-seed, Phase 5 iteration loop, auto-reviewer wait)",
-      "version": "4.14.1",
+      "version": "4.14.2",
       "source": "./",
       "author": {
         "name": "sadewadee"

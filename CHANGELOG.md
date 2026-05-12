@@ -2,6 +2,51 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.14.2] — 12-rule CLAUDE.md base template (pre-seed standard for generated apps + plugin self-application)
+
+**Why:** Phase 6 SHIP pre-seeds `CLAUDE.md` in user's project but content was ad-hoc — overview + tech stack + how-to-run + where-things-live. Missing: universal engineering discipline rules that future Claude sessions on that project should follow. User shared a 12-rule template (think before coding / simplicity / surgical changes / goal-driven / model-for-judgment / token budgets / surface conflicts / read before write / tests verify intent / checkpoint / match conventions / fail loud) — 10 universal + 2 opinionated (Rule 5 model-only-for-judgment, Rule 6 token budget specifics).
+
+This release codifies the template as the canonical base for every pre-seeded CLAUDE.md.
+
+### Added — `docs/templates/claude-md-base.md`
+
+Canonical 12-rule template + integration instructions for writer agent. Writer uses this as the FIRST section of every generated `CLAUDE.md` during Phase 6 SHIP pre-seed. Phase 7 LEARN preserves rules unchanged and appends project-specific sections BELOW.
+
+Project-specific tuning allowed:
+- Rule 5 (model for judgment) — if AI-native app legitimately uses model for routing, writer adds note BELOW Rule 5 (don't modify Rule 5 itself)
+- Rule 6 (token budgets) — default 4k/task, 30k/session; architect can override in `.claude/conventions.md` per project scale
+
+Validation rule: if generated `CLAUDE.md` doesn't contain "Rule 1 — Think Before Coding" verbatim, pre-seed step failed → re-dispatch writer.
+
+### Changed — `agents/dev-squad/writer.md` `.claude/` Pre-Seed section
+
+CLAUDE.md spec updated: START with 12-rule base template verbatim (from docs/templates/claude-md-base.md), THEN append project-specific. Total cap ~200 LOC project-specific (12 rules = ~70 LOC fixed). Explicit "do NOT modify the 12 rules — only append below".
+
+### Changed — `commands/build.md`
+
+- Phase 6 SHIP `.claude/` pre-seed step: `CLAUDE.md` description now references 12-rule base template
+- Phase 7 LEARN CLAUDE.md update step: "preserve the 12 rules at top unchanged — append new conventions as 'Project Conventions Discovered During Build' section BELOW"
+
+### Changed — `.claude-plugin/workflows/zero-to-ship.json` Phase 6
+
+`CLAUDE.md` artifact description encodes 12-rule template requirement.
+
+### Changed — `CLAUDE.md` (dev-squad-plugin self-application)
+
+The plugin's own `CLAUDE.md` now starts with the 12-rule base template. Two plugin-specific notes added:
+- Rule 5 note: "coordinator uses model for agent dispatch (routing via judgment) — agent SDK pattern; outside coordinator dispatch, rule applies normally"
+- Rule 6 note: "SaaS-class build sessions may exceed default budget; coordinator may negotiate higher budget at workflow start"
+
+Rest of CLAUDE.md (Repository Type, Architecture, Common Tasks, etc.) preserved unchanged BELOW the 12 rules.
+
+### Changed — `docs/saas-build-checklist.md`
+
+Phase 6 `.claude/` pre-seed section updated: CLAUDE.md checklist item now mentions the 12-rule base template requirement.
+
+### Migration
+
+None. Auto-update on next session start. New behavior applies to future Phase 6 SHIP runs. Existing projects' CLAUDE.md not retroactively modified — users can manually prepend the 12 rules if desired.
+
 ## [4.14.1] — Canonical SaaS build checklist doc + 2026 compliance updates
 
 **Why:** SaaS-relevant content was scattered across saas-patterns + saas-readiness + workflow JSONs + agent prompts + commands/build.md. No single document gave "here's the canonical end-to-end SaaS build checklist + minimum requirements". Plus user's WebSearch suggestion surfaced 2026 EU regulations (AI Act, CRA, DORA) and 2026 industry baselines (OAuth 2.1 PKCE, AES-256/TLS 1.2+, SOC 2 Type 1 vs Type 2 distinction, JIT provisioning) not yet covered.

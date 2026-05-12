@@ -296,7 +296,7 @@ If 10+ P0+P1 items across 4+ domains: invoke `/dev-squad readiness` workflow (sa
 ### `.claude/` pre-seed (mandatory for generated apps)
 
 Writer + Architect produce in user's project:
-- [ ] `CLAUDE.md` — project root, auto-loaded
+- [ ] `CLAUDE.md` — project root, auto-loaded. **STARTS with 12-rule base template** verbatim (see `docs/templates/claude-md-base.md` — think before coding / simplicity / surgical changes / goal-driven / model-for-judgment / token budgets / surface conflicts / read before write / tests verify intent / checkpoint / match conventions / fail loud). Project-specific sections (overview, tech stack, how-to-run, where things live) AFTER the 12 rules. Writer MUST NOT modify the 12 rules — append below only.
 - [ ] `.claude/architecture.md` — entities, modules, flow, mermaid
 - [ ] `.claude/conventions.md` — naming, error handling, testing, commits
 - [ ] `.claude/gotchas.md` — known issues filtered from `.dev-squad/gotchas.md`

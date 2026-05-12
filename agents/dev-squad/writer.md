@@ -136,7 +136,7 @@ For payment-related emails (Phase 6-A billing): payment-failed-1st/2nd/final dun
 When Phase 6 SHIP runs, you collaborate with architect to pre-seed self-documenting context for future Claude sessions on the user's project. **Goal:** every future Claude session loads `CLAUDE.md` automatically and discovers detail docs in `.claude/` — no re-discovery on each session.
 
 Produce in user's project root:
-- **`CLAUDE.md`** (project root, auto-loaded) — 1-paragraph project overview, tech stack list, how-to-run commands, where things live (`apps/backend/`, `apps/frontend/`, `packages/`), references to `.claude/` detail docs. Cap ~200 LOC.
+- **`CLAUDE.md`** (project root, auto-loaded) — START with **12-rule base template** verbatim (read `docs/templates/claude-md-base.md` from dev-squad plugin). Below the 12 rules, append: 1-paragraph project overview, tech stack list, how-to-run commands, where things live (`apps/backend/`, `apps/frontend/`, `packages/`), references to `.claude/` detail docs. Total cap ~200 LOC of project-specific content (rules themselves are ~70 LOC fixed). **Do NOT modify the 12 rules** — they're canonical. If project is AI-native or has special token budget, add note BELOW the relevant rule (don't edit the rule itself).
 - **`.claude/architecture.md`** — entities + relationships, key modules + responsibilities, data flow, auth flow (with mermaid). Sourced from architect's Phase 2 design doc.
 - **`.claude/conventions.md`** — naming, file org, error handling, validation, testing, commit format. Sourced from reviewer's Phase 5 notes + ADRs.
 - **`.claude/gotchas.md`** — known issues, footguns, things to be careful about. Filtered from `.dev-squad/gotchas.md` (drop dev-squad-internal entries).

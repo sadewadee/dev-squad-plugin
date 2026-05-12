@@ -331,7 +331,7 @@ Agent tool with:
     - Dispatch git-ops for PR creation with full description
     - Dispatch reviewer for final sign-off
     - **Pre-seed self-documenting context for future Claude sessions** (mandatory): writer + architect collaborate to produce in user's project root:
-      - `CLAUDE.md` — project overview (1 paragraph), tech stack, how-to-run, where things live (`apps/backend/`, `apps/frontend/`, `packages/`), references to detail docs in `.claude/`. Auto-loaded by Claude Code at session start.
+      - `CLAUDE.md` — START with **12-rule base template** (verbatim from `docs/templates/claude-md-base.md` in dev-squad plugin) covering: think before coding, simplicity, surgical changes, goal-driven execution, model-for-judgment-only, token budgets, surface conflicts, read before write, tests verify intent, checkpoint, match conventions, fail loud. THEN append project-specific: overview (1 paragraph), tech stack, how-to-run, where things live, references to `.claude/` detail docs. Auto-loaded by Claude Code at session start. **Do NOT modify the 12 rules** — only append project-specific BELOW.
       - `.claude/architecture.md` — entities + relationships, key modules + responsibilities, data flow, auth flow (with mermaid). Sourced from architect's Phase 2 design doc.
       - `.claude/conventions.md` — naming, file organization, error handling, validation, testing, commit format. Sourced from reviewer's Phase 5 notes + ADRs.
       - `.claude/gotchas.md` — known issues, footguns, things to be careful about. Sourced from `.dev-squad/gotchas.md` (filter to project-relevant only — drop dev-squad-internal entries).
@@ -380,7 +380,7 @@ Agent tool with:
 
     - Append "What worked" entries to `.dev-squad/playbook.md` (create if not exist)
     - Append "What didn't work" entries as fix-it tickets in `docs/next-iteration.md`
-    - Update project `CLAUDE.md` with conventions discovered during this build (e.g., "always use cursor pagination", "auth flow uses httpOnly cookies")
+    - Update project `CLAUDE.md` with conventions discovered during this build (e.g., "always use cursor pagination", "auth flow uses httpOnly cookies"). **Preserve the 12 rules at top of CLAUDE.md unchanged** — append new conventions as a "Project Conventions Discovered During Build" section BELOW. Do NOT inline conventions inside the 12 rules.
     - Write lessons to agent-memory + episodic memory for future projects
 
     **Step 3: Mark complete**
