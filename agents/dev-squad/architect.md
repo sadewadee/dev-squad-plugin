@@ -418,19 +418,52 @@ When defining API contracts between services:
 
 ### Plan Review Loop (Quality Gate)
 
-After writing any implementation plan or spec:
+After writing any implementation plan or spec, dispatch a plan reviewer. **There is NO `dev-squad:plan-reviewer` agent type.** Two valid dispatch patterns:
 
+**Pattern A — cost-efficient gate (default, recommended)**:
 ```
-1. Dispatch plan-reviewer subagent (haiku for cost efficiency) with:
-   - Path to plan document
-   - Path to original spec/requirements
-2. Reviewer checks: completeness, feasibility, gaps, risks
-3. If issues found:
-   - Fix the issues in the plan
-   - Re-dispatch to SAME reviewer for re-review
-   - Max 3 iterations — then escalate to coordinator/user
-4. If no issues: plan is approved, proceed to implementation
+Agent({
+  subagent_type: "general-purpose",
+  model: "haiku",                     // haiku for cost-efficient plan completeness check
+  description: "Plan review (round N)",
+  prompt: |
+    You are a plan reviewer. Verify this implementation plan is complete, feasible, and free of gaps before implementation begins.
+
+    **Plan document:** {path}
+    **Original spec/requirements:** {path}
+
+    **Check matrix:**
+    | Category | What to look for |
+    |----------|------------------|
+    | Completeness | TODOs, placeholders, "TBD", missing steps |
+    | Feasibility | Tasks that cannot be implemented as written |
+    | Gaps | Spec requirements not covered by any task |
+    | Risks | Tasks with unclear rollback path, no test coverage |
+    | Granularity | Tasks that are not bite-sized (2-5 min each, one action) |
+
+    **Output:**
+    Status: APPROVED | ISSUES FOUND
+    Issues: (bullet list with section reference)
+    Recommendations: (advisory)
+})
 ```
+
+**Pattern B — codebase-aware (for plans touching security/SaaS subsystems)**:
+```
+Agent({
+  subagent_type: "dev-squad:reviewer",
+  description: "Plan review with security + SaaS awareness",
+  prompt: <plan + spec paths + saas-readiness Section 8 check matrix if SaaS scope>
+})
+```
+
+Flow:
+1. Dispatch via Pattern A or B
+2. Reviewer returns APPROVED or ISSUES FOUND
+3. If issues: fix the plan inline, re-dispatch same pattern (max 3 iterations → escalate to coordinator/user)
+4. If approved: proceed to implementation
+
+**Anti-pattern**: `subagent_type: "plan-reviewer"` or `subagent_type: "dev-squad:plan-reviewer"` — both fail "agent type not available" → architect silently skips review → plan gaps lolos to implement phase. NEVER use those literal types.
 
 **Plan task granularity:** Each task must be ONE action, completable in 2-5 minutes:
 - "Write test for user creation" → "Run test (expect fail)" → "Implement createUser" → "Run test (expect pass)" → "Commit"

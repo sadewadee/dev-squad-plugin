@@ -2,6 +2,48 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.15.2] — Phantom subagent type cleanup (`judge` + `plan-reviewer`)
+
+**Why:** v4.15.1 fixed the `spec-document-reviewer` phantom dispatch gotcha. Systematic audit revealed **two more** phantom subagent references throughout the plugin docs that follow the same silent-skip failure mode:
+
+1. **`judge` / `dev-squad:judge`** — referenced 8+ times across coordinator.md (Phase Gate Decision pattern, Two-Stage Review, Smart Model Routing), commands/build.md (Phase 1 + Phase 2 gates), skills/dev-squad/SKILL.md (Phase Gate Judge orchestration pattern). NO `dev-squad:judge` agent file exists. The "judge" is a **role name**, not a subagent type. Coordinator attempting `subagent_type: "judge"` literally would silently skip the phase gate → phases transition with broken or incomplete deliverables.
+
+2. **`plan-reviewer` / `dev-squad:plan-reviewer`** — referenced in architect.md (Plan Review Loop) and commands/build.md (Phase 2 plan review). NO agent file exists. The "plan-reviewer" is a **role name**. Architect attempting `subagent_type: "plan-reviewer"` literally would silently skip plan review → plan gaps lolos to implement phase.
+
+Both follow the same pattern as the v4.15.1 spec-document-reviewer issue: the docs use natural role names that don't correspond to actual subagent types. Pattern audit complete — these are the only remaining phantom dispatches.
+
+### Changed — `commands/build.md` (3 locations)
+
+- Phase 1 spec review loop: `dispatch reviewer subagent` → explicit `subagent_type: "dev-squad:reviewer"`
+- Phase 1 gate: `Dispatch haiku judge agent` → explicit `subagent_type: "general-purpose"` with `model: "haiku"`
+- Phase 2 plan review loop: `dispatch plan-reviewer subagent` → `general-purpose` + haiku OR `dev-squad:reviewer`
+- Phase 2 gate: `Judge agent verifies Phase 2 deliverables` → explicit `general-purpose` + haiku
+- Phase 4 spec-compliance pass: `dispatch reviewer (or haiku judge for simple pass/fail)` → explicit `dev-squad:reviewer` OR `general-purpose` + haiku
+
+### Changed — `agents/dev-squad/coordinator.md` Phase Gate Decision section
+
+Rewrote section with canonical dispatch pattern. Explicit warning: "There is NO `dev-squad:judge` agent type." Full Agent({}) example with `subagent_type: "general-purpose"` + `model: "haiku"` + phase-deliverables prompt template. Anti-pattern explicit.
+
+Also fixed line 689 (Two-Stage Review SPEC COMPLIANCE REVIEW section): `dispatch reviewer (or haiku judge agent for cost efficiency)` → explicit `dev-squad:reviewer` OR `general-purpose` + haiku.
+
+### Changed — `agents/dev-squad/architect.md` Plan Review Loop section
+
+Rewrote with two canonical dispatch patterns (Pattern A: `general-purpose` + haiku for cost-efficient gate; Pattern B: `dev-squad:reviewer` for codebase-aware security/SaaS plans). Explicit warning: "There is NO `dev-squad:plan-reviewer` agent type." Anti-pattern call-out included.
+
+### Added — `skills/dev-squad/SKILL.md` Known Gotchas section extended
+
+Two new gotcha entries:
+- **Gotcha 2**: `judge` / `dev-squad:judge` is NOT a subagent type — use `general-purpose` + `model: "haiku"`
+- **Gotcha 3**: `plan-reviewer` is NOT a subagent type — use `general-purpose` + haiku OR `dev-squad:reviewer`
+
+Plus a closing summary clause: "dev-squad ships 11 real agent types (coordinator, architect, designer, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer). Any other 'subagent' name in docs (`spec-document-reviewer`, `judge`, `plan-reviewer`, `phase-gate-judge`) is a **role**, not a type. The dispatcher resolves the role to either `general-purpose` (with model override) or one of the 11 dev-squad agents. Never dispatch a role as if it were a type."
+
+### Migration
+
+None. Docs + dispatch correctness. Auto-pulls on next session. Existing in-flight projects benefit immediately — coordinator/architect will read corrected dispatch patterns on their next subagent dispatch.
+
+**Risk closed**: silent-skip failures for phase gates + plan reviews can no longer happen via "agent type not available" path. Plugin's three documented agent-role-vs-type confusions are now all caught and corrected.
+
 ## [4.15.1] — Brainstorming spec-review dispatch gotcha (prevent silent skip)
 
 **Why:** User reported a note from a prior session: "brainstorming skill biasanya minta dispatch ke spec-document-reviewer subagent, tapi agent type tsb tidak tersedia di environment kita — saya skip step itu transparan, lebih efisien minta kamu review langsung." Investigation revealed:

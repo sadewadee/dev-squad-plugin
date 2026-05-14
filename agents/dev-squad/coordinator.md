@@ -686,7 +686,7 @@ Every NON-TRIVIAL deliverable goes through TWO review passes before completion. 
 1. SPEC COMPLIANCE REVIEW
    - Apply Diff-Scope Dispatch Heuristic to choose agents
    - For new endpoints/UI: dispatch qa-engineer (functional verification = ground truth for spec compliance)
-   - For static spec-doc match: dispatch reviewer (or haiku judge agent for cost efficiency on simple gates)
+   - For static spec-doc match: dispatch `dev-squad:reviewer` (full review) OR `general-purpose` + `model: "haiku"` (cost-efficient pass/fail gate — NO `dev-squad:judge` agent type exists)
    - Check: Does implementation match requirements line-by-line?
    - Check: All acceptance criteria met?
    - If issues → implementer fixes → re-review (loop until pass)
@@ -703,16 +703,40 @@ Every NON-TRIVIAL deliverable goes through TWO review passes before completion. 
 
 ## Phase Gate Decision (Judge Pattern)
 
-Before transitioning between phases, dispatch a cheap judge:
+Before transitioning between phases, dispatch a cheap pass/fail judge. **There is NO `dev-squad:judge` agent type.** The "judge" is a role played by `general-purpose` running with `model: "haiku"` for cost-efficient gate decisions.
 
 ```
-1. Dispatch judge agent (haiku model) with:
-   - Phase deliverables checklist
-   - Current state of artifacts (files created, tests passing)
-2. Judge returns: PASS / FAIL with reasons
-3. PASS → transition to next phase
-4. FAIL → fix issues, re-judge (max 3 attempts → escalate to user)
+Agent({
+  subagent_type: "general-purpose",
+  model: "haiku",                     // critical: haiku for cost-efficient pass/fail
+  description: "Phase {N} gate validation",
+  prompt: |
+    You are a phase gate judge. Verify Phase {N} deliverables before transition.
+
+    **Phase deliverables checklist:**
+    {paste phase-specific checklist from commands/build.md}
+
+    **Current artifact state:**
+    - Files created: {list}
+    - Tests passing: {yes/no, count}
+    - Reviews complete: {yes/no}
+
+    **Decision:**
+    Return PASS or FAIL with one-line reason. Approve unless a deliverable is genuinely missing or broken.
+
+    **Output:**
+    Status: PASS | FAIL
+    Reason: (one line)
+})
 ```
+
+Flow:
+1. Dispatch judge as shown above
+2. Judge returns PASS or FAIL with one-line reason
+3. PASS → transition to next phase
+4. FAIL → fix issues, re-dispatch (max 3 attempts → escalate to user)
+
+**Anti-pattern**: `subagent_type: "judge"` or `subagent_type: "dev-squad:judge"` — both fail "agent type not available" → coordinator silently skips gate → phase transitions with broken deliverables. NEVER use those literal types. Use the canonical pattern above.
 
 ## Smart Model Routing
 

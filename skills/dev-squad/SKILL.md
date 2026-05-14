@@ -240,6 +240,57 @@ v5.1.0+ replaced the dispatch with inline self-review (Step 7 of brainstorming S
 
 This gotcha applies to: coordinator, architect, designer, reviewer (any agent using brainstorming skill).
 
+### Gotcha 2: `judge` / `dev-squad:judge` is NOT a subagent type
+
+dev-squad's Phase Gate Decision pattern and Smart Model Routing reference "haiku judge agent" / "Phase Gate Judge" — those are **role names**, not subagent types. There is no `dev-squad:judge` agent file. Trying `subagent_type: "judge"` or `subagent_type: "dev-squad:judge"` returns "agent type not available" → coordinator silently skips the phase gate → phases transition with broken or incomplete deliverables.
+
+**Correct dispatch**:
+```
+Agent({
+  subagent_type: "general-purpose",
+  model: "haiku",                     // critical: explicit haiku for cost-efficient pass/fail
+  description: "Phase {N} gate validation",
+  prompt: <phase deliverables checklist + current state + PASS/FAIL output format>
+})
+```
+
+The role of "judge" is played by `general-purpose` running with `model: "haiku"` (Agent tool's `model` parameter accepts `haiku | sonnet | opus`). See coordinator.md "Phase Gate Decision (Judge Pattern)" for the full prompt template.
+
+This gotcha applies to: coordinator (every phase transition), commands/build.md (Phase 1 + Phase 2 gates).
+
+### Gotcha 3: `plan-reviewer` is NOT a subagent type
+
+architect.md's Plan Review Loop and commands/build.md's Phase 2 plan review reference "plan-reviewer subagent" — that is a **role name**, not a subagent type. There is no `dev-squad:plan-reviewer` agent file. Trying `subagent_type: "plan-reviewer"` literally returns "agent type not available" → architect silently skips plan review → plan gaps lolos to implement phase.
+
+**Correct dispatch (two valid patterns)**:
+
+Pattern A (cost-efficient, default):
+```
+Agent({
+  subagent_type: "general-purpose",
+  model: "haiku",
+  description: "Plan review",
+  prompt: <plan path + spec path + check matrix: completeness/feasibility/gaps/risks/granularity>
+})
+```
+
+Pattern B (codebase-aware, for security/SaaS plans):
+```
+Agent({
+  subagent_type: "dev-squad:reviewer",
+  description: "Plan review with security + SaaS awareness",
+  prompt: <plan + spec paths + saas-readiness Section 8 check matrix if SaaS>
+})
+```
+
+See architect.md "Plan Review Loop (Quality Gate)" for full prompt templates.
+
+This gotcha applies to: architect (every plan written), commands/build.md (Phase 2).
+
+---
+
+**Summary of dispatch discipline**: dev-squad ships 11 real agent types (coordinator, architect, designer, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer). Any other "subagent" name in docs (`spec-document-reviewer`, `judge`, `plan-reviewer`, `phase-gate-judge`) is a **role**, not a type. The dispatcher resolves the role to either `general-purpose` (with model override) or one of the 11 dev-squad agents. Never dispatch a role as if it were a type.
+
 ## Workflow: Zero-to-Ship (Full Project Build)
 
 The `/dev-squad build <description>` command triggers a fully automated 7-phase project build:

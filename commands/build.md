@@ -184,9 +184,9 @@ Agent tool with:
     - Research tech options via Context7 MCP
     - Generate a PRD (Product Requirements Document) using the architect's PRD template
     - PRD MUST include: auth requirements, API scope, data model, non-functional requirements
-    - Run spec review loop: dispatch reviewer subagent to check PRD completeness (max 3 iterations)
+    - Run spec review loop: dispatch `subagent_type: "dev-squad:reviewer"` to check PRD completeness (max 3 iterations). Reviewer applies spec-document-reviewer check matrix from saas-readiness Section 8 (if SaaS) or general spec review (otherwise).
     - >>> CHECKPOINT: Present PRD to user for approval before continuing <<<
-    - PHASE GATE: Dispatch haiku judge agent to verify Phase 1 deliverables before transitioning
+    - PHASE GATE: Dispatch `subagent_type: "general-purpose"` with `model: "haiku"` to verify Phase 1 deliverables before transitioning. (See "Phase Gate Judge Dispatch Pattern" in coordinator.md — there is NO `dev-squad:judge` agent type; use general-purpose + haiku model for cost-efficient pass/fail gates.)
 
     ### Phase 2: DESIGN (Writing-Plans Pattern)
     - Dispatch architect for full architecture design
@@ -202,8 +202,8 @@ Agent tool with:
       - Rate limiting strategy (per-endpoint limits)
       - Observability plan (structured logging, metrics, traces)
     - Write implementation plan with bite-sized tasks (2-5 min each, ONE action per task)
-    - Run plan review loop: dispatch plan-reviewer subagent (max 3 iterations)
-    - PHASE GATE: Judge agent verifies Phase 2 deliverables
+    - Run plan review loop: dispatch `subagent_type: "general-purpose"` with `model: "haiku"` (cost-efficient plan completeness check) OR `subagent_type: "dev-squad:reviewer"` (codebase-aware, when plan touches security/SaaS subsystems). Max 3 iterations. NO `dev-squad:plan-reviewer` agent type exists — use one of the two patterns above.
+    - PHASE GATE: Dispatch `subagent_type: "general-purpose"` with `model: "haiku"` to verify Phase 2 deliverables.
 
     ### Phase 3: SCAFFOLD (Monorepo)
     - Dispatch devops → create MONOREPO structure (see Monorepo Standard below)
@@ -256,8 +256,8 @@ Agent tool with:
       1. Implementer builds + tests + self-reviews
       2. Coordinator looks at task diff and applies heuristic to decide which agents to dispatch
       3. Spec-compliance pass:
-         - New endpoint or UI → dispatch qa-engineer (functional verify against acceptance criteria)
-         - Static spec match → dispatch reviewer (or haiku judge for simple pass/fail)
+         - New endpoint or UI → dispatch `dev-squad:qa-engineer` (functional verify against acceptance criteria)
+         - Static spec match → dispatch `dev-squad:reviewer` (full review) OR `general-purpose` + `model: "haiku"` (simple pass/fail gate — there is NO `dev-squad:judge` agent type)
          - Loop until pass
       4. Code-quality pass:
          - DB/perf/large diff → dispatch auditor (real metrics)
