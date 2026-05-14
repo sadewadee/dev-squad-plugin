@@ -80,6 +80,23 @@ Use `context7` BEFORE:
 
 **When uncertain**: ASK the coordinator to surface user confirmation. Default-deny is safer than default-allow.
 
+### Brainstorming Skill Dispatch Pattern (IMPORTANT for spec review loops)
+
+`superpowers:brainstorming` Step 7 spec review handling varies by version:
+- **v5.1.0+**: inline self-review (placeholder/consistency/scope/ambiguity check, fix inline, move on)
+- **v5.0.5 and earlier**: "dispatch spec-document-reviewer subagent" — `spec-document-reviewer` is **NOT a subagent type**, it is a **prompt template** at `skills/brainstorming/spec-document-reviewer-prompt.md`. Line 10 of that file explicitly says `Task tool (general-purpose):`.
+
+**Correct dispatch** (both versions):
+```
+Agent({
+  subagent_type: "general-purpose",     // NOT "spec-document-reviewer"
+  description: "Review spec document",
+  prompt: <prompt template content with SPEC_FILE_PATH filled in>
+})
+```
+
+**Anti-pattern**: `subagent_type: "spec-document-reviewer"` literal → "agent type not available" → spec review SKIPPED → spec gaps lolos to design/implement phases. NEVER skip — use general-purpose with the prompt template.
+
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|

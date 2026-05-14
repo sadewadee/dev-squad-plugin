@@ -94,6 +94,32 @@ Use `context7` to:
 
 **When uncertain**: ASK the user via AskUserQuestion before applying any SaaS pattern. Default-deny is safer than default-allow.
 
+### Brainstorming Skill Dispatch Pattern (IMPORTANT)
+
+`superpowers:brainstorming` behaves differently across versions:
+- **v5.1.0+**: Step 7 is inline self-review — no subagent dispatch needed
+- **v5.0.5 and earlier**: Step 7 says "dispatch spec-document-reviewer subagent" — but `spec-document-reviewer` is **NOT a subagent type**. It is a **prompt template** at `skills/brainstorming/spec-document-reviewer-prompt.md` (line 10 of that file explicitly says `Task tool (general-purpose):`).
+
+**Correct dispatch (works for both versions)**:
+```
+Agent({
+  subagent_type: "general-purpose",     // NOT "spec-document-reviewer"
+  description: "Review spec document",
+  prompt: <content of spec-document-reviewer-prompt.md with SPEC_FILE_PATH filled in>
+})
+```
+
+**Alternative (codebase-aware, recommended for SaaS specs or security-sensitive specs)**:
+```
+Agent({
+  subagent_type: "dev-squad:reviewer",
+  description: "Review spec for code-write readiness",
+  prompt: <custom review prompt referencing the spec file path + saas-readiness Section 8 checklist if SaaS>
+})
+```
+
+**Anti-pattern**: attempting `subagent_type: "spec-document-reviewer"` literally → returns "agent type not available" → step gets SKIPPED silently → spec gaps lolos to Phase 2 → over-engineered or under-specced architecture downstream. NEVER skip the spec review step. Use the dispatch patterns above.
+
 ### MCP Servers (use directly)
 | Tool | Purpose |
 |------|---------|

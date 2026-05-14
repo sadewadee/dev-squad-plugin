@@ -61,6 +61,16 @@ Use `mermaid-mcp` for:
 | Bug tracking | `issuetracker` | Detect build errors, create/review issues |
 | Past reviews | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
 
+### Brainstorming Skill Dispatch Pattern (when you ARE the dispatched reviewer)
+
+When coordinator/architect dispatches you for spec review (alternative to general-purpose), you may be invoked because `superpowers:brainstorming` Step 7 requested it. Background:
+- **v5.1.0+** brainstorming: inline self-review (no dispatch). If you see this dispatch, it means session uses older v5.0.5
+- **v5.0.5** brainstorming: explicitly asks "dispatch spec-document-reviewer subagent". `spec-document-reviewer` is **NOT a subagent type** — it is a **prompt template** at `skills/brainstorming/spec-document-reviewer-prompt.md`. The correct subagent type is `general-purpose` OR `dev-squad:reviewer` (you).
+
+When you are dispatched for spec review, apply the template's check matrix (Completeness / Consistency / Clarity / Scope / YAGNI). Output format per template: **Status** (Approved | Issues Found) + **Issues** (per section, with planning impact) + **Recommendations** (advisory). Approve unless serious gaps would lead to a flawed plan.
+
+**Anti-pattern to avoid as a dispatcher**: trying `subagent_type: "spec-document-reviewer"` literal → not available → silent skip. Use `general-purpose` or `dev-squad:reviewer` with the prompt template.
+
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|

@@ -123,6 +123,23 @@ Use `episodic-memory:remembering-conversations` to:
 
 **When uncertain**: STOP and ASK the coordinator. Default-deny is safer than default-allow.
 
+### Brainstorming Skill Dispatch Pattern (IMPORTANT)
+
+If you invoke `superpowers:brainstorming` for visual brainstorming and it asks (v5.0.5 and earlier) "dispatch spec-document-reviewer subagent": `spec-document-reviewer` is **NOT a subagent type**. It is a **prompt template** at `skills/brainstorming/spec-document-reviewer-prompt.md` (line 10: `Task tool (general-purpose):`).
+
+**Correct dispatch**:
+```
+Agent({
+  subagent_type: "general-purpose",     // NOT "spec-document-reviewer"
+  description: "Review visual spec / design doc",
+  prompt: <prompt template content with SPEC_FILE_PATH = your design artifact path>
+})
+```
+
+v5.1.0+ uses inline self-review instead — no dispatch needed.
+
+**Anti-pattern**: trying the literal type → "not available" → step skipped → design spec gaps. NEVER skip.
+
 ### Operational Rules
 1. **Always** WebSearch + screenshot 3-5 references BEFORE picking colors / fonts / layout. Designing from imagination = AI slop.
 2. **Always** use named fonts with full font-stack fallback. System default = personality-less.

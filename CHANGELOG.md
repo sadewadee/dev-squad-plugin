@@ -2,6 +2,37 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.15.1] — Brainstorming spec-review dispatch gotcha (prevent silent skip)
+
+**Why:** User reported a note from a prior session: "brainstorming skill biasanya minta dispatch ke spec-document-reviewer subagent, tapi agent type tsb tidak tersedia di environment kita — saya skip step itu transparan, lebih efisien minta kamu review langsung." Investigation revealed:
+
+- `superpowers:brainstorming` v5.0.5 Step 7 says "dispatch spec-document-reviewer subagent" but **spec-document-reviewer is NOT a subagent type** — it is a **prompt template** at `skills/brainstorming/spec-document-reviewer-prompt.md`. Line 10 of that file explicitly states `Task tool (general-purpose):`.
+- v5.1.0+ removed the dispatch entirely (Step 7 is now inline self-review). Both versions are cached on the user's machine.
+- An agent reading v5.0.5 brainstorming and attempting `subagent_type: "spec-document-reviewer"` literally gets "agent type not available" and **silently skips the spec review step** — letting spec gaps lolos to Phase 2/3 with downstream over-engineering or under-speccing.
+- dev-squad does not reference spec-document-reviewer anywhere (grep clean), but coordinator/architect/designer/reviewer all have `superpowers:brainstorming` in `auto_skills` and are exposed to this pattern.
+
+This release documents the correct dispatch pattern in all affected agents and skill so the silent skip never happens.
+
+### Added — 4 agent prompts (`coordinator.md`, `architect.md`, `designer.md`, `reviewer.md`)
+
+New `### Brainstorming Skill Dispatch Pattern` section after the SaaS Scope Safety Default block (or after Skills section for reviewer). Each agent gets role-tailored guidance:
+
+- **coordinator + architect + designer**: when invoking brainstorming and v5.0.5 asks for spec-document-reviewer dispatch — use `subagent_type: "general-purpose"` with the prompt template content. For SaaS specs or security-sensitive specs, alternative is `subagent_type: "dev-squad:reviewer"`.
+- **reviewer**: dispatched-side guidance. When you ARE the spec reviewer (alternative to general-purpose), apply the template's check matrix (Completeness / Consistency / Clarity / Scope / YAGNI) and output Status + Issues + Recommendations.
+- All 4 explicitly warn against the anti-pattern `subagent_type: "spec-document-reviewer"` literal.
+
+### Added — `skills/dev-squad/SKILL.md` Known Gotchas section
+
+New "## Known Gotchas (read once, apply forever)" section before Workflow: Zero-to-Ship. First entry documents Gotcha 1: `spec-document-reviewer` is NOT a subagent type. Coordinator reads SKILL.md at every dev-squad invocation — gotcha surfaces upfront.
+
+Includes recommendation to upgrade superpowers to v5.1.0+ to eliminate the issue entirely (inline self-review replaces dispatch).
+
+### Migration
+
+None. Docs-only. Auto-pulls on next session.
+
+**Recommendation to users**: `claude plugins install superpowers@latest` to use v5.1.0+ where Step 7 is inline self-review (no dispatch). Plugin still handles v5.0.5 correctly via the documented dispatch pattern.
+
 ## [4.15.0] — Phase 0 Step 2.5b SaaS Intake (10-question kick-start gate) — SaaS scope marked BETA
 
 **Why:** Empirical audit of `wacrm` (multi-tenant CRM SaaS built using v4.14 dev-squad) revealed the v4.14 Phase 0 SaaS detection was severely under-scoped. Phase 0 Step 2.5 asked only **"Enable SaaS yes/no"** — leaving 50+ implementation decisions made silently. The post-implement readiness audit then surfaced gaps that should have been planned at kick-start. Concrete retrofit cost on wacrm: 8 post-implement phases (`saas_readiness_audit`, `multi_tenant_gap_audit`, `phase_6a_billing_replatform` through `phase_6h_customer_success`) covering billing replatform (PayPal+Xendit+Manual after assuming Stripe), 3-tier admin hierarchy retrofit (`PlatformRole` enum + `/(platform-admin)` routes + impersonation + `PlatformAuditLog`), password reset + 2FA + account lockout + refresh token rotation + GDPR endpoints, Faktur Pajak + NPWP + invoice PDF, trial cron + annual + coupons + downgrade, customer API keys + webhooks + OpenAPI, cookie consent + sub-processor + DPA, backup + Sentry + Prometheus + status page + CI/CD + PII redaction, welcome email + onboarding drip + help center.

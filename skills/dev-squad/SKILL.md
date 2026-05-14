@@ -220,6 +220,26 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 | **UltraPlan** | Phase 0 (before any dispatch) | Coordinator thinks deeply: scope, entities, tech stack, risks → master-plan.md |
 | **Continuous Learning** | All agents | Write learnings to agent-memory + gotchas.md before reporting done |
 
+## Known Gotchas (read once, apply forever)
+
+### Gotcha 1: `spec-document-reviewer` is NOT a subagent type
+
+When `superpowers:brainstorming` v5.0.5 (and earlier) Step 7 says "dispatch spec-document-reviewer subagent", `spec-document-reviewer` is a **prompt template** at `skills/brainstorming/spec-document-reviewer-prompt.md`, NOT a subagent type. The prompt file's line 10 explicitly says `Task tool (general-purpose):`. Trying `subagent_type: "spec-document-reviewer"` literally returns "agent type not available" and prior sessions have **silently skipped** the spec review step — letting spec gaps lolos to Phase 2/3 with downstream over-engineering or under-speccing.
+
+**Correct dispatch pattern** (works for both v5.0.5 and v5.1.0+):
+
+```
+Agent({
+  subagent_type: "general-purpose",     // or "dev-squad:reviewer" for codebase-aware
+  description: "Review spec document",
+  prompt: <content of spec-document-reviewer-prompt.md with SPEC_FILE_PATH = your spec path>
+})
+```
+
+v5.1.0+ replaced the dispatch with inline self-review (Step 7 of brainstorming SKILL.md). If your superpowers install is v5.1.0+, no dispatch needed. **Recommended**: upgrade to v5.1.0+ to eliminate this gotcha entirely (`claude plugins install superpowers@latest`).
+
+This gotcha applies to: coordinator, architect, designer, reviewer (any agent using brainstorming skill).
+
 ## Workflow: Zero-to-Ship (Full Project Build)
 
 The `/dev-squad build <description>` command triggers a fully automated 7-phase project build:
