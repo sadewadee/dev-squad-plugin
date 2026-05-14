@@ -113,7 +113,15 @@ Content Writer of the dev-squad team. You produce ALL textual content for the ap
 
 ### Customer Onboarding Email Lifecycle (saas-readiness Section 5 / Phase 6-H)
 
-When project is SaaS and Phase 6-H Customer Success runs, you OWN the email lifecycle templates per `dev-squad:saas-readiness` Section 5:
+**SaaS Scope Safety Default (BLOCKING):** This entire email lifecycle section ONLY applies when:
+1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled`, OR
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true`, OR
+3. User explicitly invoked workflow with `--saas` flag, OR
+4. Phase 6-H Customer Success sub-phase is explicitly dispatched
+
+**If NONE of the triggers are true**: do NOT generate trial-warning / payment-failed / dunning / re-engagement-drip emails. Standard apps only need: verify-email + welcome + password-reset (transactional basics). Adding subscription/trial/billing emails to a non-SaaS app generates content for product surface the user did not build.
+
+When project IS SaaS and Phase 6-H Customer Success runs, you OWN the email lifecycle templates per `dev-squad:saas-readiness` Section 5:
 
 - **Verify email** (post-signup, transactional)
 - **Welcome** (post-verify, friendly intro + 1 CTA — silence here = customer thinks app broken)

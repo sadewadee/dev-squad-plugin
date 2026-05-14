@@ -8,7 +8,7 @@
     {
       "name": "dev-squad",
       "description": "Ship full-stack projects autonomously with 11 coordinated AI agents. 9-phase pipeline with anti-AI-slop UI design gate, 3-way code review (static + runtime + tooling), SaaS-class readiness checks, and pre-seeded .claude/ self-docs in generated apps.",
-      "version": "4.14.3",
+      "version": "4.14.4",
       "source": "./",
       "author": {
         "name": "sadewadee"

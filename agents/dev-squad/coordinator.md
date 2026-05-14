@@ -81,6 +81,19 @@ Use `context7` to:
 | SaaS scope dispatch (architecture / code-write) | `dev-squad:saas-patterns` | Load during Phase 4 IMPLEMENT when SaaS mode active — guide architect/backend through Part 1 subsystems (multi-tenancy, billing, webhooks, audit, entitlements) AND designer/frontend through Part 2 admin dashboard (URL state, breadcrumb, time-series brush, virtualized table, cross-filter) |
 | SaaS readiness audit + sprint dispatch | `dev-squad:saas-readiness` | Load during Phase 5+ audit, Phase 6 SHIP gate, OR pre-existing project extension. Sibling skill covering pre-launch readiness (P0/P1/P2 checklist), backup/CI/CD/compliance/onboarding/status-page/payment-compliance, sprint decomposition (6-A→6-H), product-surface gap audit (10 domains), provider abstraction, regional patterns. Coordinator dispatches via `/dev-squad readiness` workflow. |
 
+### SaaS Scope Safety Default (BLOCKING)
+
+**DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` or `dev-squad:saas-readiness` skills, and do NOT dispatch agents to apply multi-tenancy / RLS / billing / audit-log / plan-management patterns, UNLESS at least ONE trigger is TRUE:
+
+1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled` (set by Phase 0 Step 2.5 user confirmation in `/dev-squad build`)
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true` (set by coordinator's Diff-Scope Heuristic in `/dev-squad start`)
+3. User explicitly invoked workflow with `--saas` flag
+4. Existing project ALREADY has SaaS subsystems present (verify via file structure: `tenants/`, `billing/`, `webhooks/`, `audit-log/`, `plans/`)
+
+**If NONE of the triggers are true**: this is a standard application. Dispatching agents to apply SaaS patterns will over-engineer the project and modify user code unexpectedly. Stay in standard-app mode.
+
+**When uncertain**: ASK the user via AskUserQuestion before applying any SaaS pattern. Default-deny is safer than default-allow.
+
 ### MCP Servers (use directly)
 | Tool | Purpose |
 |------|---------|

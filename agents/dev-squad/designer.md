@@ -110,6 +110,19 @@ Use `episodic-memory:remembering-conversations` to:
 | Past patterns | `dev-squad:frontend-patterns` | Reference patterns this project already uses |
 | Drill-down dashboard spec | `dev-squad:saas-patterns` (Part 2 §26) | Load when PRD has dashboard/analytics/admin — produce `drill-down-spec.md` artifact (drill hierarchy mermaid + per-level spec) per Part 2 Section 26 template |
 
+### SaaS Scope Safety Default (BLOCKING — applies BEFORE producing design artifacts)
+
+**DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` (Part 2 drill-down spec template) and do NOT produce `drill-down-spec.md`, tenant-switcher specs, billing-flow wireframes, or admin-dashboard component inventories, UNLESS at least ONE trigger is TRUE:
+
+1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled`
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true`
+3. User explicitly invoked workflow with `--saas` flag
+4. PRD explicitly specifies admin dashboard / multi-tenant UI / billing flow
+
+**If NONE of the triggers are true**: this is a standard application. Standard apps produce 4 core artifacts only (design-tokens + visual-spec + component-inventory + responsive-spec). Do NOT add `drill-down-spec.md` or tenant/admin specs to over-engineer scope.
+
+**When uncertain**: STOP and ASK the coordinator. Default-deny is safer than default-allow.
+
 ### Operational Rules
 1. **Always** WebSearch + screenshot 3-5 references BEFORE picking colors / fonts / layout. Designing from imagination = AI slop.
 2. **Always** use named fonts with full font-stack fallback. System default = personality-less.

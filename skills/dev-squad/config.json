@@ -33,9 +33,11 @@
         "episodic-memory:remembering-conversations",
         "issuetracker",
         "find-skills",
-        "claude-md-management:revise-claude-md",
-        "dev-squad:saas-patterns",
-        "dev-squad:saas-readiness"
+        "claude-md-management:revise-claude-md"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode is explicitly enabled — checked via .dev-squad/master-plan.md ('SaaS Mode: enabled') OR .dev-squad/scope-tier.json ('saas_touch: true') OR --saas flag. NEVER load by default." },
+        { "skill": "dev-squad:saas-readiness", "load_when": "Phase 5+ audit OR Phase 6 SHIP gate AND saas_mode is enabled, OR pre-existing SaaS project audit. NEVER load by default for standard apps." }
       ],
       "auto_mcp": [
         "mermaid-mcp",
@@ -65,9 +67,11 @@
         "superpowers:brainstorming",
         "superpowers:writing-plans",
         "episodic-memory:remembering-conversations",
-        "claude-md-management:revise-claude-md",
-        "dev-squad:saas-patterns",
-        "dev-squad:saas-readiness"
+        "claude-md-management:revise-claude-md"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode enabled (master-plan.md OR scope-tier.json OR --saas flag). Architect produces ADR-001..005 only when SaaS mode active." },
+        { "skill": "dev-squad:saas-readiness", "load_when": "Phase 6 SHIP gate OR pre-existing SaaS project audit AND saas_mode enabled." }
       ],
       "auto_mcp": [
         "context7",
@@ -103,9 +107,11 @@
         "issuetracker",
         "episodic-memory:remembering-conversations",
         "dev-squad:backend-patterns",
-        "dev-squad:postgres-patterns",
-        "dev-squad:saas-patterns",
-        "dev-squad:saas-readiness"
+        "dev-squad:postgres-patterns"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode enabled AND working on Phase 4 IMPLEMENT for SaaS subsystem (tenants/billing/webhooks/audit/api-keys/admin). NEVER apply multi-tenancy/RLS/billing patterns to standard apps." },
+        { "skill": "dev-squad:saas-readiness", "load_when": "Phase 6 sub-phase execution (6-A..6-F) AND saas_mode enabled." }
       ],
       "auto_mcp": [
         "context7",
@@ -142,9 +148,11 @@
         "playwright-skill:playwright-skill",
         "superpowers-chrome:browsing",
         "episodic-memory:remembering-conversations",
-        "dev-squad:frontend-patterns",
-        "dev-squad:saas-patterns",
-        "dev-squad:saas-readiness"
+        "dev-squad:frontend-patterns"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode enabled AND project has admin/analytics dashboard with drill-down (Part 2). NEVER apply drill-down/multi-tenant UI patterns to standard apps." },
+        { "skill": "dev-squad:saas-readiness", "load_when": "Phase 6 sub-phase execution (6-B/6-D/6-F frontend UI) AND saas_mode enabled." }
       ],
       "auto_mcp": [
         "context7",
@@ -179,9 +187,11 @@
         "superpowers:verification-before-completion",
         "superpowers-chrome:browsing",
         "playwright-skill:playwright-skill",
-        "dev-squad:frontend-patterns",
-        "dev-squad:saas-patterns",
-        "dev-squad:saas-readiness"
+        "dev-squad:frontend-patterns"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-patterns", "load_when": "PRD has dashboard/analytics/admin AND saas_mode enabled — produce drill-down-spec.md per Part 2 §26. NEVER for standard apps." },
+        { "skill": "dev-squad:saas-readiness", "load_when": "Phase 6 sub-phase frontend design work AND saas_mode enabled." }
       ],
       "auto_mcp": [
         "context7",
@@ -248,9 +258,11 @@
         "dev-squad:golang-patterns",
         "dev-squad:golang-testing",
         "dev-squad:backend-patterns",
-        "dev-squad:security-review",
-        "dev-squad:saas-patterns",
-        "dev-squad:saas-readiness"
+        "dev-squad:security-review"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode enabled AND auditing SaaS-specific subsystems (tenant isolation, billing, audit logs). NEVER for standard apps." },
+        { "skill": "dev-squad:saas-readiness", "load_when": "Phase 6 SHIP readiness gate (operational audit) AND saas_mode enabled." }
       ],
       "auto_mcp": [
         "context7",
@@ -275,8 +287,10 @@
       "context_focus": ["voice_tone", "brand_consistency", "compliance_copy", "claude_pre_seed"],
       "auto_skills": [
         "superpowers:verification-before-completion",
-        "claude-md-management:revise-claude-md",
-        "dev-squad:saas-readiness"
+        "claude-md-management:revise-claude-md"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-readiness", "load_when": "saas_mode enabled AND Phase 6-H customer success sub-phase OR writing payment/billing/trial emails. NEVER for standard apps." }
       ],
       "auto_mcp": [
         "context7",
@@ -315,9 +329,11 @@
         "issuetracker",
         "episodic-memory:remembering-conversations",
         "dev-squad:security-review",
-        "dev-squad:postgres-patterns",
-        "dev-squad:saas-patterns",
-        "dev-squad:saas-readiness"
+        "dev-squad:postgres-patterns"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode enabled AND reviewing SaaS subsystems (tenant isolation, RLS, billing webhook idempotency, API key handling). NEVER for standard apps." },
+        { "skill": "dev-squad:saas-readiness", "load_when": "Phase 6 SHIP readiness gate (security audit lane) AND saas_mode enabled." }
       ],
       "auto_mcp": [
         "grep-github",
@@ -350,9 +366,11 @@
         "superpowers:verification-before-completion",
         "superpowers:writing-plans",
         "superpowers:systematic-debugging",
-        "episodic-memory:remembering-conversations",
-        "dev-squad:saas-patterns",
-        "dev-squad:saas-readiness"
+        "episodic-memory:remembering-conversations"
+      ],
+      "conditional_skills": [
+        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode enabled AND Phase 3 SCAFFOLD scaffold SaaS modules (tenants/plans/billing/webhooks/api-keys/audit-log). NEVER scaffold these modules for standard apps." },
+        { "skill": "dev-squad:saas-readiness", "load_when": "Phase 6 SHIP readiness gate (operational lane) OR Phase 6-G ops sub-phase AND saas_mode enabled." }
       ],
       "auto_mcp": [
         "context7",

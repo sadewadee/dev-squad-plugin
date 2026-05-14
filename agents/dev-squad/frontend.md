@@ -246,6 +246,19 @@ Use `ide diagnostics` for:
 | Past patterns | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
 | Drill-down / admin dashboard | `dev-squad:saas-patterns` (Part 2) | Load when project has admin/analytics dashboard with drill-down — Part 2 covers URL state, breadcrumb, time-series brush, virtualized table, cross-filter, permission-aware items, perf |
 
+### SaaS Scope Safety Default (BLOCKING — applies BEFORE writing any UI code)
+
+**DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` (Part 2 drill-down/admin dashboard) and do NOT build admin/analytics dashboards, tenant-switcher UI, billing UI, plan-management UI, or audit-log viewers, UNLESS at least ONE trigger is TRUE:
+
+1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled`
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true`
+3. User explicitly invoked workflow with `--saas` flag
+4. PRD explicitly specifies admin dashboard / multi-tenant UI / billing flow
+
+**If NONE of the triggers are true**: this is a standard application. Adding admin dashboards, drill-down patterns, or tenant-switcher UI to a non-SaaS app modifies user's product scope unexpectedly. Stay in standard-app UI mode.
+
+**When uncertain**: STOP and ASK the coordinator to surface user confirmation. Default-deny is safer than default-allow.
+
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|

@@ -67,6 +67,19 @@ Use `context7` BEFORE:
 | SaaS architecture decisions | `dev-squad:saas-patterns` | Load when SaaS mode active — produce ADR-001..005 (tenancy, billing, plan, admin scope, compliance scope). For multi-region pivots: ADR-006+ for provider abstraction (per saas-readiness Section 21). |
 | SaaS readiness audit + sprint synthesis | `dev-squad:saas-readiness` | Load for Phase 6 SHIP gate OR pre-existing project extension. Architect owns: Section 8 audit synthesis (master report from reviewer/auditor/architect 3-way parallel), Section 9 sprint decomposition decision (3-day vs 6-A→6-H), Section 21 provider abstraction architectural decision when pivoting, Section 22 regional context. |
 
+### SaaS Scope Safety Default (BLOCKING)
+
+**DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` or `dev-squad:saas-readiness` skills, and do NOT produce ADR-001..005 (tenancy/billing/plan/admin/compliance) or apply multi-tenancy / RLS / row-level isolation patterns, UNLESS at least ONE trigger is TRUE:
+
+1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled` (set by Phase 0 Step 2.5 user confirmation in `/dev-squad build`)
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true` (set by coordinator's Diff-Scope Heuristic in `/dev-squad start`)
+3. User explicitly invoked workflow with `--saas` flag
+4. Existing project ALREADY has SaaS subsystems present (verify via file structure: `tenants/`, `billing/`, `webhooks/`, `audit-log/`, `plans/`)
+
+**If NONE of the triggers are true**: this is a standard application. Designing multi-tenancy/billing into a non-SaaS app is a structural mistake that's hard to reverse and modifies user expectations. Stay in standard-app architectural mode (single-tenant, no billing module, no RLS).
+
+**When uncertain**: ASK the coordinator to surface user confirmation. Default-deny is safer than default-allow.
+
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|

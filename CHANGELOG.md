@@ -2,6 +2,49 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.14.4] — SaaS auto-trigger safety hardening (default-deny multi-tenancy / billing / RLS)
+
+**Why:** Audit revealed dangerous documentation-reality drift. `skills/dev-squad/config.json` listed `dev-squad:saas-patterns` and `dev-squad:saas-readiness` in `auto_skills` arrays for 9 of 11 agents — implying auto-load — while agent YAML frontmatter (the actual loader) did NOT include them. Documentation lied. Risk: if any downstream tool parsed `auto_skills`, OR if an agent saw the config field and reached for SaaS patterns by judgment, a standard (non-SaaS) project could accidentally get multi-tenancy, RLS, `tenant_id` columns, billing modules, and audit logs injected — modifying user's data model and business logic against their intent. Phase 0 Step 2.5 SaaS detection had a 2-keyword threshold (false-positive risk) and ambiguous default behavior on user dismissal. `/dev-squad start` (feature-development workflow) relied on coordinator's heuristic with no explicit default-deny fallback.
+
+This release enforces default-deny across all layers.
+
+### Changed — `skills/dev-squad/config.json`
+
+Removed `dev-squad:saas-patterns` and `dev-squad:saas-readiness` from `auto_skills` for all 9 agents (coordinator, architect, backend, frontend, designer, auditor, writer, reviewer, devops). Added new `conditional_skills` array per agent with explicit `load_when` conditions. Each condition cites the trigger sources (`.dev-squad/master-plan.md`, `.dev-squad/scope-tier.json`, `--saas` flag) and states "NEVER for standard apps" explicitly.
+
+### Changed — agent prompts (7 files)
+
+Added `### SaaS Scope Safety Default (BLOCKING)` section to: `coordinator.md`, `architect.md`, `backend.md`, `frontend.md`, `designer.md`, `devops.md`, `writer.md`. Each section enforces:
+
+- **DEFAULT MODE: NON-SAAS.** Do NOT load saas-patterns or saas-readiness, do NOT apply multi-tenancy / RLS / billing / audit-log / plan-management / drill-down patterns, UNLESS one of 4 explicit triggers fires.
+- **Four triggers** (any one suffices): master-plan.md has `SaaS Mode: enabled`, scope-tier.json has `saas_touch: true`, `--saas` flag passed, or existing project file structure shows SaaS subsystems already present.
+- **When uncertain**: stop and ASK via coordinator. Default-deny is safer than default-allow.
+
+Role-specific wording: architect's clause emphasizes "do NOT produce ADR-001..005"; backend's emphasizes "do NOT write `tenant_id` columns / RLS / billing module"; frontend's emphasizes "do NOT build admin dashboards / drill-down"; devops's emphasizes "do NOT scaffold 8 SaaS modules"; designer's emphasizes "do NOT produce `drill-down-spec.md`"; writer's email lifecycle section now blocks on same triggers.
+
+### Changed — `commands/build.md` Phase 0 Step 2.5
+
+- Threshold raised: **3+ keywords** (was 2+) before confirmation question is shown — reduces false-positives.
+- If fewer than 3 keywords AND no `--saas` flag: skip confirmation entirely, lock SaaS Mode: disabled, proceed. No user friction for clearly non-SaaS scope.
+- AskUserQuestion wording rewritten: **"No, build a standard app" is now the first/default/recommended option.** Body text explains the heavy patterns (multi-tenancy, billing, RLS, 8 modules) so user has informed choice.
+- **Explicit default-deny on dismiss/cancel**: if user dismisses or cancels the question, plugin locks `SaaS Mode: disabled`. Never silently applies SaaS patterns.
+- master-plan.md records explicit value (`enabled` or `disabled`) so downstream agents have unambiguous source-of-truth.
+
+### Added — `README.md` "Safety: SaaS scope is opt-in only" section
+
+New section between "When NOT to use" and "Team Composition" documents the safety guarantee user-facing:
+- How `/dev-squad build` opts in (Phase 0 Step 2.5 default-no)
+- How `/dev-squad start` detects (Diff-Scope Heuristic with explicit `saas_touch` flag)
+- How existing-project detection works (file structure check, never retrofits)
+- Once locked, decision persists for project lifetime
+- Every SaaS-capable agent carries BLOCKING safety clause; default-deny, never default-allow
+
+### Migration
+
+None. Docs + config edits auto-pull on next session start. New behavior applies to all future Phase 0 Step 2.5 runs and all agent dispatches.
+
+**Backwards compatibility note:** projects whose `master-plan.md` already has `SaaS Mode: enabled` continue to load saas-patterns/saas-readiness as before — the safety default only blocks NEW non-SaaS projects from accidentally entering SaaS mode.
+
 ## [4.14.3] — Developer-facing positioning (marketplace card + README intro)
 
 **Why:** Plugin was capable but packaging for the evaluating developer was weak. Marketplace description was a 60-word kitchen-sink sentence with internal jargon ("6-A→6-H sprint decomposition", "provider abstraction"). README led with feature lists instead of "who is this for / what does this do for me". Required-vs-recommended companion list contradicted "graceful-degrade" language elsewhere. Risk: developer skims marketplace, bounces off, installs lighter alternatives despite dev-squad's deeper capabilities.

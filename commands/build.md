@@ -67,19 +67,21 @@ Agent tool with:
     - File uploads needed? (Local, S3, CDN?)
     - Background jobs needed? (Queue, cron, event-driven?)
 
-    **Step 2.5: SaaS Mode Detection** — Detect if this is SaaS-class scope:
+    **Step 2.5: SaaS Mode Detection** — Detect if this is SaaS-class scope. **DEFAULT POSTURE: NON-SAAS unless user explicitly confirms.**
     - Auto-detect from PRD/description keywords: "subscription", "tenant", "billing", "plans", "multi-tenant", "team workspace", "billing/Stripe", "usage-based", "admin panel", "drill down", "analytics dashboard", "white-label"
-    - If 2+ keywords match OR user passed `--saas` flag → enter SaaS confirmation
-    - SaaS confirmation (use AskUserQuestion):
+    - Trigger SaaS confirmation question ONLY when: **3+ keywords match** OR user passed `--saas` flag explicitly
+    - If fewer than 3 keywords match AND no `--saas` flag: skip confirmation, lock master-plan.md to `SaaS Mode: disabled (standard app)`, proceed to Step 3
+    - SaaS confirmation (use AskUserQuestion) — "No" is the recommended/safe default:
       ```
-      Question: "I detected SaaS-class scope. Enable saas-patterns + drill-down-patterns skills?"
-      Options:
-        - "Yes, full SaaS scope" → load both skills, scaffold extends to: tenants, plans, billing, webhooks, api-keys, audit-log, notifications, admin
-        - "Yes, but skip drill-down" → load saas-patterns only (no admin dashboard)
-        - "No, just standard app" → skip both skills, standard zero-to-ship
+      Question: "I detected possible SaaS-class scope. Multi-tenancy, billing, RLS, and audit logs are heavy patterns — they modify your data model and add 8 backend modules (tenants, plans, billing, webhooks, api-keys, audit-log, notifications, admin). Enable SaaS scope?"
+      Options (in order):
+        - "No, build a standard app" → DEFAULT/RECOMMENDED. Lock SaaS Mode: disabled. No multi-tenancy, no billing module, no audit logs. Standard zero-to-ship.
+        - "Yes, full SaaS scope" → Lock SaaS Mode: enabled. Load saas-patterns + saas-readiness. Scaffold extends to 8 SaaS modules. Architect produces ADR-001..005.
+        - "Yes, but skip admin dashboard" → Lock SaaS Mode: enabled, drill-down disabled. Load saas-patterns Part 1 only.
       ```
-    - Record decision in `.dev-squad/master-plan.md` under section "SaaS Mode" — once locked, do not retrofit (multi-tenancy retrofit = data leak risk)
-    - If SaaS mode active, architect MUST produce ADR-001 to **ADR-005** in Phase 2 BEFORE backend codes: tenancy strategy, billing model, plan structure, admin scope, and **compliance scope** (which regulations apply: GDPR / PDP / CCPA / LGPD / sectoral — drives saas-patterns Part 3 Section 30 obligations)
+    - **If user dismisses/cancels the question OR returns no answer**: DEFAULT TO "No, standard app". Lock master-plan.md to `SaaS Mode: disabled`. Never apply SaaS patterns silently.
+    - Record decision in `.dev-squad/master-plan.md` under section "SaaS Mode" with explicit value (`enabled` or `disabled`) — once locked, do NOT retrofit (multi-tenancy retrofit = data leak risk; removing it = wasted code)
+    - If SaaS mode is `enabled` ONLY, architect MUST produce ADR-001 to **ADR-005** in Phase 2 BEFORE backend codes: tenancy strategy, billing model, plan structure, admin scope, and **compliance scope** (which regulations apply: GDPR / PDP / CCPA / LGPD / sectoral — drives saas-patterns Part 3 Section 30 obligations). If SaaS mode is `disabled`, skip ADR-001..005 entirely.
 
     **Step 3: Write Master Plan** — Create `.dev-squad/master-plan.md`:
     ```markdown

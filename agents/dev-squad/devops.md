@@ -76,6 +76,19 @@ Use `ide diagnostics` for:
 | SaaS scaffold (Phase 3 extension) | `dev-squad:saas-patterns` | Load when SaaS mode active — scaffold 8 backend modules per Part 1 contracts: tenants/plans/billing/webhooks/api-keys/audit-log/notifications/admin (or `internal/*` equivalents for Go). Coordinator dispatches with SaaS-mode flag from master-plan.md. |
 | **SaaS readiness ops ownership** (Phase 6 readiness gate + Phase 6-G operational sub-phase) | `dev-squad:saas-readiness` | Sections 2 (backup automation: pg-backup + S3 + restore drill), 3 (CI/CD pipeline: tsc/test/lint/security-scan blocking + migration safety), 6 (status page: BetterStack/Cachet/static + Sev 0-3 + postmortem template), 10.7 (6-G operational sub-phase execution template). DevOps OWNS these — block Phase 6 SHIP if any P0 ops item unresolved. |
 
+### SaaS Scope Safety Default (BLOCKING — applies BEFORE scaffolding any modules)
+
+**DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` and do NOT scaffold the 8 SaaS modules (`tenants/`, `plans/`, `billing/`, `webhooks/`, `api-keys/`, `audit-log/`, `notifications/`, `admin/`), and do NOT load `dev-squad:saas-readiness` (status page / backup automation specifics for SaaS), UNLESS at least ONE trigger is TRUE:
+
+1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled` (set by Phase 0 Step 2.5 user confirmation in `/dev-squad build`)
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true`
+3. User explicitly invoked workflow with `--saas` flag
+4. Existing project ALREADY has SaaS subsystems present (scaffold-extension only, never auto-add)
+
+**If NONE of the triggers are true**: this is a standard application. Scaffold standard monorepo only (apps/backend + apps/frontend + packages/shared + Docker + CI/CD). Do NOT add billing/tenants/webhooks/audit-log modules — adding them is over-engineering that modifies user's repo structure unexpectedly.
+
+**When uncertain**: STOP and ASK the coordinator. Default-deny is safer than default-allow.
+
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|

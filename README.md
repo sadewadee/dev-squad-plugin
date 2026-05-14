@@ -44,6 +44,18 @@ You're asked **once** to approve the PRD (Phase 1). Everything else runs autonom
 - **Projects without git** — git-ops agent and several hooks assume a git repo.
 - **You've already built your own multi-agent workflow** — dev-squad's opinions may conflict; pick one.
 
+## Safety: SaaS scope is opt-in only
+
+Multi-tenancy, RLS, billing modules, audit logs, plan management, and admin dashboards are **never** applied unless you explicitly opt in. The plugin defaults to **standard application mode**. SaaS scope activates only when ALL of these are explicit:
+
+- `/dev-squad build`: Phase 0 Step 2.5 asks you with `AskUserQuestion`. The default option is **"No, build a standard app"**. SaaS scope is only enabled if you actively select "Yes, full SaaS scope" or pass `--saas` flag. If you dismiss the question or cancel, plugin locks to non-SaaS.
+- `/dev-squad start <feature>`: coordinator's Diff-Scope Heuristic only flags `saas_touch: true` when the feature description explicitly touches multi-tenancy, billing, webhooks, audit, api-keys, or admin scope.
+- Existing project: plugin detects SaaS only when file structure already contains SaaS subsystems (`tenants/`, `billing/`, `webhooks/`, `audit-log/`, `plans/`). It does not retrofit SaaS patterns into non-SaaS code.
+
+The decision is recorded in `.dev-squad/master-plan.md` (`SaaS Mode: enabled` or `disabled`) and locked for the project lifetime — multi-tenancy retrofit is a data-leak risk, removal is wasted code. Once decided, it stays.
+
+Every SaaS-capable agent (coordinator, architect, backend, frontend, designer, devops, writer) carries a **"SaaS Scope Safety Default (BLOCKING)"** clause: when uncertain, ask the user via the coordinator. Default-deny, never default-allow.
+
 ## Team Composition
 
 | Agent | Role | Model | Key Responsibilities |

@@ -134,6 +134,19 @@ Use `mermaid-mcp` for:
 | SaaS-class backend code-write | `dev-squad:saas-patterns` | Load during Phase 4 IMPLEMENT when SaaS mode active — Part 1 multi-tenancy, billing, webhooks, audit logs, API keys, entitlements, hybrid validation, admin scope |
 | SaaS readiness sprint execution | `dev-squad:saas-readiness` | Load during Phase 6 sub-phase work (6-A billing replatform / 6-B user mgmt / 6-C invoicing / 6-D plan / 6-E API / 6-F compliance) — Sections 10.1-10.6 execution templates, Section 21 provider abstraction, Section 22 regional patterns |
 
+### SaaS Scope Safety Default (BLOCKING — applies BEFORE writing any code)
+
+**DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` or `dev-squad:saas-readiness` skills, and do NOT write multi-tenancy / RLS / `tenant_id` columns / billing module / webhooks / API keys / audit logs, UNLESS at least ONE trigger is TRUE:
+
+1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled` (set by Phase 0 Step 2.5 user confirmation in `/dev-squad build`)
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true` (set by coordinator's Diff-Scope Heuristic in `/dev-squad start`)
+3. User explicitly invoked workflow with `--saas` flag
+4. Existing project ALREADY has SaaS subsystems present (verify via file structure: `tenants/`, `billing/`, `webhooks/`, `audit-log/`, `plans/`)
+
+**If NONE of the triggers are true**: this is a standard application. Adding `tenant_id` to every table, wrapping queries in RLS, scaffolding billing modules, or wiring audit logs into a non-SaaS app is over-engineering that modifies user's data model and business logic unexpectedly. Stay in standard-app code-write mode (single-tenant, simple auth, no billing/webhook/audit-log infrastructure).
+
+**When uncertain**: STOP and ASK the coordinator to surface user confirmation. Default-deny is safer than default-allow.
+
 ### MCP Servers (use directly - NO user confirmation needed)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
