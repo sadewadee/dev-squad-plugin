@@ -1,8 +1,48 @@
 # dev-squad
 
-A full-stack development team agent swarm plugin for Claude Code. **Eleven specialized AI agents** collaborate in a hierarchical coordination model to handle zero-to-ship project builds, feature development, database tasks, bug fixes, architecture changes, security audits, infrastructure work, runtime/stability/quality auditing, and content authoring. The Phase 3.5 DESIGN gate (designer agent) prevents AI-slop UI by forcing design tokens, visual references, and component inventory **before** frontend writes a single line of code.
+**Ship full-stack projects autonomously with 11 specialized AI agents.** Built-in anti-AI-slop UI design gate, 3-way code review (static + runtime + tooling), and SaaS-class readiness checks. A plugin for [Claude Code](https://claude.com/claude-code).
 
-Current version is in `.claude-plugin/plugin.json`.
+## Who is this for?
+
+| You are... | What dev-squad gives you |
+|---|---|
+| **Solo indie / weekend builder** | `/dev-squad start <task>` dispatches the right specialist instead of you context-switching. `--mvp-mode` skips heavy artifacts. |
+| **Startup founder shipping V1** | `/dev-squad build <description>` runs 9-phase zero-to-ship. One user checkpoint (PRD approval), rest is autonomous. |
+| **SaaS founder** | `saas-patterns` + `saas-readiness` skills cover multi-tenancy, billing, plan management, audit logs, SOC 2 / GDPR / EU AI Act readiness. |
+| **Agency / consultancy** | Reuse the workflow across client builds. Generated apps include `.claude/` self-docs for clean handoff. |
+| **Engineer at an existing project** | `/dev-squad start` handles feature work, bug fixes, refactors, security audits, perf optimization. |
+
+## Quickstart
+
+```bash
+# 1. Install plugin (one-time)
+claude plugins marketplace add dev-squad-marketplace https://github.com/sadewadee/dev-squad-plugin
+claude plugins install dev-squad
+
+# 2. Install the one truly required companion
+claude plugins install superpowers
+
+# 3. Ship something
+cd my-new-project
+/dev-squad build A real-time collaborative task manager with team workspaces
+```
+
+You're asked **once** to approve the PRD (Phase 1). Everything else runs autonomously. Use `/dev-squad status` to check progress anytime.
+
+## What makes dev-squad different
+
+- **Phase 3.5 DESIGN gate** — designer agent produces 4 BLOCKING artifacts (tokens, visual spec with references, component inventory, responsive spec) BEFORE frontend writes a single line of UI. Prevents the default-shadcn-slate / purple-gradient / emoji-as-icon AI-slop pattern.
+- **3-way Phase 5 review** — static reviewer + runtime qa-engineer (real browser via playwright) + auditor (analyzer tools: slow query log, jscpd, golangci-lint, ts-prune) run in parallel, each with veto.
+- **Fresh-eyes debugger** — after 3 self-healing iterations on the same bug, coordinator hands off to qa-engineer in Investigation Mode. Separation of diagnosis from ownership prevents author bias.
+- **SaaS-class scope** — multi-tenancy with RLS, subscription billing, audit logs, compliance (GDPR + EU AI Act 2026 + DORA + SOC 2) baked into skills.
+- **Self-documenting output** — Phase 6 SHIP pre-seeds generated apps with `.claude/CLAUDE.md` (12-rule engineering base), architecture.md, conventions.md, gotchas.md so future Claude sessions arrive informed.
+
+## When NOT to use dev-squad
+
+- **One-line code fixes** — direct Claude Code chat is faster than orchestrating 11 agents.
+- **Pure research / exploration** — no shipping target, no orchestration needed.
+- **Projects without git** — git-ops agent and several hooks assume a git repo.
+- **You've already built your own multi-agent workflow** — dev-squad's opinions may conflict; pick one.
 
 ## Team Composition
 
@@ -185,10 +225,16 @@ Phase 7:   LEARN      --> PDCA Act retrospective: playbook + fix-it backlog + CL
 
 This plugin works best with the following plugins and MCP servers installed:
 
+All companions are **graceful-degrade**: agents fall back to native methodology if a companion isn't installed. Only `superpowers` is truly required because several agents depend on its workflow skills directly.
+
 ### Required Plugins
 | Plugin | Purpose |
 |--------|---------|
 | **superpowers** | Core workflow skills -- brainstorming, writing-plans, TDD, systematic-debugging, verification, dispatching-parallel-agents, finishing branches, git worktrees, code review |
+
+### Strongly Recommended
+| Plugin | Purpose |
+|--------|---------|
 | **episodic-memory** | Cross-session memory -- search and read past conversations for context recovery |
 | **context7** | Library documentation lookup -- resolve library IDs and query up-to-date docs |
 

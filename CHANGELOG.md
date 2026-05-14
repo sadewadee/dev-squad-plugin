@@ -2,6 +2,38 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.14.3] — Developer-facing positioning (marketplace card + README intro)
+
+**Why:** Plugin was capable but packaging for the evaluating developer was weak. Marketplace description was a 60-word kitchen-sink sentence with internal jargon ("6-A→6-H sprint decomposition", "provider abstraction"). README led with feature lists instead of "who is this for / what does this do for me". Required-vs-recommended companion list contradicted "graceful-degrade" language elsewhere. Risk: developer skims marketplace, bounces off, installs lighter alternatives despite dev-squad's deeper capabilities.
+
+This release is docs-only — no agent or workflow behavior changes.
+
+### Changed — `.claude-plugin/marketplace.json`
+
+Description compressed from 60-word jargon block to outcome-focused single sentence (~35 words). Surfaces what the plugin DOES (ship full-stack projects), what's unique (anti-AI-slop gate, 3-way review, SaaS readiness, pre-seeded `.claude/` docs), without internal phase numbering or skill-name dumps.
+
+### Changed — `.claude-plugin/plugin.json`
+
+Description rewritten: lists agents by role, names the unique capabilities (Phase 3.5 design gate, 3-way review, Phase 5 iteration loop, security hook, SaaS readiness), drops version-history changelog text. Same length-class, much higher signal density.
+
+### Changed — `README.md` intro
+
+Replaced single intro paragraph with structured top:
+
+1. **One-line hook** stating outcome + key differentiators
+2. **"Who is this for?"** persona table (5 segments: solo indie, startup founder, SaaS founder, agency, engineer at existing project) — each row says what dev-squad gives them specifically
+3. **Quickstart** — 3-step install + first build command, ~5 min to first dispatch
+4. **"What makes dev-squad different"** — 5 specific differentiators (design gate, 3-way review, fresh-eyes debugger, SaaS scope, self-documenting output) — concrete, not generic
+5. **"When NOT to use dev-squad"** — 4 honest cases (one-line fixes, research, no-git projects, you already have your own swarm) — honest framing builds trust
+
+### Changed — README required vs recommended companions
+
+Removed contradiction. Previously listed `superpowers` + `episodic-memory` + `context7` as "Required" while text elsewhere said companions "degrade gracefully". Now: only `superpowers` is Required (workflow skills are direct dependencies); `episodic-memory` + `context7` moved to a new "Strongly Recommended" tier; rest remain under "Recommended Plugins". Quickstart matches: "Install the one truly required companion".
+
+### Migration
+
+None. Docs-only changes auto-pull on next session start.
+
 ## [4.14.2] — 12-rule CLAUDE.md base template (pre-seed standard for generated apps + plugin self-application)
 
 **Why:** Phase 6 SHIP pre-seeds `CLAUDE.md` in user's project but content was ad-hoc — overview + tech stack + how-to-run + where-things-live. Missing: universal engineering discipline rules that future Claude sessions on that project should follow. User shared a 12-rule template (think before coding / simplicity / surgical changes / goal-driven / model-for-judgment / token budgets / surface conflicts / read before write / tests verify intent / checkpoint / match conventions / fail loud) — 10 universal + 2 opinionated (Rule 5 model-only-for-judgment, Rule 6 token budget specifics).
