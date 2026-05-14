@@ -2,6 +2,55 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.15.0] — Phase 0 Step 2.5b SaaS Intake (10-question kick-start gate) — SaaS scope marked BETA
+
+**Why:** Empirical audit of `wacrm` (multi-tenant CRM SaaS built using v4.14 dev-squad) revealed the v4.14 Phase 0 SaaS detection was severely under-scoped. Phase 0 Step 2.5 asked only **"Enable SaaS yes/no"** — leaving 50+ implementation decisions made silently. The post-implement readiness audit then surfaced gaps that should have been planned at kick-start. Concrete retrofit cost on wacrm: 8 post-implement phases (`saas_readiness_audit`, `multi_tenant_gap_audit`, `phase_6a_billing_replatform` through `phase_6h_customer_success`) covering billing replatform (PayPal+Xendit+Manual after assuming Stripe), 3-tier admin hierarchy retrofit (`PlatformRole` enum + `/(platform-admin)` routes + impersonation + `PlatformAuditLog`), password reset + 2FA + account lockout + refresh token rotation + GDPR endpoints, Faktur Pajak + NPWP + invoice PDF, trial cron + annual + coupons + downgrade, customer API keys + webhooks + OpenAPI, cookie consent + sub-processor + DPA, backup + Sentry + Prometheus + status page + CI/CD + PII redaction, welcome email + onboarding drip + help center.
+
+The user (operator of plugin + wacrm) explicitly identified the 3-tier identity hierarchy gap (Platform owner / Tenant admin / User-within-tenant + impersonation + audit log split) as the single most critical kick-start miss.
+
+This release rewrites Phase 0 to capture 10 SaaS dimensions upfront via structured AskUserQuestion intake.
+
+### Added — `commands/build.md` Phase 0 Step 2.5b SaaS Scope Intake
+
+New step runs ONLY when Step 2.5 locked `SaaS Mode: enabled` (skipped entirely for standard apps — non-SaaS unchanged).
+
+3 AskUserQuestion blocks in sequence (10 questions total):
+
+**Block 1: Foundation (4 Q)** — Target Market (Indonesia/EU/US/Multi-region — drives currency, payment provider, tax regime, legal); 3-tier Admin Hierarchy (Platform+Tenant+User vs Tenant-only — drives PlatformRole enum + impersonation + audit log split); Per-Tenant Role Model (Owner-only / Owner+Member / Owner+Admin+Editor+Viewer / Custom RBAC); Trial + Plan Model (no trial / freemium / time-limited / freemium+trial-of-higher).
+
+**Block 2: Customer-facing features (4 Q)** — Self-Service Auth Flows multiselect (password-reset, password-change, email-change, account-deletion, 2FA, lockout); Customer-Facing API Surface (None / API-keys / +webhooks / +OpenAPI); Email Lifecycle multiselect (verify, welcome, trial-warn, trial-expired, payment-failed-dunning, re-engagement, win-back); Invoice Surface (Stripe-portal / in-app+PDF / +resend-notes).
+
+**Block 3: Operational + Compliance (2 Q)** — Operational Readiness Baseline multiselect (backup-cron, CI-CD-gate, Sentry, status-page, PII-redact, rate-limit); Compliance Jurisdiction multiselect (GDPR, PDP UU 27/2022, CCPA, LGPD, SOC2 Type 1, EU AI Act 2026, none).
+
+**Cancellation handling**: any block cancelled mid-way locks answers obtained so far + marks remaining dimensions `UNANSWERED — REQUIRE Phase 1 clarification`. Architect's Phase 1 brainstorming must close them before PRD generation.
+
+### Changed — `master-plan.md` template (in `commands/build.md` Step 3)
+
+Extended template to include `## SaaS Mode` (enabled/disabled) + `## SaaS Intake` section (only when enabled) capturing all 10 dimension answers. Architect, backend, frontend, devops, writer READ this section at their respective phases. Master-plan locked once written — multi-tenancy/identity/payment retrofits require explicit ADR.
+
+Entities/Tech Stack/Auth Model sections now reference SaaS Intake answers explicitly:
+- Entities: if Q2 = 3-tier → must include `Platform.{Admin,Support}` + `Organization` + `User(with platformRole?, role)` + `PlatformAuditLog` + `TenantAuditLog`
+- Tech Stack: payment provider derived from Q1 (Indonesia → Xendit+manual; EU/US → Stripe; Multi-region → abstraction)
+- Auth Model: self-service flows derived from Q5
+
+### Changed — ADR scope expansion (referenced from Step 2.5 → Phase 2)
+
+Architect now produces **ADR-001..006** (was 001..005). ADR-006 NEW = identity hierarchy (3-tier Platform/Tenant/User-in-tenant model per Q2/Q3). Existing ADRs informed by Intake: ADR-002 billing (by Q1 + Q4), ADR-004 admin scope (by Q2), ADR-005 compliance (by Q10).
+
+### Changed — `README.md`
+
+"Safety: SaaS scope is opt-in only" → "SaaS scope (BETA — opt-in only)". Added **Beta notice** at top citing wacrm empirical baseline. New "What happens when you opt in" subsection documents the 3-block intake user-facing.
+
+### Changed — `plugin.json`, `marketplace.json`
+
+Descriptions updated to mention BETA SaaS scope + 10-question intake. Version 4.14.4 → 4.15.0 (minor: new feature, additive — non-SaaS workflow unchanged).
+
+### Migration
+
+None for non-SaaS projects (intake is skipped). Existing SaaS projects with `master-plan.md` already locked at v4.14 or earlier: intake does NOT re-run on session resume. To benefit from intake, run `/dev-squad build` on a fresh project OR manually add `## SaaS Intake` section to existing master-plan.md and re-dispatch architect with `--re-read-master-plan` instruction.
+
+**Trade-off accepted**: SaaS-mode kick-start now requires up to 3 AskUserQuestion blocks (10 questions). This is intentional friction — the alternative is 50+ silent decisions surfacing as P0/P1 gaps weeks later (wacrm baseline). Users who want minimal-question kick-start can decline SaaS mode and use standard-app path.
+
 ## [4.14.4] — SaaS auto-trigger safety hardening (default-deny multi-tenancy / billing / RLS)
 
 **Why:** Audit revealed dangerous documentation-reality drift. `skills/dev-squad/config.json` listed `dev-squad:saas-patterns` and `dev-squad:saas-readiness` in `auto_skills` arrays for 9 of 11 agents — implying auto-load — while agent YAML frontmatter (the actual loader) did NOT include them. Documentation lied. Risk: if any downstream tool parsed `auto_skills`, OR if an agent saw the config field and reached for SaaS patterns by judgment, a standard (non-SaaS) project could accidentally get multi-tenancy, RLS, `tenant_id` columns, billing modules, and audit logs injected — modifying user's data model and business logic against their intent. Phase 0 Step 2.5 SaaS detection had a 2-keyword threshold (false-positive risk) and ambiguous default behavior on user dismissal. `/dev-squad start` (feature-development workflow) relied on coordinator's heuristic with no explicit default-deny fallback.

@@ -81,33 +81,92 @@ Agent tool with:
       ```
     - **If user dismisses/cancels the question OR returns no answer**: DEFAULT TO "No, standard app". Lock master-plan.md to `SaaS Mode: disabled`. Never apply SaaS patterns silently.
     - Record decision in `.dev-squad/master-plan.md` under section "SaaS Mode" with explicit value (`enabled` or `disabled`) — once locked, do NOT retrofit (multi-tenancy retrofit = data leak risk; removing it = wasted code)
-    - If SaaS mode is `enabled` ONLY, architect MUST produce ADR-001 to **ADR-005** in Phase 2 BEFORE backend codes: tenancy strategy, billing model, plan structure, admin scope, and **compliance scope** (which regulations apply: GDPR / PDP / CCPA / LGPD / sectoral — drives saas-patterns Part 3 Section 30 obligations). If SaaS mode is `disabled`, skip ADR-001..005 entirely.
+    - If SaaS mode is `enabled` ONLY, proceed to Step 2.5b SaaS Scope Intake (below) BEFORE writing master-plan. Architect later produces ADR-001 to **ADR-006** in Phase 2 BEFORE backend codes: tenancy strategy, billing model, plan structure, admin scope, **compliance scope** (regulations apply per Intake Block 3 Q10), and **identity hierarchy** (3-tier Platform/Tenant/User-in-tenant per Intake Block 1 Q2). If SaaS mode is `disabled`, skip Step 2.5b AND skip ADR-001..006 entirely.
+
+    **Step 2.5b: SaaS Scope Intake** — RUN ONLY IF Step 2.5 locked `SaaS Mode: enabled`. Skip entirely for standard apps.
+
+    Many SaaS projects fail at kick-start because Phase 0 captures only "Enable SaaS yes/no" — leaving 50+ implementation decisions made silently. The post-launch readiness audit then surfaces P0/P1 gaps that should have been planned upfront. Empirical evidence (wacrm project audit, 2026-05): single-question Phase 0 caused 8 retrofit phases — billing replatform, user management hardening, invoicing/tax, plan management, customer API, compliance lifecycle, operational, customer success.
+
+    To prevent this, run **3 AskUserQuestion blocks in sequence** to lock 10 SaaS dimensions before architect codes. Each answer is recorded in master-plan.md `## SaaS Intake` section. Architect, backend, frontend, devops, writer READ this section at their respective phases.
+
+    **Block 1: Foundation (4 questions, 1 AskUserQuestion call)**
+
+    | # | Question | Options |
+    |---|----------|---------|
+    | Q1 | "Primary target market? (drives currency + payment provider + tax + legal compliance)" | Indonesia (IDR + Faktur Pajak + Xendit/QRIS + manual bank + PDP UU 27/2022) / EU (EUR + VAT + Stripe + GDPR + AI Act + DORA) / United States (USD + Stripe Tax + Stripe + CCPA + SOC 2 path) / Multi-region (regional provider abstraction per saas-readiness §21) |
+    | Q2 | "3-tier admin hierarchy? (drives identity model + impersonation)" | Yes — Platform admin + Tenant admin + User-in-tenant (PlatformRole enum + /(platform-admin) routes + impersonation + PlatformAuditLog) / Tenant-only — no platform layer (simpler, limits operator visibility) |
+    | Q3 | "Per-tenant role model? (drives RBAC complexity)" | Owner-only (single user per tenant) / Owner + Member (binary) / Owner + Admin + Editor + Viewer (standard 3-role) / Custom RBAC with permission matrix |
+    | Q4 | "Trial + plan model?" | No trial — paid only / Free tier + paid plans (freemium) / Time-limited trial (e.g., 14-day) → automatic downgrade cron on expiry / Free tier + time-limited trial of higher plan |
+
+    **Block 2: Customer-facing features (4 questions, 1 AskUserQuestion call)**
+
+    | # | Question | Options |
+    |---|----------|---------|
+    | Q5 | "Self-service auth flows required? (multiSelect)" | Password reset / Password change / Email change with re-verification / Account deletion / 2FA TOTP / Account lockout after N failed |
+    | Q6 | "Customer-facing API surface?" | None — internal use only / API keys (X-API-Key) / API keys + customer-facing webhooks / Full OpenAPI/Swagger + API keys + webhooks |
+    | Q7 | "Transactional email lifecycle? (multiSelect)" | Email verification / Welcome / Trial-ending warning / Trial-expired / Payment-failed dunning (1st/2nd/final) / Re-engagement drip (30/60/90 day) / Win-back / cancel survey |
+    | Q8 | "Invoice surface?" | Stripe-hosted portal only / In-app invoice list + PDF download / In-app + PDF + customer resend/notes |
+
+    **Block 3: Operational + Compliance (2 questions, 1 AskUserQuestion call)**
+
+    | # | Question | Options |
+    |---|----------|---------|
+    | Q9 | "Operational readiness baseline? (multiSelect — all checked = production-ready)" | Postgres backup cron (pg_dump → S3 + restore drill) / CI/CD pipeline (typecheck + test + lint + security scan blocking) / Error tracking (Sentry) / Status page (BetterStack/Cachet/static) / PII log redaction (Pino redact) / Rate limiting per endpoint + per API key |
+    | Q10 | "Compliance jurisdiction? (multiSelect — drives data export + erasure + consent UI)" | GDPR (any EU user triggers Art. 15/17) / PDP UU 27/2022 (Indonesian user) / CCPA (California opt-out + delete) / LGPD (Brazilian) / SOC 2 Type 1 path / EU AI Act 2026 / None (US domestic, no special compliance) |
+
+    **After all 10 answers captured**: write to `.dev-squad/master-plan.md` under new `## SaaS Intake` section. This becomes source-of-truth that architect/backend/frontend/devops/writer READ during their phases. Master-plan.md cannot be modified retroactively without explicit ADR (multi-tenancy retrofits = data leak risk; identity hierarchy retrofits = full re-scaffold; payment provider retrofits = full billing replatform).
+
+    **Decline / cancel handling**: if user cancels any block mid-intake, lock the answers obtained so far + mark remaining dimensions as `UNANSWERED — REQUIRE Phase 1 clarification` in master-plan.md. Phase 1 architect brainstorming MUST re-surface unanswered dimensions before PRD generation (architect uses brainstorming skill with `clarifying_questions` mode for these specific gaps).
+
+    **BETA notice**: SaaS Intake is beta. The 10-question matrix captures most SaaS scope but is not exhaustive. Phase 5+ readiness audit will likely still surface edge-case P1/P2 gaps. Treat Intake as foundation, not guarantee.
 
     **Step 3: Write Master Plan** — Create `.dev-squad/master-plan.md`:
     ```markdown
     # Master Plan: {project name}
     
+    ## SaaS Mode
+    `enabled` | `disabled`   ← set explicitly in Step 2.5
+    
+    ## SaaS Intake
+    (Include this section ONLY when SaaS Mode = enabled. Captured during Step 2.5b. UNANSWERED = require Phase 1 clarification.)
+    
+    ### Block 1: Foundation
+    - **Q1 Target Market**: {Indonesia | EU | United States | Multi-region}
+    - **Q2 Admin Hierarchy**: {3-tier (Platform + Tenant + User-in-tenant) | Tenant-only}
+    - **Q3 Per-Tenant Role Model**: {Owner-only | Owner+Member | Owner+Admin+Editor+Viewer | Custom RBAC}
+    - **Q4 Trial + Plan Model**: {No trial | Freemium | Time-limited trial | Free tier + time-limited trial of higher plan}
+    
+    ### Block 2: Customer-facing features
+    - **Q5 Self-Service Auth Flows**: [password-reset, password-change, email-change, account-deletion, 2FA, lockout]
+    - **Q6 Customer-Facing API Surface**: {None | API-keys | API-keys+webhooks | OpenAPI+keys+webhooks}
+    - **Q7 Email Lifecycle**: [verify, welcome, trial-warn, trial-expired, payment-failed-dunning, re-engagement, win-back]
+    - **Q8 Invoice Surface**: {Stripe-portal | In-app + PDF | In-app + PDF + resend/notes}
+    
+    ### Block 3: Operational + Compliance
+    - **Q9 Operational Readiness**: [backup-cron, ci-cd-gate, sentry, status-page, pii-redact, rate-limit]
+    - **Q10 Compliance Jurisdiction**: [GDPR, PDP-UU-27, CCPA, LGPD, SOC2-Type1, EU-AI-Act, none]
+    
     ## Scope
     {MVP scope, explicitly what's IN and OUT}
     
     ## Entities
-    {list every entity with key fields}
+    {list every entity with key fields. If Q2 = 3-tier: include `Platform.{Admin,Support}` + `Organization` + `User(with platformRole?, role)` + `PlatformAuditLog` + `TenantAuditLog`. If Q2 = Tenant-only: include `Organization` + `User(role)` only.}
     
     ## Tech Stack Decision
-    {stack chosen + WHY, not just what}
+    {stack chosen + WHY, not just what. Payment provider derived from Q1 (Indonesia → Xendit + manual; EU/US → Stripe; Multi-region → provider abstraction per saas-readiness §21).}
     
     ## Auth Model
-    {auth approach + reasoning}
+    {auth approach + reasoning. Self-service flows derived from Q5 — explicitly list each flow's endpoint.}
     
     ## Risk Assessment
     | Risk | Likelihood | Mitigation |
     |------|-----------|------------|
     
     ## Agent Dispatch Plan
-    {which agents, what order, what each gets}
+    {which agents, what order, what each gets. Architect produces ADR-001..006 if SaaS=enabled (006 = identity hierarchy from Q2/Q3).}
     
     ## Phase Estimates
-    {rough sizing per phase}
+    {rough sizing per phase. SaaS-mode-enabled adds Phase 6 sub-phase decomposition 6-A..6-H per saas-readiness §9 if Intake reveals 10+ P0+P1 across 4+ domains.}
     ```
     
     **Step 4: Validate** — Re-read your master plan. Ask yourself:

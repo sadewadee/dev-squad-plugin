@@ -44,17 +44,35 @@ You're asked **once** to approve the PRD (Phase 1). Everything else runs autonom
 - **Projects without git** — git-ops agent and several hooks assume a git repo.
 - **You've already built your own multi-agent workflow** — dev-squad's opinions may conflict; pick one.
 
-## Safety: SaaS scope is opt-in only
+## SaaS scope (BETA — opt-in only)
 
-Multi-tenancy, RLS, billing modules, audit logs, plan management, and admin dashboards are **never** applied unless you explicitly opt in. The plugin defaults to **standard application mode**. SaaS scope activates only when ALL of these are explicit:
+> **Beta notice:** SaaS scope is functional but not yet exhaustive. The Phase 0 10-question intake captures most decisions but the Phase 5+ readiness audit may still surface edge-case P1/P2 gaps. Treat intake as foundation, not guarantee. Empirical baseline: tested on a multi-tenant CRM migration (`wacrm`) — Phase 0 v4.14 caught ~50% of scope; v4.15 intake closes most of the remainder upfront.
 
-- `/dev-squad build`: Phase 0 Step 2.5 asks you with `AskUserQuestion`. The default option is **"No, build a standard app"**. SaaS scope is only enabled if you actively select "Yes, full SaaS scope" or pass `--saas` flag. If you dismiss the question or cancel, plugin locks to non-SaaS.
-- `/dev-squad start <feature>`: coordinator's Diff-Scope Heuristic only flags `saas_touch: true` when the feature description explicitly touches multi-tenancy, billing, webhooks, audit, api-keys, or admin scope.
-- Existing project: plugin detects SaaS only when file structure already contains SaaS subsystems (`tenants/`, `billing/`, `webhooks/`, `audit-log/`, `plans/`). It does not retrofit SaaS patterns into non-SaaS code.
+### Opt-in safety guarantee
 
-The decision is recorded in `.dev-squad/master-plan.md` (`SaaS Mode: enabled` or `disabled`) and locked for the project lifetime — multi-tenancy retrofit is a data-leak risk, removal is wasted code. Once decided, it stays.
+Multi-tenancy, RLS, billing modules, audit logs, plan management, and admin dashboards are **never** applied unless you explicitly opt in. The plugin defaults to **standard application mode**.
 
-Every SaaS-capable agent (coordinator, architect, backend, frontend, designer, devops, writer) carries a **"SaaS Scope Safety Default (BLOCKING)"** clause: when uncertain, ask the user via the coordinator. Default-deny, never default-allow.
+- `/dev-squad build`: Phase 0 Step 2.5 asks via `AskUserQuestion`. The default option is **"No, build a standard app"**. If you dismiss/cancel, plugin locks to non-SaaS.
+- `/dev-squad start <feature>`: coordinator's Diff-Scope Heuristic only flags `saas_touch: true` when feature explicitly touches multi-tenancy/billing/webhooks/audit/api-keys/admin scope.
+- Existing project: detected only when file structure already contains SaaS subsystems. Plugin does not retrofit.
+
+The decision is recorded in `.dev-squad/master-plan.md` (`SaaS Mode: enabled` or `disabled`) and locked for the project lifetime — multi-tenancy retrofit is a data-leak risk, removal is wasted code.
+
+Every SaaS-capable agent (coordinator, architect, backend, frontend, designer, devops, writer) carries a **"SaaS Scope Safety Default (BLOCKING)"** clause: when uncertain, ask the user via coordinator. Default-deny.
+
+### What happens when you opt in (Phase 0 Step 2.5b — 10-question intake)
+
+Once SaaS mode is locked enabled, plugin runs a 3-block intake to capture decisions that, if left to silent assumption, cause major retrofits. Empirical evidence: single-question Phase 0 caused 8 retrofit phases on `wacrm` (billing replatform, user mgmt hardening, invoicing/tax, plan mgmt, customer API, compliance, operational, customer success).
+
+| Block | Dimensions captured |
+|---|---|
+| 1. Foundation (4 Q) | Target market (drives payment + tax + legal) / 3-tier admin hierarchy / Per-tenant role model / Trial + plan model |
+| 2. Customer-facing features (4 Q) | Self-service auth flows (multi) / Customer-facing API surface / Email lifecycle (multi) / Invoice surface |
+| 3. Operational + compliance (2 Q) | Operational readiness baseline (multi) / Compliance jurisdiction (multi) |
+
+Answers are written to `master-plan.md` under `## SaaS Intake`. Architect produces ADR-001..006 (006 = identity hierarchy from Q2/Q3) before backend codes. Each downstream agent reads the intake section at their phase.
+
+Cancellation = remaining dimensions marked `UNANSWERED — REQUIRE Phase 1 clarification`. Phase 1 architect brainstorming must close them before PRD generation.
 
 ## Team Composition
 
