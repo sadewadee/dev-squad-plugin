@@ -1,9 +1,9 @@
 {
   "workflow_id": "zero-to-ship",
   "schema_version": "1.0",
-  "version": "4.14.0",
+  "version": "4.15.3",
   "name": "Zero-to-Ship",
-  "description": "Full project build from zero to shippable state. 9 phases with up to 2 user checkpoints (Phase 0 Step 2.5 SaaS-mode confirmation if triggered + Phase 1 PRD approval). PDCA cycle: Plan (Phases 0-2 + 3.5) -> Do (Phases 3-4) -> Check (Phase 5 with formal iteration loop) -> Act (Phases 6-7). v4.12.0: SaaS-mode detection (Phase 0 Step 2.5) + .claude/ pre-seed (Phase 6) + Phase 5 iteration loop with rollback + auto-reviewer 180s wait (Phase 6).",
+  "description": "Full project build from zero to shippable state. 9 phases with up to 2 user checkpoints (Phase 0 Step 2.5/2.5b SaaS-mode + intake confirmation + Phase 1 PRD approval). PDCA cycle: Plan (Phases 0-2 + 3.5) -> Do (Phases 3-4) -> Check (Phase 5 with formal iteration loop) -> Act (Phases 6-7). v4.15.x: Step 2.5b SaaS Intake (10 questions, BETA) + ADR-006 identity hierarchy + phantom subagent dispatch fixes + workflow JSON drift sync.",
   "trigger_command": "/dev-squad build",
   "phases": [
     {
@@ -16,11 +16,11 @@
         { "artifact": "user_description", "from": "user", "required": true }
       ],
       "outputs": [
-        { "artifact": ".dev-squad/master-plan.md", "to": "architect", "blocking": true, "description": "Stack pre-decisions + Evidence section (>=3 verified WebSearch/context7 lookups) + SaaS Mode section (Step 2.5: auto-detect from PRD keywords like 'subscription', 'tenant', 'billing', 'multi-tenant', 'admin panel', 'drill down' — if 2+ match OR --saas flag, AskUserQuestion confirms full-SaaS / no-drill-down / standard; locked once decided — retrofit = data leak risk)" }
+        { "artifact": ".dev-squad/master-plan.md", "to": "architect", "blocking": true, "description": "Stack pre-decisions + Evidence section (>=3 verified WebSearch/context7 lookups) + SaaS Mode section (Step 2.5: auto-detect from PRD keywords like 'subscription', 'tenant', 'billing', 'multi-tenant', 'admin panel', 'drill down' — if 3+ match OR --saas flag, AskUserQuestion confirms with 'No, standard app' as DEFAULT/RECOMMENDED option; dismiss/cancel = default-deny). If SaaS mode = enabled: ALSO run Step 2.5b SaaS Intake (3 AskUserQuestion blocks, 10 questions covering market/admin-hierarchy/role-model/trial-plan + auth-flows/API/email/invoice + ops/compliance — written to master-plan.md ## SaaS Intake section). Locked once decided — retrofit = data leak risk." }
       ],
       "blocking_gate": {
         "downstream_phase": "discover",
-        "check": "master-plan.md exists with non-empty Evidence section (>=3 lookups) AND SaaS Mode section (active|inactive locked); if SaaS active, ADRs 001-005 must be produced in Phase 2 before backend codes (ADR-001 tenancy / 002 billing / 003 plan / 004 admin scope / 005 compliance scope = which regulations apply)",
+        "check": "master-plan.md exists with non-empty Evidence section (>=3 lookups) AND ## SaaS Mode section (enabled|disabled locked); if SaaS enabled, ## SaaS Intake section MUST have all 10 dimensions answered (UNANSWERED markers acceptable only if explicitly marked for Phase 1 clarification). If SaaS enabled, ADRs 001-006 must be produced in Phase 2 before backend codes (ADR-001 tenancy / 002 billing / 003 plan / 004 admin scope / 005 compliance scope / 006 identity hierarchy NEW v4.15.0).",
         "verification_command": "test -f .dev-squad/master-plan.md && grep -c '^- ' .dev-squad/master-plan.md | awk '$1>=3'"
       },
       "estimated_complexity": "high",
@@ -29,7 +29,7 @@
         "preferred": [
           { "skill": "superpowers:brainstorming", "rationale": "Explores scope/risks before pre-decisions", "graceful_degrade": true, "invoked_by": "coordinator" },
           { "skill": "superpowers:writing-plans", "rationale": "Structures master-plan.md", "graceful_degrade": true, "invoked_by": "coordinator" },
-          { "skill": "dev-squad:saas-patterns", "rationale": "Load on SaaS detection — informs Step 2.5 confirmation copy + Phase 2 ADR-001..004 mandate (tenancy/billing/plan/admin scope)", "graceful_degrade": false, "invoked_by": "coordinator" },
+          { "skill": "dev-squad:saas-patterns", "rationale": "Load on SaaS detection — informs Step 2.5 confirmation copy + Step 2.5b SaaS Intake (10 Q) + Phase 2 ADR-001..006 mandate (tenancy/billing/plan/admin/compliance/identity-hierarchy)", "graceful_degrade": false, "invoked_by": "coordinator" },
           { "skill": "gsd-new-project", "rationale": "Bootstraps PROJECT.md/REQUIREMENTS.md/ROADMAP.md/STATE.md if GSD installed", "graceful_degrade": true, "invoked_by": "coordinator" }
         ],
         "fallback": "Manual via WebSearch + context7 + sequential-thinking MCP"
@@ -95,7 +95,7 @@
         "preferred": [
           { "skill": "gsd-plan-phase", "rationale": "Spec-driven planning with plan-checker loop", "graceful_degrade": true, "invoked_by": "architect" },
           { "skill": "mermaid-mcp", "rationale": "C4 diagrams + auth flow + threat surface diagrams", "graceful_degrade": true, "invoked_by": "architect" },
-          { "skill": "dev-squad:saas-patterns", "rationale": "When SaaS mode active (per Phase 0 Step 2.5), architect MUST produce ADR-001 (tenancy strategy), ADR-002 (billing model), ADR-003 (plan structure), ADR-004 (admin scope), ADR-005 (compliance scope: GDPR/PDP/CCPA/LGPD/sectoral — drives Part 3 Section 30 obligations) before backend can code — Part 1 of saas-patterns is the reference", "graceful_degrade": false, "invoked_by": "architect" }
+          { "skill": "dev-squad:saas-patterns", "rationale": "When SaaS mode active (per Phase 0 Step 2.5), architect MUST produce ADR-001 (tenancy strategy), ADR-002 (billing model — informed by Intake Q1 market), ADR-003 (plan structure — informed by Q4 trial+plan), ADR-004 (admin scope — informed by Q2), ADR-005 (compliance scope — informed by Q10), ADR-006 (identity hierarchy — NEW v4.15.0, informed by Q2/Q3 3-tier vs tenant-only + per-tenant role model) before backend can code. Provider abstraction = ADR-007+ if multi-region. Part 1 of saas-patterns is the reference.", "graceful_degrade": false, "invoked_by": "architect" }
         ],
         "fallback": "Manual via context7 + sequential-thinking + plain markdown for diagrams"
       },
@@ -202,7 +202,7 @@
         { "artifact": ".dev-squad/implementation-summary.md", "to": "reviewer", "blocking": false }
       ],
       "blocking_gate": {
-        "downstream_phase": "verify",
+        "downstream_phase": "review",
         "check": "Tests pass; builds clean; design tokens used (no inline arbitrary values); SVG icons (no emoji-as-icon)",
         "verification_command": "(cd apps/backend && npm test) && (cd apps/frontend && npm test)"
       },
@@ -223,7 +223,7 @@
       }
     },
     {
-      "id": "verify",
+      "id": "review",
       "number": "5",
       "name": "REVIEW (3-way parallel)",
       "lead_agent": "dev-squad:coordinator",
@@ -268,7 +268,7 @@
       "name": "SHIP",
       "lead_agent": "dev-squad:devops",
       "parallel_agents": ["dev-squad:git-ops"],
-      "trigger": "verify.complete",
+      "trigger": "review.complete",
       "inputs": [
         { "artifact": ".dev-squad/phase5-metrics-report.md", "from": "reviewer", "required": true }
       ],

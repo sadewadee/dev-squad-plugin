@@ -53,16 +53,43 @@ If any item is unclear about which phase covers it, default to Phase 0 (architec
 
 ---
 
-## Phase 0 — SaaS Mode Detection
+## Phase 0 — SaaS Mode Detection + Intake (BETA)
 
-Coordinator (during ULTRAPLAN) detects SaaS scope from PRD/description keywords and locks decision in `.dev-squad/master-plan.md`:
+Two-step process: detection + intake. Both run during ULTRAPLAN, locked in `.dev-squad/master-plan.md`.
 
-- [ ] Auto-detect: keywords like "subscription", "tenant", "billing", "plans", "multi-tenant", "team workspace", "billing", "admin panel", "drill down", "analytics dashboard", "white-label" — 2+ matches OR explicit `--saas` flag
-- [ ] User confirmation via AskUserQuestion: full SaaS / SaaS without drill-down / standard app
-- [ ] Decision locked in `.dev-squad/master-plan.md` SaaS Mode section
-- [ ] If SaaS active: enable Phase 6 readiness gate; load saas-patterns + saas-readiness skills
+### Step 2.5: SaaS Mode Detection (default-deny per v4.14.4)
 
-**Once locked, do not retrofit.** Multi-tenancy retrofit = cross-tenant data leak risk.
+- [ ] Auto-detect: keywords "subscription", "tenant", "billing", "plans", "multi-tenant", "team workspace", "billing/Stripe", "usage-based", "admin panel", "drill down", "analytics dashboard", "white-label" — **3+ matches** (raised from 2+ to reduce false-positives) OR explicit `--saas` flag
+- [ ] If fewer than 3 keywords AND no `--saas` flag: skip confirmation, lock `SaaS Mode: disabled (standard app)`, proceed
+- [ ] User confirmation via AskUserQuestion — **"No, build a standard app" is recommended default** (first option). User must actively choose "Yes, full SaaS scope" or "Yes, but skip admin dashboard"
+- [ ] Dismiss/cancel = DEFAULT to disabled (never silent-enable)
+- [ ] Decision locked in master-plan.md `## SaaS Mode` section with explicit value (`enabled` / `disabled`)
+
+### Step 2.5b: SaaS Scope Intake (v4.15.0 — NEW, BETA)
+
+If SaaS Mode locked enabled, run **3 AskUserQuestion blocks (10 questions total)** capturing scope dimensions. Each answer is written to master-plan.md `## SaaS Intake` section and read by architect / backend / frontend / devops / writer at their phases.
+
+**Block 1 — Foundation (4Q):**
+- [ ] Q1 Target Market — Indonesia (IDR+Faktur Pajak+Xendit+PDP) / EU (EUR+VAT+Stripe+GDPR+AI Act+DORA) / US (USD+Stripe Tax+CCPA+SOC 2) / Multi-region (provider abstraction)
+- [ ] Q2 Admin Hierarchy — 3-tier (Platform+Tenant+User+impersonation+audit log split) / Tenant-only (no platform layer)
+- [ ] Q3 Per-Tenant Role Model — Owner-only / Owner+Member / Owner+Admin+Editor+Viewer / Custom RBAC
+- [ ] Q4 Trial + Plan — no trial / freemium / time-limited trial / freemium + trial-of-higher
+
+**Block 2 — Customer-facing (4Q):**
+- [ ] Q5 Self-Service Auth Flows (multi) — password-reset / password-change / email-change / account-deletion / 2FA / lockout
+- [ ] Q6 Customer-Facing API — None / API-keys / +webhooks / +OpenAPI
+- [ ] Q7 Email Lifecycle (multi) — verify / welcome / trial-warn / trial-expired / payment-failed-dunning / re-engagement / win-back
+- [ ] Q8 Invoice Surface — Stripe-portal / in-app+PDF / +resend-notes
+
+**Block 3 — Ops + Compliance (2Q):**
+- [ ] Q9 Operational Readiness (multi) — backup-cron / CI-CD-gate / Sentry / status-page / PII-redact / rate-limit
+- [ ] Q10 Compliance Jurisdiction (multi) — GDPR / PDP UU 27 / CCPA / LGPD / SOC2 Type1 / EU AI Act / none
+
+Cancellation handling: any block cancelled mid-way → remaining dimensions marked `UNANSWERED — REQUIRE Phase 1 clarification`. Architect's Phase 1 brainstorming must close them before PRD generation.
+
+**Once locked, do not retrofit.** Multi-tenancy retrofit = cross-tenant data leak risk. Identity hierarchy retrofit = full re-scaffold. Payment provider retrofit = full billing replatform.
+
+**BETA notice:** SaaS Intake is functional but not exhaustive. Phase 5+ readiness audit may still surface edge-case gaps. Treat intake as foundation, not guarantee. Empirical baseline: tested on wacrm CRM migration.
 
 ---
 
@@ -82,14 +109,15 @@ Architect's PRD MUST answer (in addition to standard PRD questions):
 
 ## Phase 2 — ADRs + Architectural Foundations
 
-Architect MUST produce **ADR-001 to ADR-005** in `docs/adr/` BEFORE backend codes (retrofit = data leak risk):
+Architect MUST produce **ADR-001 to ADR-006** in `docs/adr/` BEFORE backend codes (retrofit = data leak risk). Each ADR informed by Phase 0 Step 2.5b Intake answers:
 
-- [ ] **ADR-001 Tenancy strategy** — shared DB+RLS / schema-per-tenant / DB-per-tenant / hybrid (saas-patterns Section 1.1)
-- [ ] **ADR-002 Billing model** — per-seat / per-usage / hybrid; **provider choice** (Stripe / Xendit / PayPal / Manual / multi-provider — Section 21 if multi-region)
-- [ ] **ADR-003 Plan structure** — tiers, free trial, entitlement keys, grandfathering policy
-- [ ] **ADR-004 Admin scope** — root-tenant API key vs dedicated `admin_users` table
-- [ ] **ADR-005 Compliance scope** — which regulations apply (drives saas-readiness Section 4 obligations)
-- [ ] **ADR-006+ Provider abstraction** (if multi-region or multi-provider) — `PaymentProvider` interface + registry pattern (saas-readiness Section 21)
+- [ ] **ADR-001 Tenancy strategy** — shared DB+RLS / schema-per-tenant / DB-per-tenant / hybrid (saas-patterns §1.1). Informed by: project scale + Q1 target market data residency requirements.
+- [ ] **ADR-002 Billing model** — per-seat / per-usage / hybrid; **provider choice**. Informed by: Q1 target market (Indonesia → Xendit + manual; EU/US → Stripe; Multi-region → provider abstraction). Q4 trial+plan model. (saas-patterns §2 + saas-readiness §21 if multi-region)
+- [ ] **ADR-003 Plan structure** — tiers, free trial, entitlement keys, grandfathering policy. Informed by: Q4 trial+plan model.
+- [ ] **ADR-004 Admin scope** — root-tenant API key vs dedicated `admin_users` table vs PlatformRole enum. Informed by: Q2 admin hierarchy answer.
+- [ ] **ADR-005 Compliance scope** — which regulations apply (drives saas-readiness §4 obligations). Informed by: Q10 compliance jurisdiction multiselect.
+- [ ] **ADR-006 Identity Hierarchy** (NEW v4.15.0) — 3-tier Platform/Tenant/User-in-tenant model: PlatformRole enum design, per-tenant role enum (Q3), impersonation flow design, audit log split (PlatformAuditLog vs TenantAuditLog). Informed by: Q2 + Q3. **Mandatory if Q2 = 3-tier.** If Q2 = Tenant-only, ADR-006 documents the simpler 2-tier model.
+- [ ] **ADR-007+ Provider abstraction** (conditional, if multi-region or multi-provider) — `PaymentProvider` interface + registry pattern (saas-readiness §21). Renumbered from ADR-006 in v4.15.0 to make room for ADR-006 Identity Hierarchy.
 
 Threat model (`docs/threat-model.md`) parallel from reviewer.
 

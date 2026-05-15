@@ -1765,12 +1765,13 @@ When this skill is loaded, also reference:
 
 Architect MUST decide and document in ADRs (Phase 2) before backend codes:
 - ADR-001 Tenancy strategy (shared/schema/db/hybrid)
-- ADR-002 Billing model (per-seat, per-usage, hybrid). If multi-region target: provider abstraction (see saas-readiness Section 21) — ADR-006+ for provider choices
+- ADR-002 Billing model (per-seat, per-usage, hybrid). If multi-region target: provider abstraction (see saas-readiness Section 21) — **ADR-007+ for provider choices** (v4.15.0 reserved ADR-006 for identity hierarchy)
 - ADR-003 Plan structure (free trial? plan tiers? entitlement keys?)
 - ADR-004 Admin scope (root-tenant key vs dedicated admin_users table)
 - **ADR-005 Compliance scope** (which regulations apply: GDPR / PDP / CCPA / LGPD / sectoral) — drives saas-readiness Section 4 obligations
+- **ADR-006 Identity Hierarchy** (NEW v4.15.0) — 3-tier Platform/Tenant/User-in-tenant model: PlatformRole enum, per-tenant role enum, impersonation flow, audit log split. Informed by Phase 0 Intake Q2/Q3.
 
-Without ADR-001..005, backend will retrofit = data leak risk + compliance debt.
+Without ADR-001..006, backend will retrofit = data leak risk + compliance debt + identity model retrofit (3-tier retrofit = full re-scaffold).
 
 Designer (Phase 3.5) MUST produce `drill-down-spec.md` (Part 2 Section 26 template) BEFORE frontend codes any admin dashboard. Without explicit drill spec, frontend will improvise — usually skipping breadcrumb state preservation, virtualization, or permission gating.
 

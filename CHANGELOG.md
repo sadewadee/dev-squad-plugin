@@ -2,6 +2,96 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.15.3] — Workflow JSON drift sync + hooks audit + ADR-006 cross-file consistency + MCP naming clarification
+
+**Why:** Systematic audit (3 parallel agents — workflow JSON, hooks, MCP) revealed silent-failure risks accumulated since the last formal consistency sweep (v4.13.1, 4 versions ago):
+
+1. **P0 silent skip — `check-workflow.sh` phase list stale**: hardcoded for-loop iterated `ultraplan discover design scaffold implement review ship learn` — missing the `ui_design` Phase 3.5 (anti-AI-slop gate). Phase 3.5 incomplete state was never surfaced as a workflow reminder.
+2. **P0 cross-file mismatch — `workflow-active` phase name "review" vs JSON id "verify"**: `commands/build.md` writes `review` to workflow-active, `check-workflow.sh` iterates `review`, but `zero-to-ship.json` declared Phase 5 id as `verify`. A coordinator reading the JSON as canonical would write `verify` and the hook would never match.
+3. **P1 ADR range conflict — ADR-006 dual definition**: v4.15.0 commands/build.md said ADR-006 = identity hierarchy. architect.md and saas-build-checklist.md still said ADR-006+ = provider abstraction (wacrm historical numbering). saas-readiness-sprint.json still produced ADR-006 = payment provider. Three different definitions in circulation.
+4. **P1 SaaS detection threshold drift**: zero-to-ship.json said "2+ matches"; SKILL.md said "2+"; build.md said "3+" (the v4.14.4 safety default). Coordinator would see inconsistent guidance.
+5. **P1 SaaS Intake completely absent from JSON contract**: v4.15.0 Phase 0 Step 2.5b added 10-question intake. Implemented only in build.md prose. zero-to-ship.json Phase 0 output description and blocking_gate had zero reference to `## SaaS Intake` section.
+6. **P1 force-push patterns trivially bypassed**: `guard-dangerous-ops.sh` only caught `git push --force origin main`, not the `-f` short flag (`git push -f origin main`) or `--force-with-lease` variants.
+7. **P1 test-hook indefinite hang risk**: `validate-task.sh` (TaskCompleted, no hook-level timeout) and `stop-verify.sh` (300s budget consumed by single slow tsc/eslint/test) had no per-command timeout. Hanging integration tests could block TaskCompleted forever.
+8. **P1 TeammateIdle event possibly non-existent**: hooks.json wired `check-teammate.sh` to `TeammateIdle` event which is not a documented Claude Code hook event. Either silently dead or causes init error.
+9. **P1 chrome-devtools (MCP) vs superpowers-chrome (skill) name conflation**: 5 agent files and SKILL.md used these interchangeably. Different invocation surfaces with different availability — silent no-op risk when only one is installed.
+10. **P1 stale workflow JSON versions**: feature-development, bug-fix, refactoring all stuck at 4.13.0. saas-readiness-sprint at 4.14.0.
+
+This release closes all 10 findings.
+
+### Changed — `hooks/check-workflow.sh` (P0 fix)
+
+Phase list updated from `ultraplan discover design scaffold implement review ship learn` (8 phases, missing Phase 3.5 + wrong sequencing) to `ultraplan discover design scaffold ui_design implement review ship learn` (9 phases matching zero-to-ship.json after the verify→review rename).
+
+### Changed — `.claude-plugin/workflows/zero-to-ship.json` (P0 + multiple P1)
+
+- Phase 5 id: `"verify"` → `"review"` (aligns with workflow-active + check-workflow.sh)
+- Phase 4 blocking_gate `downstream_phase`: `"verify"` → `"review"`
+- Phase 6 `trigger`: `"verify.complete"` → `"review.complete"`
+- Phase 0 output `description`: keyword threshold `2+` → `3+`, added Step 2.5b SaaS Intake (10-Q, 3 blocks) explicit mention
+- Phase 0 `blocking_gate.check`: added `## SaaS Intake` validation requirement, ADR mandate `001-005` → `001-006` (includes identity hierarchy)
+- Phase 0 `external_skills` rationale: ADR mandate `001..004` → `001..006`
+- Phase 2 `external_skills` rationale: ADR mandate `001..005` → `001..006`, all ADRs now annotated with Intake question source (Q1/Q2/Q3/Q4/Q10)
+- `version`: `4.14.0` → `4.15.3`
+
+### Changed — other workflow JSONs (version bumps)
+
+- `feature-development.json` `version`: `4.13.0` → `4.15.3`
+- `bug-fix.json` `version`: `4.13.0` → `4.15.3`
+- `refactoring.json` `version`: `4.13.0` → `4.15.3`
+- `saas-readiness-sprint.json` `version`: `4.14.0` → `4.15.3`, description extended with ADR numbering note (v4.15.0 reserved ADR-006 for identity hierarchy; provider abstraction now ADR-007+; wacrm case study retains historical ADR-006 = payment provider)
+
+### Changed — `hooks/guard-dangerous-ops.sh` (P1 fix)
+
+Force-push pattern coverage expanded. Now catches all variants of force-push to `main` and `master`:
+- `git push --force origin main|master` (existing)
+- `git push -f origin main|master` (short flag — NEW)
+- `git push --force-with-lease origin main|master` (NEW)
+- `git push -f origin main:|master:` (with refspec — NEW)
+
+Feature branch force-push remains allowed (legitimate workflow: rebase, history cleanup).
+
+### Changed — `hooks/validate-task.sh` (P1 fix)
+
+Added 120s timeout via `timeout` / `gtimeout` (macOS fallback) for `npm test`, `go test`, `make test`. Hanging tests now exit with timeout marker (exit 124) producing clear user-facing message "Tests timed out after 120s. Check for hanging integration tests or network calls." instead of blocking TaskCompleted indefinitely. Graceful degradation when `timeout` command unavailable (warns + proceeds without timeout).
+
+### Changed — `hooks/stop-verify.sh` (P1 fix)
+
+Per-command 90s timeout wrapper for tsc, eslint, npm test, go build/vet/test, mypy, ruff, pytest. Stop hook's 300s budget no longer consumed by single slow command in large monorepo. Each timed-out command surfaces as `"<tool>: timed out (90s)"` in the error summary.
+
+### Changed — `hooks/hooks.json` (P1 fix)
+
+Removed `TeammateIdle` event wiring. This event is not a documented Claude Code hook event; the wiring was either silently dead or could cause harness init errors. `hooks/check-teammate.sh` retained on disk for potential future re-wiring if the event becomes officially supported.
+
+### Changed — `docs/saas-build-checklist.md`
+
+- Phase 0 section: 2+ → 3+ keywords; AskUserQuestion default-no recommended; explicit Step 2.5b SaaS Intake 10-Q with all three blocks documented; BETA notice
+- Phase 2 ADR section: `ADR-001 to ADR-005` → `ADR-001 to ADR-006`; ADR-006 NEW v4.15.0 = identity hierarchy (3-tier per Q2/Q3); provider abstraction relocated to ADR-007+ with explanatory note
+
+### Changed — `agents/dev-squad/architect.md`
+
+Skill Selection Matrix saas-patterns row: ADR mandate expanded to ADR-001..006 with ADR-006 = identity hierarchy (informed by Phase 0 Intake Q2/Q3). Provider abstraction now ADR-007+.
+
+### Changed — `skills/saas-patterns/SKILL.md` Bootstrap Context
+
+ADR list expanded to 001..006. ADR-006 NEW = Identity Hierarchy. Provider abstraction noted as ADR-007+ (v4.15.0 reserved ADR-006).
+
+### Changed — phase count copy
+
+- `commands/build.md` frontmatter: "6 automated phases" → "9 automated phases (0-7 + 3.5 design gate)"
+- `skills/dev-squad/SKILL.md`: "7-phase project build" → "9-phase project build (Phases 0-7 + 3.5 design gate)"; `2+ match` → `3+ match` + Step 2.5b reference
+- `agents/dev-squad/coordinator.md`: "7 phases" → "9 phases (0-7 + 3.5 design gate)"
+
+### Added — `skills/dev-squad/SKILL.md` Known Gotchas Gotcha 4
+
+Documents `chrome-devtools` (MCP) vs `superpowers-chrome:browsing` (skill) distinction with a table. Both ship browser-control functionality but via different invocation surfaces. Agents that conflate them silently no-op when only one is installed.
+
+### Migration
+
+None for users. Auto-pulls on next session. Agents read the corrected workflow JSONs + hook behaviors immediately.
+
+**Risk closed:** Phase 3.5 unmonitoring (silent skip), workflow JSON id mismatch (silent skip), ADR-006 ambiguity (architect produces wrong ADR), SaaS detection threshold inconsistency, force-push bypass via short flag, indefinite test hook hang, dead TeammateIdle wiring. MCP naming ambiguity documented (no silent fix; user must verify both surfaces installed if agent uses both).
+
 ## [4.15.2] — Phantom subagent type cleanup (`judge` + `plan-reviewer`)
 
 **Why:** v4.15.1 fixed the `spec-document-reviewer` phantom dispatch gotcha. Systematic audit revealed **two more** phantom subagent references throughout the plugin docs that follow the same silent-skip failure mode:

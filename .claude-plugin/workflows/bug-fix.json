@@ -1,7 +1,7 @@
 {
   "workflow_id": "bug-fix",
   "schema_version": "1.0",
-  "version": "4.13.0",
+  "version": "4.15.3",
   "name": "Bug Fix",
   "description": "Reproduce -> root cause -> fix -> verify. qa-engineer Investigation Mode for cross-boundary or runtime bugs. PreToolUse security hook prevents accidental introduction of dangerous patterns during fix. Phase 4 verify uses iteration loop pattern: if regression introduced by fix, rollback + retry.",
   "trigger_command": "/dev-squad fix",

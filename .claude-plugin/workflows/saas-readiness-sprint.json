@@ -1,9 +1,9 @@
 {
   "workflow_id": "saas-readiness-sprint",
   "schema_version": "1.0",
-  "version": "4.14.0",
+  "version": "4.15.3",
   "name": "SaaS Pre-Launch Readiness Sprint",
-  "description": "Domain-decomposed sprint for hardening existing SaaS to ship-ready. 8 sub-phases (6-A through 6-H) covering billing/user-mgmt/invoicing/plan/api/compliance/operational/customer-success. Run when SaaS readiness audit (saas-readiness Section 8) reveals 10+ P0/P1 gaps across 4+ domains where 3-day sprint is unrealistic. Sub-phases parallelizable when independent (6-B+6-C+6-D), sequenced when dependent (6-A→6-C, 6-A→6-D, all→6-G+6-H). Each sub-phase ships incrementally with own commit/PR, doesn't wait for whole sprint. Pattern extracted from real-world wacrm Indonesia-first pivot.",
+  "description": "Domain-decomposed sprint for hardening existing SaaS to ship-ready. 8 sub-phases (6-A through 6-H) covering billing/user-mgmt/invoicing/plan/api/compliance/operational/customer-success. Run when SaaS readiness audit (saas-readiness Section 8) reveals 10+ P0/P1 gaps across 4+ domains where 3-day sprint is unrealistic. Sub-phases parallelizable when independent (6-B+6-C+6-D), sequenced when dependent (6-A→6-C, 6-A→6-D, all→6-G+6-H). Each sub-phase ships incrementally with own commit/PR, doesn't wait for whole sprint. Pattern extracted from real-world wacrm Indonesia-first pivot. ADR numbering note: v4.15.0 reserved ADR-006 for identity hierarchy (3-tier Platform/Tenant/User). Provider abstraction now ADR-007+ in new projects. wacrm case study uses historical ADR-006 = payment provider numbering — case-study-specific.",
   "trigger_command": "/dev-squad readiness",
   "phases": [
     {

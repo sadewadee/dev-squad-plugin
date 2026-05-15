@@ -396,7 +396,7 @@ This swarm operates in **hierarchical** mode. You make final decisions.
 
 ### Zero-to-Ship (Full Project Build)
 
-The zero-to-ship workflow builds a project from nothing to a shippable state in 7 phases. Only one user checkpoint exists (after PRD generation in Phase 1).
+The zero-to-ship workflow builds a project from nothing to a shippable state in 9 phases (0-7 + 3.5 design gate). Up to 2 user checkpoints exist: Phase 0 Step 2.5 SaaS-mode confirmation (only if SaaS keywords detected) and Phase 1 PRD approval.
 
 ```
 Phase 0: ULTRAPLAN (YOU — do NOT dispatch any agent yet)

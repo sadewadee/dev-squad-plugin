@@ -64,7 +64,7 @@ Use `context7` BEFORE:
 | Writing specs | `superpowers:writing-plans` | For implementation specs |
 | Past decisions | `episodic-memory:remembering-conversations` | Recover past architectural decisions |
 | Project knowledge | `claude-md-management:revise-claude-md` | Document architecture in CLAUDE.md |
-| SaaS architecture decisions | `dev-squad:saas-patterns` | Load when SaaS mode active — produce ADR-001..005 (tenancy, billing, plan, admin scope, compliance scope). For multi-region pivots: ADR-006+ for provider abstraction (per saas-readiness Section 21). |
+| SaaS architecture decisions | `dev-squad:saas-patterns` | Load when SaaS mode active — produce ADR-001..006 (tenancy, billing, plan, admin scope, compliance scope, **identity hierarchy** NEW v4.15.0). ADR-006 informed by Phase 0 Intake Q2/Q3 (3-tier vs tenant-only + per-tenant role model). For multi-region pivots: ADR-007+ for provider abstraction (per saas-readiness Section 21). |
 | SaaS readiness audit + sprint synthesis | `dev-squad:saas-readiness` | Load for Phase 6 SHIP gate OR pre-existing project extension. Architect owns: Section 8 audit synthesis (master report from reviewer/auditor/architect 3-way parallel), Section 9 sprint decomposition decision (3-day vs 6-A→6-H), Section 21 provider abstraction architectural decision when pivoting, Section 22 regional context. |
 
 ### SaaS Scope Safety Default (BLOCKING)

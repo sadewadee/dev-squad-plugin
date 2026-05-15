@@ -24,14 +24,31 @@ fi
 
 ERRORS=""
 
+# v4.15.3: per-command timeout to prevent full Stop hook (300s) being consumed by
+# a single slow tsc/eslint/test invocation in a large monorepo.
+PER_CMD_TIMEOUT=90
+
+run_timed() {
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$PER_CMD_TIMEOUT" "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout "$PER_CMD_TIMEOUT" "$@"
+  else
+    "$@"
+  fi
+}
+
 # Detect project type and run verification
 if [ -f "tsconfig.json" ] || [ -f "package.json" ]; then
   # TypeScript/JavaScript project
 
   # 1. Type check
   if [ -f "tsconfig.json" ] && command -v npx &>/dev/null; then
-    TSC_OUTPUT=$(npx tsc --noEmit 2>&1)
-    if [ $? -ne 0 ]; then
+    TSC_OUTPUT=$(run_timed npx tsc --noEmit 2>&1)
+    rc=$?
+    if [ $rc -eq 124 ]; then
+      ERRORS="${ERRORS}TypeScript: tsc timed out (${PER_CMD_TIMEOUT}s). "
+    elif [ $rc -ne 0 ]; then
       ERROR_COUNT=$(echo "$TSC_OUTPUT" | grep -c "error TS")
       ERRORS="${ERRORS}TypeScript: ${ERROR_COUNT} type errors. "
     fi
@@ -39,8 +56,11 @@ if [ -f "tsconfig.json" ] || [ -f "package.json" ]; then
 
   # 2. Lint
   if [ -f "node_modules/.bin/eslint" ]; then
-    LINT_OUTPUT=$(npx eslint . --quiet 2>&1)
-    if [ $? -ne 0 ]; then
+    LINT_OUTPUT=$(run_timed npx eslint . --quiet 2>&1)
+    rc=$?
+    if [ $rc -eq 124 ]; then
+      ERRORS="${ERRORS}ESLint: timed out (${PER_CMD_TIMEOUT}s). "
+    elif [ $rc -ne 0 ]; then
       LINT_COUNT=$(echo "$LINT_OUTPUT" | grep -c "error")
       ERRORS="${ERRORS}ESLint: ${LINT_COUNT} errors. "
     fi
@@ -48,8 +68,11 @@ if [ -f "tsconfig.json" ] || [ -f "package.json" ]; then
 
   # 3. Tests
   if [ -f "package.json" ] && grep -q '"test"' package.json 2>/dev/null; then
-    TEST_OUTPUT=$(npm test --silent 2>&1)
-    if [ $? -ne 0 ]; then
+    TEST_OUTPUT=$(run_timed npm test --silent 2>&1)
+    rc=$?
+    if [ $rc -eq 124 ]; then
+      ERRORS="${ERRORS}Tests: timed out (${PER_CMD_TIMEOUT}s). "
+    elif [ $rc -ne 0 ]; then
       ERRORS="${ERRORS}Tests: failing. "
     fi
   fi
@@ -58,20 +81,29 @@ elif [ -f "go.mod" ]; then
   # Go project
 
   # 1. Build check
-  BUILD_OUTPUT=$(go build ./... 2>&1)
-  if [ $? -ne 0 ]; then
+  BUILD_OUTPUT=$(run_timed go build ./... 2>&1)
+  rc=$?
+  if [ $rc -eq 124 ]; then
+    ERRORS="${ERRORS}Go build: timed out. "
+  elif [ $rc -ne 0 ]; then
     ERRORS="${ERRORS}Go build: failed. "
   fi
 
   # 2. Vet
-  VET_OUTPUT=$(go vet ./... 2>&1)
-  if [ $? -ne 0 ]; then
+  VET_OUTPUT=$(run_timed go vet ./... 2>&1)
+  rc=$?
+  if [ $rc -eq 124 ]; then
+    ERRORS="${ERRORS}Go vet: timed out. "
+  elif [ $rc -ne 0 ]; then
     ERRORS="${ERRORS}Go vet: issues found. "
   fi
 
   # 3. Tests
-  TEST_OUTPUT=$(go test ./... 2>&1)
-  if [ $? -ne 0 ]; then
+  TEST_OUTPUT=$(run_timed go test ./... 2>&1)
+  rc=$?
+  if [ $rc -eq 124 ]; then
+    ERRORS="${ERRORS}Go tests: timed out. "
+  elif [ $rc -ne 0 ]; then
     ERRORS="${ERRORS}Go tests: failing. "
   fi
 
@@ -80,24 +112,33 @@ elif [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
 
   # 1. Type check
   if command -v mypy &>/dev/null; then
-    MYPY_OUTPUT=$(mypy . 2>&1)
-    if [ $? -ne 0 ]; then
+    MYPY_OUTPUT=$(run_timed mypy . 2>&1)
+    rc=$?
+    if [ $rc -eq 124 ]; then
+      ERRORS="${ERRORS}mypy: timed out. "
+    elif [ $rc -ne 0 ]; then
       ERRORS="${ERRORS}mypy: type errors. "
     fi
   fi
 
   # 2. Lint
   if command -v ruff &>/dev/null; then
-    RUFF_OUTPUT=$(ruff check . 2>&1)
-    if [ $? -ne 0 ]; then
+    RUFF_OUTPUT=$(run_timed ruff check . 2>&1)
+    rc=$?
+    if [ $rc -eq 124 ]; then
+      ERRORS="${ERRORS}ruff: timed out. "
+    elif [ $rc -ne 0 ]; then
       ERRORS="${ERRORS}ruff: lint errors. "
     fi
   fi
 
   # 3. Tests
   if command -v pytest &>/dev/null; then
-    TEST_OUTPUT=$(pytest --quiet 2>&1)
-    if [ $? -ne 0 ]; then
+    TEST_OUTPUT=$(run_timed pytest --quiet 2>&1)
+    rc=$?
+    if [ $rc -eq 124 ]; then
+      ERRORS="${ERRORS}pytest: timed out. "
+    elif [ $rc -ne 0 ]; then
       ERRORS="${ERRORS}pytest: failing. "
     fi
   fi

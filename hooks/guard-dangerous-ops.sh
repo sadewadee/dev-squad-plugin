@@ -10,6 +10,9 @@ if [ -z "$COMMAND" ]; then
 fi
 
 # Block patterns
+# NOTE: force-push is only blocked when targeting protected branches (main/master).
+# Force-push to feature branches is legitimate workflow (rebase, history cleanup).
+# Both long-form (--force), short-form (-f), and force-with-lease variants caught.
 BLOCKED_PATTERNS=(
   "rm -rf /"
   "rm -rf ~"
@@ -19,6 +22,12 @@ BLOCKED_PATTERNS=(
   "TRUNCATE TABLE"
   "git push --force origin main"
   "git push --force origin master"
+  "git push -f origin main"
+  "git push -f origin master"
+  "git push --force-with-lease origin main"
+  "git push --force-with-lease origin master"
+  "git push -f origin main:"
+  "git push -f origin master:"
   "git reset --hard origin"
   ":(){ :|:& };:"
   "mkfs\."

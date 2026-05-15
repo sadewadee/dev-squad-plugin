@@ -291,9 +291,26 @@ This gotcha applies to: architect (every plan written), commands/build.md (Phase
 
 **Summary of dispatch discipline**: dev-squad ships 11 real agent types (coordinator, architect, designer, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer). Any other "subagent" name in docs (`spec-document-reviewer`, `judge`, `plan-reviewer`, `phase-gate-judge`) is a **role**, not a type. The dispatcher resolves the role to either `general-purpose` (with model override) or one of the 11 dev-squad agents. Never dispatch a role as if it were a type.
 
+### Gotcha 4: `chrome-devtools` (MCP) vs `superpowers-chrome` (skill/plugin) are different surfaces
+
+Several agent prompts (designer, qa-engineer, frontend, coordinator) use these names interchangeably. They are NOT the same:
+
+| Name | Type | Invocation | Source |
+|---|---|---|---|
+| `chrome-devtools` | **MCP server** | MCP tools (browser control via Chrome DevTools Protocol) | Independent MCP install |
+| `superpowers-chrome:browsing` | **Skill** | `Skill` tool with skill name | superpowers plugin |
+| `playwright` | **MCP server** | MCP tools (browser automation) | Independent MCP install |
+| `playwright-skill:playwright-skill` | **Skill** | `Skill` tool | playwright-skill plugin |
+
+If a user installs ONLY `superpowers` plugin (gets the skill) but NOT the `chrome-devtools` MCP server: agents calling "chrome-devtools" silently no-op. Conversely if MCP installed but plugin not: skill calls fail.
+
+When agent prompts say "use chrome-devtools or superpowers-chrome" they imply graceful fallback between MCP and skill. Verify both are present for full functionality OR pick one path and document the choice in `.dev-squad/conventions.md`.
+
+This applies to: designer (visual reference capture), qa-engineer (Visual Gate + console capture), frontend (visual verification), coordinator (browser-driven gates).
+
 ## Workflow: Zero-to-Ship (Full Project Build)
 
-The `/dev-squad build <description>` command triggers a fully automated 7-phase project build:
+The `/dev-squad build <description>` command triggers a fully automated 9-phase project build (Phases 0-7 + 3.5 design gate):
 
 ```
 /dev-squad build <description>
@@ -302,7 +319,7 @@ The `/dev-squad build <description>` command triggers a fully automated 7-phase 
 Phase 0: ULTRAPLAN (Coordinator only — deep thinking, no dispatch)
     [Coordinator] → ultrathink: analyze scope, entities, tech stack, risks
     [Coordinator] → Step 2.5: SaaS-mode auto-detect from PRD keywords (subscription/tenant/billing/multi-tenant/admin/drill down/...)
-                    if 2+ match OR --saas flag → AskUserQuestion confirms (full SaaS / no drill-down / standard)
+                    if 3+ match OR --saas flag → AskUserQuestion confirms ('No, standard app' is default/recommended; full SaaS / no drill-down / standard); v4.15.0 then runs Step 2.5b SaaS Intake (10 questions)
                     decision locked in master-plan.md SaaS Mode section
     [Coordinator] → Write .dev-squad/master-plan.md
     |

@@ -1,6 +1,6 @@
 ---
 name: build
-description: Zero-to-Ship workflow. Takes a project description and builds it from scratch through 6 automated phases.
+description: Zero-to-Ship workflow. Takes a project description and builds it from scratch through 9 automated phases (0-7 + 3.5 design gate).
 ---
 
 # /dev-squad build <description>
