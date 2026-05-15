@@ -69,7 +69,7 @@ Use `context7` BEFORE:
 
 ### SaaS Scope Safety Default (BLOCKING)
 
-**DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` or `dev-squad:saas-readiness` skills, and do NOT produce ADR-001..005 (tenancy/billing/plan/admin/compliance) or apply multi-tenancy / RLS / row-level isolation patterns, UNLESS at least ONE trigger is TRUE:
+**DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` or `dev-squad:saas-readiness` skills, and do NOT produce ADR-001..006 (tenancy/billing/plan/admin/compliance/identity-hierarchy) or apply multi-tenancy / RLS / row-level isolation patterns, UNLESS at least ONE trigger is TRUE:
 
 1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled` (set by Phase 0 Step 2.5 user confirmation in `/dev-squad build`)
 2. `.dev-squad/scope-tier.json` contains `"saas_touch": true` (set by coordinator's Diff-Scope Heuristic in `/dev-squad start`)

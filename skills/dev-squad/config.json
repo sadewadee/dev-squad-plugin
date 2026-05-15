@@ -70,7 +70,7 @@
         "claude-md-management:revise-claude-md"
       ],
       "conditional_skills": [
-        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode enabled (master-plan.md OR scope-tier.json OR --saas flag). Architect produces ADR-001..005 only when SaaS mode active." },
+        { "skill": "dev-squad:saas-patterns", "load_when": "saas_mode enabled (master-plan.md OR scope-tier.json OR --saas flag). Architect produces ADR-001..006 only when SaaS mode active (006 = identity hierarchy per Phase 0 Intake Q2/Q3, NEW v4.15.0)." },
         { "skill": "dev-squad:saas-readiness", "load_when": "Phase 6 SHIP gate OR pre-existing SaaS project audit AND saas_mode enabled." }
       ],
       "auto_mcp": [
@@ -496,7 +496,7 @@
     "zero_to_ship": [
       "Phase 0 ULTRAPLAN: coordinator (deep thinking, master-plan.md) + Step 2.5 SaaS-mode auto-detect from PRD keywords + AskUserQuestion confirm → locked in master-plan.md",
       "Phase 1 DISCOVER: coordinator → architect (brainstorm + research + PRD generation) → USER CHECKPOINT (PRD approval)",
-      "Phase 2 DESIGN: coordinator → architect (architecture + C4 + ADR-001..005 if SaaS: tenancy/billing/plan/admin/compliance) → reviewer (threat model parallel)",
+      "Phase 2 DESIGN: coordinator → architect (architecture + C4 + ADR-001..006 if SaaS: tenancy/billing/plan/admin/compliance/identity-hierarchy) → reviewer (threat model parallel)",
       "Phase 3 SCAFFOLD: coordinator → devops (monorepo + Docker + CI/CD + monitoring) + git-ops (repo init + branch protection); If SaaS: scaffold backend modules tenants/plans/billing/webhooks/api-keys/audit-log/notifications/admin",
       "Phase 3.5 DESIGN (UI/UX, BLOCKING anti-AI-slop gate): coordinator → designer (4 artifacts: design-tokens + visual-spec + component-inventory + responsive-spec) + drill-down-spec.md if SaaS+dashboard",
       "Phase 4 IMPLEMENT: coordinator → writer (content) FIRST → backend + frontend (parallel with worktrees + TDD); SaaS: backend Part 1 + frontend Part 2 + PreToolUse security hook auto-blocks 9 dangerous code patterns",

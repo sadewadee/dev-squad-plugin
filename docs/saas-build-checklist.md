@@ -41,7 +41,7 @@ If your project meets all 4 + most of "typically" — proceed with this checklis
 |---|---|---|---|
 | **0 ULTRAPLAN** | Coordinator | `commands/build.md` Phase 0 + Step 2.5 | "Phase 0 — SaaS Mode Detection" + "Architectural Decisions" |
 | **1 DISCOVER** | Architect | `agents/dev-squad/architect.md` | "Phase 1 — PRD with SaaS Specifics" |
-| **2 DESIGN** | Architect (+ Reviewer threat model) | ADR-001..005 + saas-patterns Part 1 design | "Phase 2 — ADRs + Architectural Foundations" |
+| **2 DESIGN** | Architect (+ Reviewer threat model) | ADR-001..006 + saas-patterns Part 1 design | "Phase 2 — ADRs + Architectural Foundations" |
 | **3 SCAFFOLD** | DevOps + Git-Ops | saas-patterns Part 1 module list | "Phase 3 — Backend Module Scaffold" |
 | **3.5 DESIGN UI/UX** | Designer | saas-patterns Part 2 | "Phase 3.5 — Design Tokens + Drill-Down Spec" |
 | **4 IMPLEMENT** | Backend + Frontend + Writer | saas-patterns Parts 1+2 | "Phase 4 — Implementation Per Module" |
@@ -465,7 +465,7 @@ This checklist synthesizes:
 
 ## How to use this doc with dev-squad
 
-**For new SaaS build:** invoke `/dev-squad build "<description>"`. Coordinator at Phase 0 references this doc for SaaS-mode detection + ADR-001..005 mandate. Phase 6 readiness gate runs every Phase 6 checklist item.
+**For new SaaS build:** invoke `/dev-squad build "<description>"`. Coordinator at Phase 0 references this doc for SaaS-mode detection + Step 2.5b SaaS Intake (10-Q) + ADR-001..006 mandate (006 = identity hierarchy NEW v4.15.0). Phase 6 readiness gate runs every Phase 6 checklist item.
 
 **For existing SaaS extension or hardening:** invoke `/dev-squad readiness`. Coordinator dispatches reviewer + auditor + architect parallel for 3 readiness reports against this checklist + product-surface 10-domain audit (saas-readiness Part 3).
 

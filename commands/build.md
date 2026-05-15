@@ -76,7 +76,7 @@ Agent tool with:
       Question: "I detected possible SaaS-class scope. Multi-tenancy, billing, RLS, and audit logs are heavy patterns — they modify your data model and add 8 backend modules (tenants, plans, billing, webhooks, api-keys, audit-log, notifications, admin). Enable SaaS scope?"
       Options (in order):
         - "No, build a standard app" → DEFAULT/RECOMMENDED. Lock SaaS Mode: disabled. No multi-tenancy, no billing module, no audit logs. Standard zero-to-ship.
-        - "Yes, full SaaS scope" → Lock SaaS Mode: enabled. Load saas-patterns + saas-readiness. Scaffold extends to 8 SaaS modules. Architect produces ADR-001..005.
+        - "Yes, full SaaS scope" → Lock SaaS Mode: enabled. Load saas-patterns + saas-readiness. Scaffold extends to 8 SaaS modules. Architect produces ADR-001..006 (006 = identity hierarchy NEW v4.15.0).
         - "Yes, but skip admin dashboard" → Lock SaaS Mode: enabled, drill-down disabled. Load saas-patterns Part 1 only.
       ```
     - **If user dismisses/cancels the question OR returns no answer**: DEFAULT TO "No, standard app". Lock master-plan.md to `SaaS Mode: disabled`. Never apply SaaS patterns silently.

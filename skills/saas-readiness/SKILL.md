@@ -231,7 +231,7 @@ Deploy script reads `prisma migrate status` to ensure DB is up-to-date before sw
 
 ## 4. Compliance Lifecycle (Data Subject Rights)
 
-Multi-tenant SaaS handling user data must comply with regional law. Architect MUST decide ADR-005 (compliance scope) alongside ADR-001..004 (saas-patterns Bootstrap Context).
+Multi-tenant SaaS handling user data must comply with regional law. Architect MUST decide ADR-005 (compliance scope) alongside ADR-001..004 + ADR-006 identity hierarchy (saas-patterns Bootstrap Context).
 
 | Regulation | Region | Effective | Key obligations |
 |---|---|---|---|

@@ -2,6 +2,39 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.15.4] — Pre-push audit follow-up: 6 stale ADR-001..005 refs cleaned
+
+**Why:** Pre-push audit (user-requested "audit dulu biar nggak break" before pushing 7 local commits) ran systematic checks on the v4.15.3 result: JSON validity, bash/python syntax, YAML frontmatter, hook executability, cross-file consistency. **All passed except ADR mandate consistency** — v4.15.3's ADR-001..005 → 001..006 sweep missed 6 references that needed updating to match the new canonical ADR-006 = identity hierarchy definition.
+
+This release is purely follow-up cleanup of v4.15.3's incomplete sweep. No new functionality.
+
+### Changed — 6 files (ADR mandate drift cleanup)
+
+- `agents/dev-squad/architect.md` SaaS Scope Safety Default block: "do NOT produce ADR-001..005" → "ADR-001..006"
+- `docs/saas-build-checklist.md` Phase Map table row 2 DESIGN: ADR-001..005 → ADR-001..006
+- `docs/saas-build-checklist.md` "How to use this doc" section: ADR-001..005 mandate → ADR-001..006 + Step 2.5b SaaS Intake reference
+- `skills/dev-squad/config.json` architect `conditional_skills.load_when`: ADR-001..005 → ADR-001..006 with identity hierarchy note
+- `skills/dev-squad/config.json` workflows.zero_to_ship description: Phase 2 DESIGN ADR list updated
+- `commands/build.md` Phase 0 Step 2.5 confirmation option "Yes, full SaaS scope": ADR-001..005 → ADR-001..006
+- `skills/saas-readiness/SKILL.md` §4 Compliance Lifecycle: noted ADR-006 identity hierarchy alongside ADR-001..004
+
+### Audit summary (other checks all clean)
+
+- ✅ JSON validity: all 9 files (plugin/marketplace + 5 workflows + 2 configs + hooks.json) parse + match schema
+- ✅ Bash syntax: all 12 hook scripts pass `bash -n`
+- ✅ Python syntax: `guard-unsafe-code.py` compiles
+- ✅ YAML frontmatter: all 11 agent files valid
+- ✅ Hook executability: all `*.sh` + `*.py` are `chmod +x`
+- ✅ Version consistency: all 7 versioned files at 4.15.4 (post-bump)
+- ✅ Phantom subagent refs: only in anti-pattern documentation context (Gotcha 2, Gotcha 3)
+- ✅ SaaS keyword threshold: no remaining `2+ match` references
+- ✅ Phase 5 id "verify" → "review": only zero-to-ship.json affected; bug-fix.json's own Phase 4 "verify" is separate workflow (correct, not stale)
+- ✅ Workflow schema validator: exits 0, passes drift checks
+
+### Migration
+
+None. Docs-only. Auto-pulls on next session.
+
 ## [4.15.3] — Workflow JSON drift sync + hooks audit + ADR-006 cross-file consistency + MCP naming clarification
 
 **Why:** Systematic audit (3 parallel agents — workflow JSON, hooks, MCP) revealed silent-failure risks accumulated since the last formal consistency sweep (v4.13.1, 4 versions ago):
