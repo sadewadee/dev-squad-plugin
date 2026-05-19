@@ -66,92 +66,60 @@ function fail(code: string, message: string, details?: FieldError[]): ApiRespons
 }
 ```
 
-## useDebounce Hook
+## Discriminated Unions for State
 
-Reusable debounce hook for React:
-
-```typescript
-import { useState, useEffect } from "react";
-
-function useDebounce<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-
-  return debounced;
-}
-```
-
-### Usage
+Model finite states explicitly — let TypeScript prove exhaustiveness.
 
 ```typescript
-function SearchInput() {
-  const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query, 300);
+type RequestState<T> =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: T }
+  | { status: "error"; error: Error };
 
-  useEffect(() => {
-    if (debouncedQuery) {
-      fetchResults(debouncedQuery);
-    }
-  }, [debouncedQuery]);
-
-  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
-}
-```
-
-## Repository Pattern
-
-Generic CRUD repository with TypeScript:
-
-```typescript
-interface Repository<T, CreateInput, UpdateInput> {
-  findById(id: string): Promise<T | null>;
-  findAll(filter?: Partial<T>): Promise<T[]>;
-  create(data: CreateInput): Promise<T>;
-  update(id: string, data: UpdateInput): Promise<T>;
-  delete(id: string): Promise<void>;
-}
-```
-
-### Implementation Example
-
-```typescript
-class UserRepository implements Repository<User, CreateUserInput, UpdateUserInput> {
-  constructor(private db: Database) {}
-
-  async findById(id: string): Promise<User | null> {
-    return this.db.query<User>("SELECT * FROM users WHERE id = $1", [id]);
-  }
-
-  async findAll(filter?: Partial<User>): Promise<User[]> {
-    // Build query from filter
-    return this.db.queryAll<User>(query, params);
-  }
-
-  async create(data: CreateUserInput): Promise<User> {
-    return this.db.query<User>(
-      "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *",
-      [data.name, data.email]
-    );
-  }
-
-  async update(id: string, data: UpdateUserInput): Promise<User> {
-    // Build SET clause from data
-    return this.db.query<User>(query, params);
-  }
-
-  async delete(id: string): Promise<void> {
-    await this.db.query("DELETE FROM users WHERE id = $1", [id]);
+function render<T>(state: RequestState<T>) {
+  switch (state.status) {
+    case "idle":    return <Empty />;
+    case "loading": return <Spinner />;
+    case "success": return <Data value={state.data} />;
+    case "error":   return <ErrorView error={state.error} />;
+    // No default — exhaustiveness checked by TS
   }
 }
 ```
 
-### Rules
+## Brand Types for Domain IDs
 
-- One repository per domain entity
-- Repositories are injected into services, never instantiated inline
-- All database queries live inside repositories, not in route handlers or services
-- Use transactions at the service level when coordinating multiple repositories
+Stop mixing `userId: string` and `orderId: string` at call sites.
+
+```typescript
+type Brand<T, B> = T & { readonly __brand: B };
+type UserId  = Brand<string, "UserId">;
+type OrderId = Brand<string, "OrderId">;
+
+function asUserId(s: string): UserId { return s as UserId; }
+
+function loadUser(id: UserId) { /* ... */ }
+loadUser(orderIdFromSomewhere); // TS error — different brand
+```
+
+## `satisfies` Over Type Assertion
+
+```typescript
+// BAD: loses literal inference
+const palette: Record<string, string> = { brand: "#0066ff", danger: "#ff0033" };
+palette.brand; // string, not "#0066ff"
+
+// GOOD: validates shape, keeps literal
+const palette = {
+  brand:  "#0066ff",
+  danger: "#ff0033",
+} satisfies Record<string, string>;
+palette.brand; // "#0066ff"
+```
+
+## See Also
+
+- React/JSX patterns → `skills/frontend-patterns/SKILL.md` (core) + `skills/react-stack-2026/SKILL.md` (React 19 / Next.js 15 / TanStack Query / shadcn)
+- Backend API patterns (repository, service layer, middleware) → `skills/backend-patterns/SKILL.md`
+- Hooks / debounce / data fetching → `skills/frontend-patterns/SKILL.md`
