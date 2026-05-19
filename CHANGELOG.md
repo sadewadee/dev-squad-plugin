@@ -2,6 +2,52 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.16.0] — Outdated-content sweep: P0 security fixes + P1 facts + phantom skill cleanup + hook hardening
+
+**Why:** User-requested freshness audit ("update skill, rules, hooks, etc agar tidak outdate"). Three parallel audit agents found 2 P0 + 17 P1 + 15 P2 across skills/rules content, hook integrity, and registry refs. This release executes the P0 + critical-P1 subset (per user "P0 + P1 critical only, sequential 1 commit per kategori"). Cosmetic P2 deferred.
+
+Minor bump (4.15.x → 4.16.0) justified by P0 security pattern fixes in skills.
+
+### Commit 1 — Content drift fixes (skills/)
+
+**P0 — agent was teaching bad code:**
+- `skills/saas-patterns/SKILL.md` RLS middleware: replaced ``db.query(`SET LOCAL ... = '${req.user.id}'`)`` template-literal interpolation with parameterized `db.query('SELECT set_config($1, $2, true)', [...])`. Pattern was teaching a SQL injection vector.
+- `skills/security-review/SKILL.md` CSRF section: `csurf` package was archived/deprecated in 2023. Replaced with `csrf-csrf` (maintained fork, double-submit pattern) + note that Next.js Server Actions have built-in Origin check.
+
+**P1 — factual corrections (skills were misadvising agents):**
+- `skills/saas-readiness/SKILL.md` DORA row: "Jan 2026" → "In force Jan 17 2025" (already 4+ months past effective).
+- `skills/saas-readiness/SKILL.md` EU AI Act: clarified Article 5 prohibitions effective Feb 2 2025; high-risk rules Aug 2 2026.
+- `skills/saas-patterns/SKILL.md` SSO library recommendations: removed Lucia (archived Dec 2024), added Better Auth + Clerk to list.
+- `skills/saas-readiness/SKILL.md` CI/CD template: pnpm/action-setup@v4 → @v5, Node 20 → 22 (Active LTS through Apr 2027).
+- 4 files Postgres image bump 16 → 17 (saas-readiness x2, dev-squad SKILL, golang-testing).
+- `skills/golang-testing/SKILL.md` go-version 1.22 → 1.24.
+
+### Commit 2 — Phantom skill cleanup (agents/)
+
+7 skills referenced in agent `skills:` frontmatter that don't exist in any known marketplace → silent no-op on every dispatch (false sense that named patterns were guiding agents). Removed from frontmatter only; body sections kept (knowledge is inline).
+
+- `architect.md`: removed `tool-design`
+- `coordinator.md`: removed `context-fundamentals`, `context-optimization` + 2 install-skill commands pointing to non-existent GitHub paths (supabase-postgres + react-best-practices)
+- `frontend.md`: removed `react-best-practices`, `platform-design-skills`
+- `reviewer.md`: removed `evaluation`
+- `backend.md`: removed `supabase-postgres-best-practices`
+
+Kept `database-schema-designer` + `mcp-builder` — resolve in claude-code-plugins-plus / anthropic-agent-skills marketplaces.
+
+### Commit 3 — Hook security hardening (hooks/)
+
+- `guard-dangerous-ops.sh`: `grep -qi` → `grep -qiF` (fixed-string mode). Regex metacharacters in fork-bomb (`{`, `(`, `)`) and `mkfs\.` patterns previously could fail to match. Added kubectl delete namespace/ns, terraform destroy, aws s3 rb, rm-rf-HOME variant.
+- `guard-unsafe-code.py`: added `subprocess_shell_true` pattern (substring `shell=True`). Python shell-injection vector that os.system pattern alone did not catch. Added NotebookEdit support — extract_content() reads `new_source`, tool_name allowlist + file_path fallback updated. Previously eval/pickle written into notebook cells bypassed the guard entirely.
+- `hooks.json`: PreToolUse matcher `Write|Edit|MultiEdit` → `Write|Edit|MultiEdit|NotebookEdit` so new guard path fires. Wired `TeammateIdle` event to existing `check-teammate.sh` (was orphan script — TeammateIdle is a real Claude Code blocking event).
+
+### Deferred to later releases (P1 cosmetic + all P2)
+
+- `skills/frontend-patterns/SKILL.md` custom `useQuery` hook (collides with TanStack Query v5 export, teaches deprecated useEffect+fetch). Pattern refactor — larger churn.
+- `saas-readiness-sprint.json` ADR-006/007 cosmetic drift (already has "or successor" disclaimer).
+- auto-lint + stop-verify biome detection.
+- validate-task pnpm/bun/yarn/Cargo/pyproject detection.
+- Missing companions registry entries (ralph-loop, simplify, issuetracker).
+
 ## [4.15.4] — Pre-push audit follow-up: 6 stale ADR-001..005 refs cleaned
 
 **Why:** Pre-push audit (user-requested "audit dulu biar nggak break" before pushing 7 local commits) ran systematic checks on the v4.15.3 result: JSON validity, bash/python syntax, YAML frontmatter, hook executability, cross-file consistency. **All passed except ADR mandate consistency** — v4.15.3's ADR-001..005 → 001..006 sweep missed 6 references that needed updating to match the new canonical ADR-006 = identity hierarchy definition.
