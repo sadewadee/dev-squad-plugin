@@ -13,7 +13,6 @@ skills:
   - dev-squad:backend-patterns
   - dev-squad:postgres-patterns
   - database-schema-designer
-  - tool-design
 ---
 
 # System Architect Agent

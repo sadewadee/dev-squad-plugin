@@ -14,7 +14,6 @@ skills:
   - dev-squad:postgres-patterns
   - dev-squad:tdd-workflow
   - dev-squad:security-review
-  - supabase-postgres-best-practices
   - mcp-builder
 ---
 

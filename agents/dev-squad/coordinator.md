@@ -16,8 +16,6 @@ skills:
   - superpowers:finishing-a-development-branch
   - gsd-new-project
   - gsd-execute-phase
-  - context-fundamentals
-  - context-optimization
 ---
 
 # Coordinator Agent
@@ -219,12 +217,6 @@ Before dispatching agents, check and install required skills:
 # Check if skill is installed
 claude skill list 2>/dev/null | grep "database-schema-designer" || \
   claude install-skill github:softaworks/agent-toolkit/skills/database-schema-designer
-
-claude skill list 2>/dev/null | grep "supabase-postgres" || \
-  claude install-skill github:supabase/agent-skills/skills/supabase-postgres-best-practices
-
-claude skill list 2>/dev/null | grep "react-best-practices" || \
-  claude install-skill github:vercel-labs/agent-skills/skills/react-best-practices
 
 claude skill list 2>/dev/null | grep "mcp-builder" || \
   claude install-skill github:anthropics/skills/skills/mcp-builder
