@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Guard Unsafe Code — PreToolUse hook for Edit/Write/MultiEdit.
+Guard Unsafe Code — PreToolUse hook for Edit/Write/MultiEdit/NotebookEdit.
 
-Detects 9 dangerous code patterns being written by dev-squad agents and
+Detects 10 dangerous code patterns being written by dev-squad agents and
 warns (advisory mode) or blocks (strict mode). Patterns ported from
 security-guidance plugin.
 
@@ -13,7 +13,8 @@ Modes:
 
 Patterns covered:
   - eval / new Function / pickle / os.system          (code injection)
-  - child_process.exec / execSync                     (shell injection)
+  - subprocess.run/Popen with shell=True              (shell injection, Python)
+  - child_process.exec / execSync                     (shell injection, JS)
   - dangerouslySetInnerHTML / .innerHTML= / document.write   (XSS)
   - GitHub Actions workflow ${{ untrusted }} in run:  (CI injection)
 """
@@ -123,6 +124,15 @@ SECURITY_PATTERNS = [
             "with list args (no shell=True), or shlex.quote for escaping."
         ),
     },
+    {
+        "name": "subprocess_shell_true",
+        "substrings": ["shell=True"],
+        "reminder": (
+            "subprocess.run(..., shell=True) / Popen(..., shell=True) with "
+            "untrusted input = shell injection. Pass args as a list (default "
+            "shell=False), or use shlex.quote() if a shell is unavoidable."
+        ),
+    },
 ]
 
 
@@ -186,6 +196,8 @@ def extract_content(tool_name: str, tool_input: dict) -> str:
     if tool_name == "MultiEdit":
         edits = tool_input.get("edits", []) or []
         return "\n".join((e.get("new_string", "") or "") for e in edits)
+    if tool_name == "NotebookEdit":
+        return tool_input.get("new_source", "") or ""
     return ""
 
 
@@ -215,11 +227,14 @@ def main() -> int:
         return 0  # don't block on parse failure
 
     tool_name = data.get("tool_name", "")
-    if tool_name not in ("Edit", "Write", "MultiEdit"):
+    if tool_name not in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
         return 0
 
     tool_input = data.get("tool_input", {}) or {}
-    file_path = tool_input.get("file_path", "") or ""
+    # NotebookEdit uses notebook_path instead of file_path
+    file_path = (
+        tool_input.get("file_path", "") or tool_input.get("notebook_path", "") or ""
+    )
     if not file_path:
         return 0
 

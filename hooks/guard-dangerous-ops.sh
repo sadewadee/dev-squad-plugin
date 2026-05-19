@@ -16,7 +16,8 @@ fi
 BLOCKED_PATTERNS=(
   "rm -rf /"
   "rm -rf ~"
-  "rm -rf \."
+  "rm -rf ."
+  'rm -rf $HOME'
   "DROP DATABASE"
   "DROP TABLE"
   "TRUNCATE TABLE"
@@ -30,13 +31,17 @@ BLOCKED_PATTERNS=(
   "git push -f origin master:"
   "git reset --hard origin"
   ":(){ :|:& };:"
-  "mkfs\."
+  "mkfs."
   "dd if="
   "> /dev/sda"
+  "kubectl delete namespace"
+  "kubectl delete ns "
+  "terraform destroy"
+  "aws s3 rb"
 )
 
 for pattern in "${BLOCKED_PATTERNS[@]}"; do
-  if echo "$COMMAND" | grep -qi "$pattern"; then
+  if echo "$COMMAND" | grep -qiF "$pattern"; then
     echo "BLOCKED by dev-squad safety guard: command matches dangerous pattern '$pattern'. If this is intentional, run it manually outside dev-squad."
     exit 2
   fi
