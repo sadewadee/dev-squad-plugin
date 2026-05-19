@@ -174,44 +174,37 @@ function useToggle(initial = false): [boolean, () => void, (value: boolean) => v
 const [isOpen, toggleOpen] = useToggle(false);
 ```
 
-### useQuery (simplified data fetching)
+### Data fetching — do NOT roll your own
+
+Hand-rolling a `useQuery` hook with `useEffect` + `setState` is an anti-pattern. It misses:
+- Request deduplication across components
+- Background refetch on focus / reconnect / interval
+- Cache invalidation + optimistic updates
+- Stale-while-revalidate
+- Race condition handling (stale response overwriting fresh one)
+- Suspense + Error Boundary integration
+
+**Use TanStack Query v5** (canonical) — or React Server Components for server-rendered data.
 
 ```tsx
-interface UseQueryResult<T> {
-  data: T | undefined;
-  error: Error | null;
-  isLoading: boolean;
-  refetch: () => void;
+import { useQuery } from "@tanstack/react-query";
+
+function UserList() {
+  const { data: users, isPending, error } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => api.getUsers(),
+    staleTime: 30_000, // consider fresh for 30s, skip refetch
+  });
+
+  if (isPending) return <Skeleton />;
+  if (error) throw error; // let Error Boundary handle
+  return <ul>{users.map((u) => <li key={u.id}>{u.name}</li>)}</ul>;
 }
-
-function useQuery<T>(key: string, fetcher: () => Promise<T>): UseQueryResult<T> {
-  const [data, setData] = useState<T>();
-  const [error, setError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetch = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await fetcher();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetcher]);
-
-  useEffect(() => {
-    fetch();
-  }, [key, fetch]);
-
-  return { data, error, isLoading, refetch: fetch };
-}
-
-// Usage
-const { data: users, isLoading, error } = useQuery("users", () => api.getUsers());
 ```
+
+Mutations use `useMutation`. Real-time use `useSubscription` (TanStack Query v5 sync). For React Server Components, fetch directly in the async server component — no hook needed.
+
+If you genuinely need a 5-line debounced fetch inside a single component, write `useEffect` inline — don't extract a named hook that looks like a library export.
 
 ### useDebounce
 
@@ -350,16 +343,36 @@ function CartBadge() {
 
 ## 6. Performance
 
-### Memoization
+### Memoization — React Compiler first
+
+React 19's React Compiler (stable, opt-in via `babel-plugin-react-compiler`) auto-memoizes components, values, and callbacks. **For projects using the compiler, write idiomatic React and let the compiler optimize.** Manual `useMemo`/`useCallback`/`memo()` are largely unnecessary.
 
 ```tsx
-// Memoize expensive computations
+// React Compiler-friendly: write naturally
+function ProductList({ items, onSelect }: Props) {
+  const sortedItems = items.slice().sort((a, b) => a.name.localeCompare(b.name));
+  const handleSelect = (id: string) => {
+    setSelectedId(id);
+    onSelect?.(id);
+  };
+  return sortedItems.map((item) => (
+    <Row key={item.id} item={item} onSelect={handleSelect} />
+  ));
+}
+```
+
+**Manual memoization is still appropriate when**:
+1. Project does NOT use React Compiler (most legacy codebases)
+2. Profiler shows a specific component re-rendering measurably hot
+3. Passing a stable reference is part of the contract (e.g. `useEffect` dep, `useMemo` for a derived value used in deps)
+
+```tsx
+// Legacy / measured-hot path: manual memoization OK
 const sortedItems = useMemo(
   () => items.slice().sort((a, b) => a.name.localeCompare(b.name)),
   [items]
 );
 
-// Memoize callbacks passed to children
 const handleSelect = useCallback(
   (id: string) => {
     setSelectedId(id);
@@ -368,15 +381,44 @@ const handleSelect = useCallback(
   [onSelect]
 );
 
-// Memoize components that receive stable props
 const MemoizedRow = memo(function Row({ item, onSelect }: RowProps) {
-  return (
-    <tr onClick={() => onSelect(item.id)}>
-      <td>{item.name}</td>
-      <td>{item.price}</td>
-    </tr>
-  );
+  return <tr onClick={() => onSelect(item.id)}>...</tr>;
 });
+```
+
+**Anti-pattern**: blanket-wrapping every component in `memo()` "to be safe". Memoization has its own cost (reference comparison, cache storage). Profile first.
+
+### Concurrent rendering (React 18+)
+
+For non-urgent updates that would otherwise jank the UI:
+
+```tsx
+import { useTransition, useDeferredValue } from "react";
+
+// useTransition — explicit non-urgent update
+function SearchPage() {
+  const [query, setQuery] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <>
+      <input
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);              // urgent: input feedback
+          startTransition(() => setResults([])); // non-urgent: clear results
+        }}
+      />
+      {isPending && <Spinner />}
+    </>
+  );
+}
+
+// useDeferredValue — let React render with stale value while computing fresh
+function SlowList({ filter }: { filter: string }) {
+  const deferredFilter = useDeferredValue(filter);
+  // expensive render uses deferredFilter, stays interactive
+}
 ```
 
 ### Code Splitting with Lazy Loading
@@ -521,49 +563,49 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, error: null };
+// Use react-error-boundary (community standard 2026). React still requires
+// class boundaries internally, but the library wraps that for you with a
+// functional API + reset capability + suspense integration.
+import { ErrorBoundary } from "react-error-boundary";
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    this.props.onError?.(error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <div role="alert" className="p-6 bg-red-50 border border-red-200 rounded-lg">
-          <h2 className="text-lg font-semibold text-red-800">Something went wrong</h2>
-          <p className="mt-2 text-red-600">{this.state.error?.message}</p>
-          <button
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
-            onClick={() => this.setState({ hasError: false, error: null })}
-          >
-            Try Again
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div role="alert" className="p-6 bg-red-50 border border-red-200 rounded-lg">
+      <h2 className="text-lg font-semibold text-red-800">Something went wrong</h2>
+      <p className="mt-2 text-red-600">{error.message}</p>
+      <button
+        className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
+        onClick={resetErrorBoundary}
+      >
+        Try Again
+      </button>
+    </div>
+  );
 }
 
 // Usage: wrap sections that can fail independently
 function Dashboard() {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <ErrorBoundary fallback={<WidgetError name="Revenue" />}>
+      <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => queryClient.resetQueries()}>
         <RevenueChart />
       </ErrorBoundary>
-      <ErrorBoundary fallback={<WidgetError name="Users" />}>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
         <UserStats />
       </ErrorBoundary>
     </div>
   );
 }
+```
+
+**Pair with Suspense**: TanStack Query's `throwOnError` + Suspense + ErrorBoundary gives a clean async loading/error model.
+
+```tsx
+<ErrorBoundary FallbackComponent={ErrorFallback}>
+  <Suspense fallback={<Skeleton />}>
+    <UserList /> {/* useSuspenseQuery inside */}
+  </Suspense>
+</ErrorBoundary>
 ```
 
 ---
