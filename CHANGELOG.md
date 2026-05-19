@@ -2,6 +2,58 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.17.0] — React 2026 stack: frontend-patterns refresh + new react-stack-2026 skill
+
+**Why:** v4.16.0 deferred 2 P1 frontend findings (useQuery anti-pattern, class ErrorBoundary) and the audit also surfaced that `frontend-patterns/SKILL.md` had **0 mentions** of React 19 / Server Components / Server Actions / TanStack Query v5 / shadcn / Tailwind v4 / Vite 6 / Vitest 3. Users on the modern React stack got guidance that taught them the React 18 way.
+
+Split structure (not 1 fat skill) — keep token budget tight:
+- `frontend-patterns` (core, framework-agnostic React) — refreshed in place
+- `react-stack-2026` (NEW, framework-specific) — loaded conditionally
+
+### Commit 1 — frontend-patterns/SKILL.md (3 outdated sections replaced)
+
+- **useQuery custom hook → removed**. Collided with TanStack Query v5 export, taught fetch-in-useEffect anti-pattern. Replaced with "do NOT roll your own" guidance pointing to TanStack Query v5 or RSC.
+- **Memoization section → React Compiler-first**. Auto-memoization is the default for React 19. Manual `useMemo`/`useCallback`/`memo()` kept as "when manual is still appropriate" (legacy / measured-hot / dep stability). Added Concurrent rendering subsection (`useTransition` + `useDeferredValue`).
+- **Class ErrorBoundary → `react-error-boundary`** (community standard). Added Suspense pairing pattern.
+
+### Commit 2 — rules/typescript/patterns.md (drift cleanup + TS-specific additions)
+
+Removed:
+- useDebounce hook (duplicate of frontend-patterns — it's a React hook, not a TS pattern)
+- Repository pattern (backend code, misplaced — lives in backend-patterns)
+
+Added genuine TypeScript-specific patterns:
+- Discriminated unions for finite state with exhaustiveness checking
+- Brand types for domain IDs (UserId vs OrderId distinction)
+- `satisfies` operator vs type assertion
+
+Added See Also pointing to the right skill per concern.
+
+### Commit 3 — NEW skills/react-stack-2026/SKILL.md (707 lines, 10 sections)
+
+Sibling skill to frontend-patterns. **Loaded conditionally**, not auto-loaded for every frontend dispatch.
+
+1. **React 19 essentials** — `use()` hook (promises + conditional context), Server Actions, `useActionState` + `useFormStatus`, `useOptimistic`, ref-as-prop (no more `forwardRef`), document metadata as JSX
+2. **Next.js 15 App Router** — RSC/client boundary, streaming Suspense, parallel + intercepting routes, `generateMetadata`, Partial Prerendering, React `cache()`
+3. **TanStack Query v5** — `useSuspenseQuery`, mutations with optimistic update + rollback, RSC hydration boundary
+4. **Forms** — react-hook-form + Zod (client) and Conform (progressive enhancement with Server Actions) with pick-rule
+5. **shadcn/ui composition** — variants over className overrides, primitives over wrapper-of-wrapper, CSS variable theming
+6. **Tailwind v4 CSS-first config** — `@theme` directive, Vite plugin
+7. **Build & Tooling** — Vite 6 + SWC plugin, React Compiler setup, Biome 2 vs ESLint+Prettier
+8. **Testing** — Vitest 3 + Testing Library, Playwright E2E, RSC test note
+9. **Anti-patterns table** — 9 patterns to reject with what to use instead
+10. **Decision trees** — where to fetch, where to `'use client'`, how to memoize
+
+### Commit 4 — Wire skill into frontend + designer agents
+
+- `agents/dev-squad/frontend.md` frontmatter `skills:` adds `dev-squad:react-stack-2026`
+- `agents/dev-squad/designer.md` frontmatter `skills:` adds `dev-squad:react-stack-2026`
+- `skills/dev-squad/config.json` adds conditional_skills entry for both agents with `load_when` guards:
+  - Frontend: `package.json` has `react@19+` / `next@15+` / `@tanstack/react-query@5+`, OR App Router (`app/` directory), OR `'use server'`/`'use client'` directive detected
+  - Designer: target stack is React 19 / Next.js 15 — for component inventory + responsive spec alignment with shadcn/Tailwind v4
+
+Skipped for React 18 SPAs without modern stack — keeps token budget tight.
+
 ## [4.16.0] — Outdated-content sweep: P0 security fixes + P1 facts + phantom skill cleanup + hook hardening
 
 **Why:** User-requested freshness audit ("update skill, rules, hooks, etc agar tidak outdate"). Three parallel audit agents found 2 P0 + 17 P1 + 15 P2 across skills/rules content, hook integrity, and registry refs. This release executes the P0 + critical-P1 subset (per user "P0 + P1 critical only, sequential 1 commit per kategori"). Cosmetic P2 deferred.
