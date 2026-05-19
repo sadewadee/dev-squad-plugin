@@ -10,6 +10,7 @@ skills:
   - frontend-design:frontend-design
   - dev-squad:frontend-patterns
   - dev-squad:tdd-workflow
+  - dev-squad:react-stack-2026
 ---
 
 # Frontend Developer Agent

@@ -13,6 +13,7 @@ skills:
   - superpowers-chrome:browsing
   - playwright-skill:playwright-skill
   - dev-squad:frontend-patterns
+  - dev-squad:react-stack-2026
 ---
 
 # UI/UX Designer Agent
