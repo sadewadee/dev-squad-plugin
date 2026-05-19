@@ -774,7 +774,7 @@ Summary:
 - Indexes: 7 indexes (email, role_id, etc.)
 - Constraints: Foreign keys, unique constraints, NOT NULL
 - Migration: Reversible with down migration
-- Docker: postgres:16-alpine with volume persistence
+- Docker: postgres:17-alpine with volume persistence
 
 Files created:
 - prisma/schema.prisma

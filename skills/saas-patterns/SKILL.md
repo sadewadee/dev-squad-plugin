@@ -131,9 +131,11 @@ export async function tenantContext(req: Request, res: Response, next: NextFunct
   req.tenant = tenant;
   req.membership = membership;
 
-  // Set Postgres session var for RLS (if using shared DB strategy)
-  await db.query(`SET LOCAL app.current_user_id = '${req.user.id}'`);
-  await db.query(`SET LOCAL app.current_tenant_id = '${tenant.id}'`);
+  // Set Postgres session var for RLS (if using shared DB strategy).
+  // CRITICAL: always parameterize. Template-literal interpolation here is a SQL injection vector
+  // even with UUIDs from "trusted" sources — never trust, always bind.
+  await db.query('SELECT set_config($1, $2, true)', ['app.current_user_id', req.user.id]);
+  await db.query('SELECT set_config($1, $2, true)', ['app.current_tenant_id', tenant.id]);
 
   next();
 }
@@ -953,7 +955,7 @@ Login flow:
 3. If no match + `enforced` for the domain, reject ("contact your admin")
 4. Otherwise allow password / regular auth
 
-Use battle-tested libraries (Auth.js / Lucia / WorkOS / Auth0) — don't roll SAML by hand.
+Use battle-tested libraries (Auth.js v5, WorkOS, Auth0, Clerk, Better Auth) — don't roll SAML by hand. **Avoid Lucia** — archived by author Dec 2024, no longer maintained.
 
 ---
 

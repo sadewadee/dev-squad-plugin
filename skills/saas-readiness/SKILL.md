@@ -108,7 +108,7 @@ Architecture without backup automation = ship-blocker. First DB corruption = tot
 # docker-compose.yml — add pg-backup service
 services:
   pg-backup:
-    image: prodrigestivill/postgres-backup-local:16
+    image: prodrigestivill/postgres-backup-local:17
     restart: always
     volumes:
       - ./backups:/backups
@@ -155,7 +155,7 @@ For ClickHouse / other stateful: each has its own backup pattern. Don't assume "
 
 ```bash
 # scripts/restore-drill.sh
-docker run -d --name drill-db postgres:16
+docker run -d --name drill-db postgres:17
 gunzip -c latest.sql.gz | docker exec -i drill-db psql -U postgres
 docker exec drill-db psql -U postgres -c "
   SELECT count(*) FROM users;
@@ -186,9 +186,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: 'pnpm' }
+        with: { node-version: 22, cache: 'pnpm' }
       - run: pnpm install --frozen-lockfile
       - name: Type check
         run: pnpm tsc --noEmit
@@ -239,9 +239,9 @@ Multi-tenant SaaS handling user data must comply with regional law. Architect MU
 | **PDP** (UU PDP) | Indonesia | In force | Right to access, erasure, withdrawal of consent; data localization for some sectors |
 | **CCPA / CPRA** | California | In force | Right to know, delete, opt-out of sale; verifiable consumer requests |
 | **LGPD** | Brazil | In force | Similar to GDPR — access, erasure, portability |
-| **EU AI Act** | EU (extraterritorial) | **Aug 2026** | If SaaS uses AI (LLM, recommendation, content moderation, etc.) AND serves EU customers: conformity assessment + transparency disclosures. Penalties up to **7% global annual turnover**. Even AI-free SaaS may need disclosures if processing EU customer data. |
+| **EU AI Act** | EU (extraterritorial) | **In force Aug 1 2024; Art. 5 prohibitions Feb 2 2025; high-risk rules Aug 2 2026** | If SaaS uses AI (LLM, recommendation, content moderation, etc.) AND serves EU customers: conformity assessment + transparency disclosures from Aug 2026. Prohibited-AI rules (social scoring, manipulative AI, biometric categorisation by race/etc.) ALREADY enforceable. Penalties up to **7% global annual turnover**. Even AI-free SaaS may need disclosures if processing EU customer data. |
 | **EU CRA** (Cyber Resilience Act) | EU | **Vuln reporting Sep 11 2026 / full Dec 11 2027** | Pure SaaS exempt — but installable components (browser extensions, desktop/mobile apps, agent software, SDKs, CLI tools) are IN scope. Required: documented vulnerability handling + ENISA reporting channel + SBOM. Penalties up to **€15M or 2.5% global turnover**. |
-| **DORA** (Digital Operational Resilience Act) | EU financial sector | **Jan 2026** | Applies to financial institutions + their IT service providers (incl. SaaS). Required: severe ICT incident notification within hours, threat-led penetration testing, third-party risk management. Verify scope if serving EU financial customers. |
+| **DORA** (Digital Operational Resilience Act) | EU financial sector | **In force Jan 17 2025** | Applies to financial institutions + their IT service providers (incl. SaaS). Required: severe ICT incident notification within hours, threat-led penetration testing, third-party risk management. Verify scope if serving EU financial customers. |
 
 ### 4.1 Data export endpoint (Right to access)
 
@@ -998,8 +998,8 @@ Most projects don't need this. Only enterprise tier customers ask for it.
 | **SOC 2 Type 2** (proof over 3-12 months) | P2 (Enterprise) | Required for $10k+/mo enterprise deals. Path: Type 1 first, then Type 2 readiness. |
 | PCI DSS scope (if storing card) | Core IF storing cards | Use Stripe / provider tokenization to STAY OUT of scope |
 | GDPR breach notification SLA (72h) | P1 (regional) | Document procedure |
-| **DORA incident reporting** | P1 (regional EU financial) | Severe ICT incident notification within hours; threat-led pen-test; third-party risk mgmt. Effective Jan 2026. |
-| **EU AI Act conformity** | P1 (regional EU + AI features) | Aug 2026 enforceable. Conformity assessment + transparency disclosures if SaaS uses AI. Penalties up to 7% global turnover. |
+| **DORA incident reporting** | P1 (regional EU financial) | Severe ICT incident notification within hours; threat-led pen-test; third-party risk mgmt. **Effective Jan 17 2025 — already in force.** |
+| **EU AI Act conformity** | P1 (regional EU + AI features) | Art. 5 prohibited-AI rules effective Feb 2025; high-risk conformity + transparency disclosures from Aug 2026. Penalties up to 7% global turnover. |
 | **CRA SBOM + vuln reporting** | P1 (regional EU + installable component) | If SaaS has browser extension / desktop app / mobile app / agent / SDK / CLI: SBOM + ENISA reporting channel. Sep 11 2026 / Dec 11 2027. |
 | Data residency (region selection) | P2 (Enterprise) | EU customers want EU data |
 

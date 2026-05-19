@@ -319,9 +319,16 @@ app.use(cors({
 }));
 
 // For SPA with JWT: use Authorization header (not cookies) -- inherently CSRF-safe
-// For cookie-based auth: use csrf middleware
-import csrf from "csurf";
-app.use(csrf({ cookie: { httpOnly: true, sameSite: "strict" } }));
+// For cookie-based auth: SameSite=Lax/Strict + Origin header check (csurf is deprecated/archived).
+// Next.js App Router / Server Actions: built-in Origin check; no middleware needed.
+// Express + cookie auth: double-submit token pattern (csrf-csrf package, maintained fork of csurf).
+import { doubleCsrf } from "csrf-csrf";
+const { doubleCsrfProtection } = doubleCsrf({
+  getSecret: () => process.env.CSRF_SECRET!,
+  cookieName: "__Host-csrf",
+  cookieOptions: { httpOnly: true, sameSite: "strict", secure: true },
+});
+app.use(doubleCsrfProtection);
 ```
 
 ---
