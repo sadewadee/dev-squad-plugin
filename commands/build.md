@@ -665,6 +665,10 @@ Agent tool with:
     ```
     Update each phase status to "in_progress" when starting and "complete" when done.
 
+    **If `--auto` was passed** (present in the build description / user request): also write `"mode": "auto"` and an `"auto"` object into this JSON — copy the `auto_defaults` block from `.claude-plugin/workflows/zero-to-ship.json` and add `"started_at": "<current UTC ISO timestamp>"`. Example:
+    `"mode":"auto","auto":{"started_at":"2026-05-25T10:00:00Z","wall_clock_cap_min":480,"max_total_dispatches":300,"max_iterations_per_phase":5,"on_floor_miss":"fail_loud"}`
+    Without `--auto`, omit these fields (interactive default — all auto hooks no-op).
+
     ## Instructions
     1. Create the workflow tracking file
     2. Execute Phase 0 ULTRAPLAN first — think deeply, write master-plan.md

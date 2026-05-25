@@ -34,7 +34,7 @@ fi
 if [ "$EVENT" = "PreToolUse" ]; then
   TL=$(printf '%s' "$TOOL" | tr '[:upper:]' '[:lower:]')
   case "$TL" in
-    task|agent) ;;
+    task|agent|teamcreate) ;;
     *) exit 0 ;;
   esac
 
