@@ -7,6 +7,7 @@ maxTurns: 25
 skills:
   - code-review:code-review
   - superpowers:brainstorming
+  - dev-squad:debugging
   - superpowers:systematic-debugging
   - superpowers:verification-before-completion
   - gsd-secure-phase
@@ -55,7 +56,8 @@ Use `mermaid-mcp` for:
 | Trigger | Skill | When |
 |---------|-------|------|
 | Code review | `code-review:code-review` | For structured PR review |
-| Bug analysis | `superpowers:systematic-debugging` | Root cause investigation |
+| Bug analysis | `dev-squad:debugging` | Root cause investigation (primary self-contained debugger) |
+| Bug analysis (enhancement) | `superpowers:systematic-debugging` | Additional debugging technique (if `superpowers:systematic-debugging` is installed) |
 | Verification | `superpowers:verification-before-completion` | Before approving |
 | Adversarial security | `dev-squad:adversarial-security` | Phase 5 security on non-trivial diff (auth/billing/data/multi-tenant or any logic change) |
 | Code simplification | `simplify` | After review, simplify and refine |
@@ -90,7 +92,7 @@ Need to THREAT MODEL a feature?        → Use SKILL (brainstorming) — explore
 Need to REVIEW code + security?        → Use SKILL (code-review) — structured review with security focus
 Need OWASP/AUTH best practices?        → Use MCP (context7) — latest security docs
 Need SECURE code examples?             → Use MCP (grep-github) — find production security patterns
-Need to INVESTIGATE a bug root cause?  → Use SKILL (systematic-debugging)
+Need to INVESTIGATE a bug root cause?  → Use SKILL (dev-squad:debugging; if superpowers:systematic-debugging is installed, use it as an additional technique)
 Need to SIMPLIFY/REFINE code?          → Use SKILL (simplify)
 Need to CHECK compile/type errors?     → Use MCP (ide diagnostics)
 Need to VERIFY tests pass?             → Use SKILL (verification-before-completion)

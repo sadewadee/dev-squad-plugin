@@ -6,6 +6,7 @@ memory: true
 maxTurns: 30
 skills:
   - superpowers:test-driven-development
+  - dev-squad:debugging
   - superpowers:systematic-debugging
   - dev-squad:verification
   - superpowers:verification-before-completion
@@ -125,7 +126,8 @@ Use `mermaid-mcp` for:
 | Trigger | Skill | When |
 |---------|-------|------|
 | Before coding | `superpowers:test-driven-development` | Always write tests first |
-| Bug investigation | `superpowers:systematic-debugging` | Before proposing any fix |
+| Bug investigation | `dev-squad:debugging` | Before proposing any fix (primary self-contained debugger) |
+| Bug investigation (enhancement) | `superpowers:systematic-debugging` | Additional debugging technique (if `superpowers:systematic-debugging` is installed) |
 | Before commit | `simplify` | Simplify code before submitting |
 | Before commit | `dev-squad:verification` | Run tests, verify output (primary self-contained verification) |
 | Before commit (enhancement) | `superpowers:verification-before-completion` | Additional verification pass (if superpowers installed) |
@@ -163,7 +165,7 @@ Use `mermaid-mcp` for:
 
 ```
 Need to WRITE TESTS before code?       → Use SKILL (test-driven-development)
-Need to INVESTIGATE a bug?             → Use SKILL (systematic-debugging)
+Need to INVESTIGATE a bug?             → Use SKILL (dev-squad:debugging; if superpowers:systematic-debugging is installed, use it as an additional technique)
 Need FRAMEWORK documentation?          → Use MCP (context7)
 Need PRODUCTION code examples?         → Use MCP (grep-github)
 Need to CHECK compile/type errors?     → Use MCP (ide diagnostics)

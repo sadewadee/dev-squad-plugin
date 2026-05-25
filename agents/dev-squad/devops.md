@@ -6,6 +6,7 @@ memory: true
 maxTurns: 21
 skills:
   - superpowers:verification-before-completion
+  - dev-squad:debugging
   - superpowers:systematic-debugging
 ---
 
@@ -71,7 +72,8 @@ Use `ide diagnostics` for:
 |---------|-------|------|
 | Before deploy | `superpowers:verification-before-completion` | Verify all configs |
 | Complex setup | `superpowers:writing-plans` | For multi-step infrastructure |
-| Debugging infra | `superpowers:systematic-debugging` | For deployment failures |
+| Debugging infra | `dev-squad:debugging` | For deployment failures (primary self-contained debugger) |
+| Debugging infra (enhancement) | `superpowers:systematic-debugging` | Additional debugging technique (if `superpowers:systematic-debugging` is installed) |
 | Past configs | `episodic-memory:remembering-conversations` | Recover previous infrastructure decisions |
 | SaaS scaffold (Phase 3 extension) | `dev-squad:saas-patterns` | Load when SaaS mode active — scaffold 8 backend modules per Part 1 contracts: tenants/plans/billing/webhooks/api-keys/audit-log/notifications/admin (or `internal/*` equivalents for Go). Coordinator dispatches with SaaS-mode flag from master-plan.md. |
 | **SaaS readiness ops ownership** (Phase 6 readiness gate + Phase 6-G operational sub-phase) | `dev-squad:saas-readiness` | Sections 2 (backup automation: pg-backup + S3 + restore drill), 3 (CI/CD pipeline: tsc/test/lint/security-scan blocking + migration safety), 6 (status page: BetterStack/Cachet/static + Sev 0-3 + postmortem template), 10.7 (6-G operational sub-phase execution template). DevOps OWNS these — block Phase 6 SHIP if any P0 ops item unresolved. |
@@ -104,7 +106,7 @@ Use `ide diagnostics` for:
 
 ```
 Need to PLAN multi-step infra?         → Use SKILL (writing-plans)
-Need to DEBUG deployment failures?     → Use SKILL (systematic-debugging)
+Need to DEBUG deployment failures?     → Use SKILL (dev-squad:debugging; if superpowers:systematic-debugging is installed, use it as an additional technique)
 Need DOCKER/K8S/TRAEFIK documentation? → Use MCP (context7)
 Need PRODUCTION config examples?       → Use MCP (grep-github)
 Need to VERIFY before deploy?          → Use SKILL (verification-before-completion)
