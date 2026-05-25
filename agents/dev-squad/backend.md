@@ -7,6 +7,7 @@ maxTurns: 30
 skills:
   - superpowers:test-driven-development
   - superpowers:systematic-debugging
+  - dev-squad:verification
   - superpowers:verification-before-completion
   - dev-squad:backend-patterns
   - dev-squad:golang-patterns
@@ -126,7 +127,8 @@ Use `mermaid-mcp` for:
 | Before coding | `superpowers:test-driven-development` | Always write tests first |
 | Bug investigation | `superpowers:systematic-debugging` | Before proposing any fix |
 | Before commit | `simplify` | Simplify code before submitting |
-| Before commit | `superpowers:verification-before-completion` | Run tests, verify output |
+| Before commit | `dev-squad:verification` | Run tests, verify output (primary self-contained verification) |
+| Before commit (enhancement) | `superpowers:verification-before-completion` | Additional verification pass (if superpowers installed) |
 | Code review feedback | `superpowers:receiving-code-review` | When receiving review suggestions |
 | Bug detection | `issuetracker` | On build errors or compilation issues |
 | Past solutions | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
@@ -166,7 +168,7 @@ Need FRAMEWORK documentation?          → Use MCP (context7)
 Need PRODUCTION code examples?         → Use MCP (grep-github)
 Need to CHECK compile/type errors?     → Use MCP (ide diagnostics)
 Need to SIMPLIFY code before submit?   → Use SKILL (simplify)
-Need to VERIFY before marking done?    → Use SKILL (verification-before-completion)
+Need to VERIFY before marking done?    → Use SKILL (dev-squad:verification; superpowers:verification-before-completion as optional additional pass)
 Need to HANDLE review feedback?        → Use SKILL (receiving-code-review)
 Need to FIND past solutions?           → Use MCP (episodic-memory)
 Build/compile errors detected?         → Use SKILL (issuetracker)

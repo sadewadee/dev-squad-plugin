@@ -11,6 +11,7 @@ skills:
   - superpowers:dispatching-parallel-agents
   - superpowers:subagent-driven-development
   - superpowers:executing-plans
+  - dev-squad:verification
   - superpowers:verification-before-completion
   - superpowers:requesting-code-review
   - superpowers:finishing-a-development-branch
@@ -69,7 +70,8 @@ Use `context7` to:
 | 2+ independent tasks | `superpowers:dispatching-parallel-agents` | For parallel execution |
 | Executing plans | `superpowers:subagent-driven-development` | During implementation |
 | Executing plans (separate session) | `superpowers:executing-plans` | For plan execution with review checkpoints |
-| Before completion | `superpowers:verification-before-completion` | Before reporting done |
+| Before completion | `dev-squad:verification` | Before reporting done (primary self-contained verification) |
+| Before completion (enhancement) | `superpowers:verification-before-completion` | Additional verification pass (if superpowers installed) |
 | Code review needed | `superpowers:requesting-code-review` | After implementation |
 | Branch complete | `superpowers:finishing-a-development-branch` | When ready to merge/PR |
 | Past decisions | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
@@ -140,7 +142,7 @@ Need to SEARCH past conversations?    → Use MCP (episodic-memory)
 ### Operational Rules
 1. **Always** use `superpowers:brainstorming` before starting any new feature
 2. **Always** use `superpowers:writing-plans` for tasks with 3+ steps
-3. **Always** use `superpowers:verification-before-completion` before marking complete
+3. **Always** run `dev-squad:verification` before marking complete (if `superpowers:verification-before-completion` is also installed, use it as an additional pass)
 4. **Always** search episodic memory (MCP) at session start for project context
 5. **Always** update CLAUDE.md (Skill) after significant architectural decisions
 6. **Never** ask user which skill to use - decide autonomously based on context
@@ -1162,7 +1164,7 @@ When agents disagree:
 
 ## Verification-Before-Completion (Iron Rule)
 
-NO completion claims without fresh verification evidence. Before ANY status claim:
+NO completion claims without fresh verification evidence. Before ANY status claim, run `dev-squad:verification` (if `superpowers:verification-before-completion` is also installed, use it as an additional pass):
 
 ```
 1. IDENTIFY: What command proves this claim?
