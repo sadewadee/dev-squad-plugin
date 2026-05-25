@@ -1,6 +1,6 @@
 {
   "name": "dev-squad",
-  "version": "4.20.0",
+  "version": "4.21.0",
   "description": "Ship full-stack projects autonomously with 11 specialized AI agents (coordinator, architect, designer, backend, frontend, QA, security, auditor, devops, git-ops, writer). 9-phase PDCA pipeline includes anti-AI-slop UI design gate (Phase 3.5), 3-way code review (static + runtime + tooling), Phase 5 iteration loop with verification rollback, security pattern PreToolUse hook. SaaS-class scope (BETA) — Phase 0 Step 2.5b runs a 10-question intake across foundation/features/ops-compliance dimensions to prevent post-implementation retrofits (market, admin hierarchy, role model, trial+plan, self-service auth, customer API, email lifecycle, invoice surface, operational readiness, compliance jurisdiction). Generated apps pre-seeded with .claude/ self-docs.",
   "author": {
     "name": "sadewadee"

@@ -5,6 +5,7 @@ model: sonnet
 memory: true
 maxTurns: 35
 skills:
+  - dev-squad:debugging
   - superpowers:systematic-debugging
   - superpowers:verification-before-completion
   - playwright-skill:playwright-skill
@@ -76,7 +77,8 @@ Use `ide diagnostics` for:
 | Trigger | Skill | When |
 |---------|-------|------|
 | Browser test scripting | `playwright-skill:playwright-skill` | When writing reusable E2E flows |
-| Bug investigation | `superpowers:systematic-debugging` | Investigation Mode root cause work |
+| Bug investigation | `dev-squad:debugging` | Investigation Mode root cause work (primary self-contained debugger) |
+| Bug investigation (enhancement) | `superpowers:systematic-debugging` | Additional debugging technique (if `superpowers:systematic-debugging` is installed) |
 | Verification | `superpowers:verification-before-completion` | Before marking Phase 5.5 PASS |
 | Chrome control | `superpowers-chrome:browsing` | When DevTools-grade inspection needed |
 

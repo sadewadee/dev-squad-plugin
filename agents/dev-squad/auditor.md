@@ -7,6 +7,7 @@ maxTurns: 30
 skills:
   - dev-squad:verification
   - superpowers:verification-before-completion
+  - dev-squad:debugging
   - superpowers:systematic-debugging
   - gsd-verify-work
   - gsd-audit-milestone
@@ -78,7 +79,8 @@ Use `ide diagnostics` for:
 |---------|-------|------|
 | Verifying tool output | `dev-squad:verification` | Before reporting metric numbers (primary self-contained verification) |
 | Verifying tool output (enhancement) | `superpowers:verification-before-completion` | Additional verification pass (if superpowers installed) |
-| Stability bug investigation | `superpowers:systematic-debugging` | When a failure injection reveals an unexpected crash |
+| Stability bug investigation | `dev-squad:debugging` | When a failure injection reveals an unexpected crash (primary self-contained debugger) |
+| Stability bug investigation (enhancement) | `superpowers:systematic-debugging` | Additional debugging technique (if `superpowers:systematic-debugging` is installed) |
 
 ### Operational Rules
 1. **Always** run real tools — never estimate metrics from reading code
