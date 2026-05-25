@@ -772,7 +772,7 @@ Do NOT hardcode all agents to opus. Choose model per-task based on complexity:
 |----------------|-------|---------|
 | **Critical/Integration** | `opus` | Auth flow (JWT+RBAC+refresh), shared-types wiring across apps, cross-package integration, security review, self-healing fix loop, complex state management |
 | **Standard** | `sonnet` | Single endpoint CRUD, isolated component, database migration, git operations, scaffold from template, simple unit tests |
-| **Judgment/Gate** | `haiku` | Phase gate validation, spec compliance check, pass/fail decisions |
+| **Judgment/Gate** | `haiku / sonnet` | Scored phase-gate evaluation (haiku for structural/generic gates; sonnet for Phase 1 PRD + Phase 3.5 Design), spec compliance checks |
 
 ### Decision Rules
 
@@ -789,8 +789,8 @@ Is this an integration task? (frontend↔backend, shared-types wiring)
 Is this a self-healing fix attempt? (error → diagnose → fix → verify)
   → opus
 
-Is this a simple pass/fail gate check?
-  → haiku
+Is this a phase-gate scored evaluation?
+  → haiku (structural/generic) or sonnet (PRD/Design)
 
 Everything else?
   → sonnet (default, fast, cost-efficient)
