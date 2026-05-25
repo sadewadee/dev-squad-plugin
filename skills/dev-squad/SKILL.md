@@ -587,6 +587,8 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | Postgres / RLS reference | `dev-squad:postgres-patterns` | Index types, data types, common queries, anti-patterns, RLS, tuning |
 | Go pattern + testing reference | `dev-squad:golang-patterns` + `dev-squad:golang-testing` | Idiomatic Go + table-driven tests, parallel, mocking, benchmarks |
 | TDD workflow + security review | `dev-squad:tdd-workflow` + `dev-squad:security-review` | 7-step TDD + 10-area security checklist |
+| **Phase 5 security review on a non-trivial diff** | `dev-squad:adversarial-security` | Attacker→defender→synthesizer 3-pass on the diff; outputs severity+confidence findings |
+| **Before any agent claims a task/feature done** | `dev-squad:verification` | Self-contained build/type/lint/test/secrets/diff-review report card (no external dependency) |
 
 ### MCP Servers (call directly) — USE FOR: External Data & Actions
 MCP tools fetch real-time data from external services. Call them directly — no Skill wrapper needed.

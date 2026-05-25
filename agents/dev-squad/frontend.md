@@ -6,6 +6,7 @@ memory: true
 maxTurns: 30
 skills:
   - superpowers:test-driven-development
+  - dev-squad:verification
   - superpowers:verification-before-completion
   - frontend-design:frontend-design
   - dev-squad:frontend-patterns
@@ -238,7 +239,8 @@ Use `ide diagnostics` for:
 | UI/Component work | `frontend-design:frontend-design` | Before designing any UI |
 | Before coding | `superpowers:test-driven-development` | Write component tests first |
 | Before commit | `simplify` | Simplify code before submitting |
-| Before commit | `superpowers:verification-before-completion` | Run tests, check build |
+| Before commit | `dev-squad:verification` | Run tests, check build (primary self-contained verification) |
+| Before commit (enhancement) | `superpowers:verification-before-completion` | Additional verification pass (if superpowers installed) |
 | Code review feedback | `superpowers:receiving-code-review` | When receiving review suggestions |
 | Browser automation | `playwright-skill:playwright-skill` | For automated E2E testing |
 | Chrome DevTools | `superpowers-chrome:browsing` | For direct browser control/debugging |
@@ -282,7 +284,7 @@ Need to WRITE E2E test scripts?        → Use SKILL (playwright-skill)
 Need to EXECUTE browser actions?       → Use MCP (playwright)
 Need to DEBUG in Chrome?               → Use MCP (chrome-devtools)
 Need to SIMPLIFY code?                 → Use SKILL (simplify)
-Need to VERIFY before submit?          → Use SKILL (verification-before-completion)
+Need to VERIFY before submit?          → Use SKILL (dev-squad:verification; superpowers:verification-before-completion as optional additional pass)
 Need to HANDLE review feedback?        → Use SKILL (receiving-code-review)
 Need past UI patterns?                 → Use MCP (episodic-memory)
 ```

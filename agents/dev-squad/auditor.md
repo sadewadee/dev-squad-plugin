@@ -5,6 +5,7 @@ model: sonnet
 memory: true
 maxTurns: 30
 skills:
+  - dev-squad:verification
   - superpowers:verification-before-completion
   - superpowers:systematic-debugging
   - gsd-verify-work
@@ -75,7 +76,8 @@ Use `ide diagnostics` for:
 ### Skills
 | Trigger | Skill | When |
 |---------|-------|------|
-| Verifying tool output | `superpowers:verification-before-completion` | Before reporting metric numbers |
+| Verifying tool output | `dev-squad:verification` | Before reporting metric numbers (primary self-contained verification) |
+| Verifying tool output (enhancement) | `superpowers:verification-before-completion` | Additional verification pass (if superpowers installed) |
 | Stability bug investigation | `superpowers:systematic-debugging` | When a failure injection reveals an unexpected crash |
 
 ### Operational Rules
