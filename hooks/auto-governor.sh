@@ -22,11 +22,13 @@ TOOL=$(printf '%s' "$INPUT" | python3 -c "import sys,json; print(json.load(sys.s
 
 if [ "$EVENT" = "SubagentStop" ]; then
   python3 - "$RUN_FILE" <<'PY' 2>/dev/null
-import json,sys
+import json,sys,os
 p=sys.argv[1]
 d=json.load(open(p))
 d["total_dispatches"]=int(d.get("total_dispatches",0))+1
-json.dump(d,open(p,"w"))
+tmp=p+".tmp"
+json.dump(d,open(tmp,"w"))
+os.replace(tmp,p)
 PY
   exit 0
 fi
@@ -42,8 +44,8 @@ if [ "$EVENT" = "PreToolUse" ]; then
 import json,sys,datetime
 wf=json.load(open(sys.argv[1])); run=json.load(open(sys.argv[2]))
 auto=wf.get("auto",{})
-maxd=int(auto.get("max_total_dispatches",300))
-maxmin=int(auto.get("wall_clock_cap_min",480))
+maxd=int(auto.get("max_total_dispatches",300));  maxd = maxd if maxd>=1 else 300
+maxmin=int(auto.get("wall_clock_cap_min",480));  maxmin = maxmin if maxmin>=1 else 480
 n=int(run.get("total_dispatches",0))
 if n>=maxd:
     print(f"EXCEEDED: max_total_dispatches ({n}>={maxd})"); sys.exit(0)
@@ -63,10 +65,12 @@ PY
   if [ "${VERDICT#EXCEEDED}" != "$VERDICT" ]; then
     REASON="${VERDICT#EXCEEDED: }"
     python3 - "$RUN_FILE" "$REASON" <<'PY' 2>/dev/null
-import json,sys
+import json,sys,os
 p=sys.argv[1]; d=json.load(open(p))
 d["halted"]=True; d["halt_reason"]=sys.argv[2]
-json.dump(d,open(p,"w"))
+tmp=p+".tmp"
+json.dump(d,open(tmp,"w"))
+os.replace(tmp,p)
 PY
     echo "AUTO GOVERNOR: budget exceeded ($REASON). Stop dispatching, finalize, and let the termination hook write the report."
     exit 2

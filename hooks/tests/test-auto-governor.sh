@@ -47,5 +47,22 @@ out=$(echo '{"hook_event_name":"PreToolUse","tool_name":"Task"}' | bash "$HOOK" 
 [ "$rc" -eq 2 ] || { echo "FAIL case6 rc: expected 2 got $rc"; fail=1; }
 echo "$out" | grep -qi "wall_clock" || { echo "FAIL case6 msg: '$out'"; fail=1; }
 
+# Case 7: TeamCreate (Agent-Teams dispatch) is gated like task/agent
+cat > .dev-squad/workflow-active <<'JSON'
+{"mode":"auto","auto":{"started_at":"2999-01-01T00:00:00Z","max_total_dispatches":1,"wall_clock_cap_min":480}}
+JSON
+echo '{"total_dispatches":5,"halted":false,"halt_reason":null}' > .dev-squad/auto-run.json
+out=$(echo '{"hook_event_name":"PreToolUse","tool_name":"TeamCreate"}' | bash "$HOOK" 2>&1); rc=$?
+[ "$rc" -eq 2 ] || { echo "FAIL case7 rc: expected 2 got $rc"; fail=1; }
+echo "$out" | grep -qi "GOVERNOR" || { echo "FAIL case7 msg: '$out'"; fail=1; }
+
+# Case 8: invalid cap (0) falls back to default -> does NOT brick (dispatch allowed)
+cat > .dev-squad/workflow-active <<'JSON'
+{"mode":"auto","auto":{"started_at":"2999-01-01T00:00:00Z","max_total_dispatches":0,"wall_clock_cap_min":480}}
+JSON
+echo '{"total_dispatches":0,"halted":false,"halt_reason":null}' > .dev-squad/auto-run.json
+rc=$(echo '{"hook_event_name":"PreToolUse","tool_name":"Task"}' | bash "$HOOK" >/dev/null 2>&1; echo $?)
+[ "$rc" -eq 0 ] || { echo "FAIL case8: zero-cap should fall back to default, expected 0 got $rc"; fail=1; }
+
 cd /; rm -rf "$TMP"
 if [ "$fail" -eq 0 ]; then echo "PASS test-auto-governor"; else exit 1; fi
