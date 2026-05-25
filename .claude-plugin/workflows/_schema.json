@@ -31,6 +31,17 @@
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/definitions/phase" }
+    },
+    "auto_defaults": {
+      "type": "object",
+      "description": "Default budget envelope for --auto runs. Coordinator copies these into .dev-squad/workflow-active when --auto is set.",
+      "additionalProperties": false,
+      "properties": {
+        "wall_clock_cap_min": { "type": "integer", "minimum": 1, "description": "Primary budget: max wall-clock minutes for the whole run" },
+        "max_total_dispatches": { "type": "integer", "minimum": 1, "description": "Runaway/infinite-loop backstop" },
+        "max_iterations_per_phase": { "type": "integer", "minimum": 1, "description": "Documents the existing Phase 5 anti-thrash cap; enforced in build.md, not the governor" },
+        "on_floor_miss": { "enum": ["fail_loud"], "description": "What to do if quality floor not met" }
+      }
     }
   },
   "definitions": {
