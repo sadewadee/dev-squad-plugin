@@ -207,8 +207,8 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 | **Two-Stage Review** | Phase 4 (per task) | Spec compliance → Code quality, loop until both pass; agents chosen via Diff-Scope Heuristic |
 | **3-Way Phase 5 Review** | Phase 5 (full feature) | reviewer (static, incl. design lint) + qa-engineer (runtime + Visual Gate) + auditor (automated) dispatched in parallel; reviewer synthesizes single Metrics Report. Designer added as light pass for new UI surfaces. |
 | **Diff-Scope Dispatch Heuristic** | Every review dispatch | Coordinator picks reviewer / qa-engineer / auditor combo per diff scope; logs decision to .dev-squad/dispatch-log.md |
-| **Phase Gate Judge** | Between all phases | Cheap haiku agent validates deliverables before transition |
-| **Confidence Scoring** | Phase 5 review | Score 0-100 per finding, filter < 80 as non-actionable |
+| **Scored Phase Gate** | Between all phases | Scored evaluator (0-100 vs rubric) + retry-on-feedback + plateau detection; haiku for structural/generic gates, sonnet for PRD + Design |
+| **Confidence Scoring** | Phase 5 review + phase gates | Score 0-100 per finding, filter < 80 as non-actionable (Phase 5 findings); scoring now also drives phase gate evaluation — generalized to gate evaluation across all phases |
 | **Multi-Angle Review** | Phase 5 reviewer lane | 4 review passes within reviewer's static lane: security, performance, spec, architecture |
 | **Systematic Debugging** | All agents | 4-phase: investigate → analyze → hypothesize → implement |
 | **Plan Review Loop** | Phase 2 design | Dispatch reviewer for plan, max 3 iterations |
@@ -254,7 +254,7 @@ Agent({
 })
 ```
 
-The role of "judge" is played by `general-purpose` running with `model: "haiku"` (Agent tool's `model` parameter accepts `haiku | sonnet | opus`). See coordinator.md "Phase Gate Decision (Judge Pattern)" for the full prompt template.
+The role of "judge" is played by `general-purpose` running with `model: "haiku"` (structural/generic gates) or `model: "sonnet"` (Phase 1 PRD + Phase 3.5 Design). Agent tool's `model` parameter accepts `haiku | sonnet | opus`. See coordinator.md "Phase Gate Decision (Scored Evaluator)" for the full prompt template.
 
 This gotcha applies to: coordinator (every phase transition), commands/build.md (Phase 1 + Phase 2 gates).
 
