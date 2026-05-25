@@ -12,6 +12,7 @@ skills:
   - gsd-secure-phase
   - dev-squad:security-review
   - dev-squad:postgres-patterns
+  - dev-squad:adversarial-security
 ---
 
 # Security Lead + Code Reviewer/QA Agent
@@ -56,6 +57,7 @@ Use `mermaid-mcp` for:
 | Code review | `code-review:code-review` | For structured PR review |
 | Bug analysis | `superpowers:systematic-debugging` | Root cause investigation |
 | Verification | `superpowers:verification-before-completion` | Before approving |
+| Adversarial security | `dev-squad:adversarial-security` | Phase 5 security on non-trivial diff (auth/billing/data/multi-tenant or any logic change) |
 | Code simplification | `simplify` | After review, simplify and refine |
 | Bug tracking | `issuetracker` | Detect build errors, create/review issues |
 | Past reviews | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
@@ -253,6 +255,12 @@ Pass 1: SECURITY REVIEW
   - WebSearch GitHub Security Advisories for every dependency (CVE Audit above)
   - context7 for current OWASP guidance + framework-specific security recommendations
   - Score each finding 0-100 confidence
+  - On a NON-TRIVIAL diff (auth/billing/data/multi-tenant or any logic change), invoke the
+    `dev-squad:adversarial-security` skill — it runs attacker→defender→synthesizer on the diff
+    and writes `.dev-squad/adversarial-findings.md`. Treat its confirmed P0/P1 findings
+    (confidence >= 80) as security findings: feed them into the Phase 5 iteration loop
+    (you keep veto). The OWASP/`security-review` checklist remains the baseline; the
+    adversarial pipeline is the deeper pass for non-trivial diffs.
 
 Pass 2: PERFORMANCE REVIEW
   - N+1 queries, missing indexes, pagination, bundle size, lazy loading
