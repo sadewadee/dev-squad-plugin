@@ -565,7 +565,7 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | Starting creative/design work | `superpowers:brainstorming` | Structures exploration before coding |
 | Planning multi-step tasks | `superpowers:writing-plans` | Creates actionable implementation plan |
 | Before writing ANY code | `superpowers:test-driven-development` | Enforces test-first discipline |
-| Investigating bugs | `superpowers:systematic-debugging` | Structured root cause analysis |
+| Investigating bugs | `dev-squad:debugging` (primary); `superpowers:systematic-debugging` (optional) | Self-contained 4-phase reproduce/locate/hypothesize/fix-verify loop |
 | Running 2+ independent tasks | `superpowers:dispatching-parallel-agents` | Parallel execution patterns |
 | Reviewing code | `code-review:code-review` | Structured review checklist |
 | Before claiming "done" | `superpowers:verification-before-completion` | Run tests, verify output |
@@ -589,6 +589,8 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | TDD workflow + security review | `dev-squad:tdd-workflow` + `dev-squad:security-review` | 7-step TDD + 10-area security checklist |
 | **Phase 5 security review on a non-trivial diff** | `dev-squad:adversarial-security` | Attacker→defender→synthesizer 3-pass on the diff; outputs severity+confidence findings |
 | **Before any agent claims a task/feature done** | `dev-squad:verification` | Self-contained build/type/lint/test/secrets/diff-review report card (no external dependency) |
+| **Any bug / test failure / unexpected behavior, before proposing a fix** | `dev-squad:debugging` | Self-contained 4-phase reproduce/locate/hypothesize/fix-verify loop; no external dependency |
+| **Build/compile/type errors during self-healing author retries** | `dev-squad:build-error-resolver` | Minimal-diff fix, iterate-until-green, 2-attempt escalation |
 
 ### MCP Servers (call directly) — USE FOR: External Data & Actions
 MCP tools fetch real-time data from external services. Call them directly — no Skill wrapper needed.
