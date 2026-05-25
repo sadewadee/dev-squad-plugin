@@ -129,7 +129,7 @@ Nothing new is invented at the engine level. SP1 reuses three existing surfaces 
 
 - **Files:** `hooks/auto-governor.sh` (bash) + wiring in `hooks/hooks.json`. Counters in `.dev-squad/auto-run.json`.
 - **Two responsibilities:**
-  1. **Increment** counters — wired on `SubagentStop` (alongside `check-workflow.sh`): bump `total_dispatches`, bump `per_phase_iterations[current_phase]`.
+  1. **Increment** counters — wired on `SubagentStop` (alongside `check-workflow.sh`): bump `total_dispatches`.
   2. **Gate** — wired on `PreToolUse` with a **broad matcher (`*`)**, filtering on `tool_name` from the payload to catch a subagent dispatch (resolved, see §13 Q1): before allowing a new dispatch, read counters + `auto.started_at`; if any cap is exceeded → write `halted: true` + `halt_reason` to `auto-run.json`, echo "AUTO GOVERNOR: budget exceeded ({which cap}). Stop dispatching, finalize, and let the termination hook write the report." and `exit 2`.
 - **Caps (defaults; tunable in `zero-to-ship.json` `auto` block):**
   - `wall_clock_cap_min`: 480 (8 hours — user accepts long runs for optimal results; this is the PRIMARY budget)
@@ -179,7 +179,6 @@ Nothing new is invented at the engine level. SP1 reuses three existing surfaces 
 ```json
 {
   "total_dispatches": 0,
-  "per_phase_iterations": {},
   "halted": false,
   "halt_reason": null
 }

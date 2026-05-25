@@ -32,5 +32,18 @@ echo '{"total_dispatches":999,"halted":true,"halt_reason":"x"}' > .dev-squad/aut
 rc=$(echo '{"stop_hook_active":true}' | bash "$HOOK" >/dev/null 2>&1; echo $?)
 [ "$rc" -eq 0 ] || { echo "FAIL D: expected 0 got $rc"; fail=1; }
 
+# Case E: auto mode, NO project files (aborted before scaffold) -> floor miss + report + exit 2
+TMP2=$(mktemp -d); cd "$TMP2"; mkdir -p .dev-squad
+echo '{"workflow":"zero-to-ship","mode":"auto","phases":{}}' > .dev-squad/workflow-active
+out=$(echo '{"stop_hook_active":false}' | bash "$HOOK" 2>&1); rcE=$?
+[ "$rcE" -eq 2 ] || { echo "FAIL E rc: expected 2 got $rcE"; fail=1; }
+[ -f .dev-squad/auto-failure-report.md ] || { echo "FAIL E: failure report not written"; fail=1; }
+# Case F: interactive mode, NO project files -> still exits 0 (no regression)
+echo '{"workflow":"zero-to-ship","mode":"interactive","phases":{}}' > .dev-squad/workflow-active
+rm -f .dev-squad/auto-failure-report.md
+rcF=$(echo '{"stop_hook_active":false}' | bash "$HOOK" >/dev/null 2>&1; echo $?)
+[ "$rcF" -eq 0 ] || { echo "FAIL F: interactive no-project should exit 0, got $rcF"; fail=1; }
+cd /; rm -rf "$TMP2"
+
 cd /; rm -rf "$TMP"
 if [ "$fail" -eq 0 ]; then echo "PASS test-stop-verify-auto"; else exit 1; fi
