@@ -103,7 +103,7 @@ P0 security incident found?            → DIRECT SendMessage to affected agent 
 
 ### Operational Rules
 1. **Always** use `code-review` skill (Skill) for PR reviews
-2. **Always** use `systematic-debugging` (Skill) for bug root cause
+2. **Always** use `dev-squad:debugging` (Skill) for bug root cause; if `superpowers:systematic-debugging` is installed, use it as an additional technique
 3. **Always** search GitHub (MCP) to compare with best practices
 4. **Always** verify tests pass (Skill) before approving
 5. **Always** check security for any auth/data/API changes

@@ -668,7 +668,7 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | Phase | Tool Type | Specific Tool |
 |-------|-----------|---------------|
 | Before coding | Skill | `test-driven-development` — write tests first |
-| Bug investigation | Skill | `systematic-debugging` — root cause analysis |
+| Bug investigation | Skill | `dev-squad:debugging` — root cause analysis (superpowers:systematic-debugging optional) |
 | Framework docs | MCP | `context7` — ORM/framework documentation |
 | Code patterns | MCP | `grep-github` — migration/query examples |
 | Compile errors | MCP | `ide diagnostics` — type/compile checks |
@@ -702,7 +702,7 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | **Security review** | Skill | `code-review` — structured PR review with security focus |
 | **Auth/OWASP docs** | MCP | `context7` — latest security best practices |
 | **Security patterns** | MCP | `grep-github` — find secure implementation examples |
-| Bug root cause | Skill | `systematic-debugging` — investigation |
+| Bug root cause | Skill | `dev-squad:debugging` — investigation (superpowers:systematic-debugging optional) |
 | Code refinement | Skill | `simplify` — simplify reviewed code |
 | Compile check | MCP | `ide diagnostics` — type/compile errors |
 | Before approval | Skill | `verification-before-completion` — verify tests pass |
@@ -715,7 +715,7 @@ Need to TEST in browser?              → Use SKILL (playwright-skill) to get pa
 | Phase | Tool Type | Specific Tool |
 |-------|-----------|---------------|
 | Complex setup | Skill | `writing-plans` — multi-step infrastructure plan |
-| Debugging infra | Skill | `systematic-debugging` — deployment failures |
+| Debugging infra | Skill | `dev-squad:debugging` — deployment failures (superpowers:systematic-debugging optional) |
 | Docker/K8s/Traefik docs | MCP | `context7` — latest configuration docs |
 | Config patterns | MCP | `grep-github` — production-ready examples |
 | Before deploy | Skill | `verification-before-completion` — validate all configs |
