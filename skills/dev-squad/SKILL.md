@@ -9,7 +9,7 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 
 **Command Format:**
 - `/dev-squad` or `/dev-squad start` - Start coordinator for new task
-- `/dev-squad build <description>` - Zero-to-ship: build a full project through 9 automated PDCA phases (Plan → Do → Check → Act)
+- `/dev-squad build <description> [--auto]` - Zero-to-ship: build a full project through 9 automated PDCA phases (Plan → Do → Check → Act). Add `--auto` to run unattended after kickoff (no questions; decisions inferred + logged to `.dev-squad/assumption-ledger.md`). See commands/build.md "Auto Mode".
 - `/dev-squad bootstrap` - Auto-install dev-squad companion plugins + MCP servers (one-shot setup)
 - `/dev-squad retrospective [scope]` - Run a PDCA Act-phase retrospective on completed work (feature, sprint, post-incident)
 - `/dev-squad db <description>` - Start database workflow (schema, migrations, optimization)
@@ -394,7 +394,7 @@ Phase 7: LEARN (PDCA Act — Retrospective)
     Completion report to user — only NOW workflow is done
 ```
 
-**User checkpoints:** up to 2 — Phase 0 Step 2.5 SaaS confirmation (only if SaaS keywords detected) + Phase 1 PRD approval. All other phases run autonomously.
+**User checkpoints:** up to 2 — Phase 0 Step 2.5 SaaS confirmation (only if SaaS keywords detected) + Phase 1 PRD approval. All other phases run autonomously. In `--auto` mode there are ZERO checkpoints — all decisions inferred + recorded in the assumption ledger; a run that does not meet the quality floor writes `.dev-squad/auto-failure-report.md` instead of reporting success.
 
 ## Workflow: Database Tasks (Primary Focus)
 

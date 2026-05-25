@@ -8,6 +8,38 @@ description: Zero-to-Ship workflow. Takes a project description and builds it fr
 > **Canonical workflow definition:** `.claude-plugin/workflows/zero-to-ship.json` — coordinator reads this JSON at workflow start as dispatch source-of-truth (phase list, lead agents, parallel agents, blocking gates, skip conditions, external skills). This file is the descriptive prompt; JSON is canonical.
 > Human-readable mapping: [docs/workflow-mapping.md](../docs/workflow-mapping.md). Companion plugins: [docs/companion-plugins.md](../docs/companion-plugins.md).
 
+## Auto Mode (`--auto`)
+
+If the argument string contains `--auto`, this run is UNATTENDED after kickoff. The coordinator MUST:
+
+1. **Write mode + budget to state.** At workflow start, write `.dev-squad/workflow-active` with `"mode": "auto"` and copy the `auto_defaults` block from `.claude-plugin/workflows/zero-to-ship.json` into an `"auto"` object, adding `"started_at"` (current UTC ISO timestamp). Example:
+   `{"workflow":"zero-to-ship","mode":"auto","auto":{"started_at":"<ISO>","wall_clock_cap_min":480,"max_total_dispatches":300,"max_iterations_per_phase":5,"on_floor_miss":"fail_loud"},"phases":{...}}`
+2. **Never ask the user.** Do NOT call `AskUserQuestion`. Do NOT end any turn with a question. Every decision that would normally be a question is INFERRED from the project description + defaults and recorded in `.dev-squad/assumption-ledger.md`.
+3. **Skip the Phase 1 PRD checkpoint.** The Phase 1 haiku phase-gate judge substitutes for human approval. Record "PRD auto-approved by Phase 1 gate" in the ledger.
+
+(Without `--auto`, mode is `interactive`; behavior is unchanged and all auto hooks no-op.)
+
+### Assumption ledger format (`.dev-squad/assumption-ledger.md`)
+
+| # | Phase | Decision point | Inferred value | Confidence | Source | Risk if wrong |
+|---|-------|----------------|----------------|-----------|--------|---------------|
+
+- Confidence: `high` / `med` / `low`; Source: `description-derived` / `default` / `heuristic`.
+- Mark LOW-confidence rows clearly; the Phase 7 report surfaces them.
+
+### Conservative defaults for IRREVERSIBLE decisions (auto mode)
+
+When inference confidence is not high, the 4 irreversible dimensions use these conservative defaults and are logged as `confidence: low`:
+
+| Dimension | Conservative default | Rationale |
+|-----------|---------------------|-----------|
+| Tenancy strategy (ADR-001) | shared-DB + RLS | standard B2B SaaS default; flag for review |
+| Identity hierarchy (Intake Q2) | 3-tier (Platform / Tenant / User-in-tenant) | dev-squad's documented default |
+| Billing + payment provider (ADR-002) | Stripe | most common; widest pattern coverage |
+| Compliance scope (Intake Q10) | none, UNLESS a regulation is explicitly named in the description | do not impose GDPR/SOC2/etc. speculatively |
+
+The other 6 SaaS intake dimensions are inferred ad hoc from the description (no fixed default).
+
 ## INSTRUCTIONS: When `/dev-squad build` is invoked
 
 When the user runs `/dev-squad build <description>`, **immediately** launch the coordinator agent with the zero-to-ship workflow. Do NOT ask clarifying questions first -- start the workflow and let the DISCOVER phase handle exploration.
@@ -83,6 +115,8 @@ Agent tool with:
     - Record decision in `.dev-squad/master-plan.md` under section "SaaS Mode" with explicit value (`enabled` or `disabled`) — once locked, do NOT retrofit (multi-tenancy retrofit = data leak risk; removing it = wasted code)
     - If SaaS mode is `enabled` ONLY, proceed to Step 2.5b SaaS Scope Intake (below) BEFORE writing master-plan. Architect later produces ADR-001 to **ADR-006** in Phase 2 BEFORE backend codes: tenancy strategy, billing model, plan structure, admin scope, **compliance scope** (regulations apply per Intake Block 3 Q10), and **identity hierarchy** (3-tier Platform/Tenant/User-in-tenant per Intake Block 1 Q2). If SaaS mode is `disabled`, skip Step 2.5b AND skip ADR-001..006 entirely.
 
+    **Auto mode:** skip the confirmation `AskUserQuestion`. Apply the keyword heuristic deterministically (3+ keywords OR `--saas` → SaaS enabled; else standard). Log the decision + matched keywords + confidence to the assumption ledger.
+
     **Step 2.5b: SaaS Scope Intake** — RUN ONLY IF Step 2.5 locked `SaaS Mode: enabled`. Skip entirely for standard apps.
 
     Many SaaS projects fail at kick-start because Phase 0 captures only "Enable SaaS yes/no" — leaving 50+ implementation decisions made silently. The post-launch readiness audit then surfaces P0/P1 gaps that should have been planned upfront. Empirical evidence (wacrm project audit, 2026-05): single-question Phase 0 caused 8 retrofit phases — billing replatform, user management hardening, invoicing/tax, plan management, customer API, compliance lifecycle, operational, customer success.
@@ -119,6 +153,8 @@ Agent tool with:
     **Decline / cancel handling**: if user cancels any block mid-intake, lock the answers obtained so far + mark remaining dimensions as `UNANSWERED — REQUIRE Phase 1 clarification` in master-plan.md. Phase 1 architect brainstorming MUST re-surface unanswered dimensions before PRD generation (architect uses brainstorming skill with `clarifying_questions` mode for these specific gaps).
 
     **BETA notice**: SaaS Intake is beta. The 10-question matrix captures most SaaS scope but is not exhaustive. Phase 5+ readiness audit will likely still surface edge-case P1/P2 gaps. Treat Intake as foundation, not guarantee.
+
+    **Auto mode:** do NOT run the 3 AskUserQuestion blocks. Infer all 10 dimensions: the 4 irreversible ones use the conservative-defaults table above (logged `confidence: low`); the other 6 are inferred from the description. Write every inference to the assumption ledger. Do not require Phase 1 clarification for unanswered dimensions (there is no human) — record them as low-confidence assumptions instead.
 
     **Step 3: Write Master Plan** — Create `.dev-squad/master-plan.md`:
     ```markdown
@@ -186,6 +222,7 @@ Agent tool with:
     - PRD MUST include: auth requirements, API scope, data model, non-functional requirements
     - Run spec review loop: dispatch `subagent_type: "dev-squad:reviewer"` to check PRD completeness (max 3 iterations). Reviewer applies spec-document-reviewer check matrix from saas-readiness Section 8 (if SaaS) or general spec review (otherwise).
     - >>> CHECKPOINT: Present PRD to user for approval before continuing <<<
+      (Auto mode: SKIP this checkpoint — the Phase 1 haiku phase-gate judge approves the PRD; log "PRD auto-approved by Phase 1 gate" to the assumption ledger.)
     - PHASE GATE: Dispatch `subagent_type: "general-purpose"` with `model: "haiku"` to verify Phase 1 deliverables before transitioning. (See "Phase Gate Judge Dispatch Pattern" in coordinator.md — there is NO `dev-squad:judge` agent type; use general-purpose + haiku model for cost-efficient pass/fail gates.)
 
     ### Phase 2: DESIGN (Writing-Plans Pattern)
@@ -575,6 +612,7 @@ Agent tool with:
     2. Verify all phase deliverables are present
     3. Announce: "[Phase N: NAME] COMPLETE -- transitioning to [Phase N+1: NAME]"
     4. Only stop for user input at the Phase 1 CHECKPOINT (PRD approval)
+       (Auto mode: SKIP this checkpoint — the Phase 1 haiku phase-gate judge approves the PRD; log "PRD auto-approved by Phase 1 gate" to the assumption ledger.)
 
     ## Your Team (MUST use fully-qualified names when dispatching)
     
@@ -627,11 +665,16 @@ Agent tool with:
     ```
     Update each phase status to "in_progress" when starting and "complete" when done.
 
+    **If `--auto` was passed** (present in the build description / user request): also write `"mode": "auto"` and an `"auto"` object into this JSON — copy the `auto_defaults` block from `.claude-plugin/workflows/zero-to-ship.json` and add `"started_at": "<current UTC ISO timestamp>"`. Example:
+    `"mode":"auto","auto":{"started_at":"2026-05-25T10:00:00Z","wall_clock_cap_min":480,"max_total_dispatches":300,"max_iterations_per_phase":5,"on_floor_miss":"fail_loud"}`
+    Without `--auto`, omit these fields (interactive default — all auto hooks no-op).
+
     ## Instructions
     1. Create the workflow tracking file
     2. Execute Phase 0 ULTRAPLAN first — think deeply, write master-plan.md
     3. Execute Phases 1-7 in order (Phase 7 LEARN is mandatory — PDCA Act)
     4. Only pause for user input at Phase 1 CHECKPOINT
+       In `--auto` mode there are ZERO user checkpoints; all decisions are inferred and recorded in `.dev-squad/assumption-ledger.md`.
     5. Use Skills and MCP tools autonomously throughout
     6. Report final completion with summary of everything built
 ```

@@ -5,6 +5,12 @@
   "name": "Zero-to-Ship",
   "description": "Full project build from zero to shippable state. 9 phases with up to 2 user checkpoints (Phase 0 Step 2.5/2.5b SaaS-mode + intake confirmation + Phase 1 PRD approval). PDCA cycle: Plan (Phases 0-2 + 3.5) -> Do (Phases 3-4) -> Check (Phase 5 with formal iteration loop) -> Act (Phases 6-7). v4.15.x: Step 2.5b SaaS Intake (10 questions, BETA) + ADR-006 identity hierarchy + phantom subagent dispatch fixes + workflow JSON drift sync.",
   "trigger_command": "/dev-squad build",
+  "auto_defaults": {
+    "wall_clock_cap_min": 480,
+    "max_total_dispatches": 300,
+    "max_iterations_per_phase": 5,
+    "on_floor_miss": "fail_loud"
+  },
   "phases": [
     {
       "id": "ultraplan",
