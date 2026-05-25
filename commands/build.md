@@ -15,7 +15,7 @@ If the argument string contains `--auto`, this run is UNATTENDED after kickoff. 
 1. **Write mode + budget to state.** At workflow start, write `.dev-squad/workflow-active` with `"mode": "auto"` and copy the `auto_defaults` block from `.claude-plugin/workflows/zero-to-ship.json` into an `"auto"` object, adding `"started_at"` (current UTC ISO timestamp). Example:
    `{"workflow":"zero-to-ship","mode":"auto","auto":{"started_at":"<ISO>","wall_clock_cap_min":480,"max_total_dispatches":300,"max_iterations_per_phase":5,"on_floor_miss":"fail_loud"},"phases":{...}}`
 2. **Never ask the user.** Do NOT call `AskUserQuestion`. Do NOT end any turn with a question. Every decision that would normally be a question is INFERRED from the project description + defaults and recorded in `.dev-squad/assumption-ledger.md`.
-3. **Skip the Phase 1 PRD checkpoint.** The Phase 1 haiku phase-gate judge substitutes for human approval. Record "PRD auto-approved by Phase 1 gate" in the ledger.
+3. **Skip the Phase 1 PRD checkpoint.** The Phase 1 scored evaluator (Phase 1 PRD rubric, sonnet) substitutes for human approval. Record "PRD auto-approved by Phase 1 gate" in the ledger.
 
 (Without `--auto`, mode is `interactive`; behavior is unchanged and all auto hooks no-op.)
 
@@ -222,8 +222,8 @@ Agent tool with:
     - PRD MUST include: auth requirements, API scope, data model, non-functional requirements
     - Run spec review loop: dispatch `subagent_type: "dev-squad:reviewer"` to check PRD completeness (max 3 iterations). Reviewer applies spec-document-reviewer check matrix from saas-readiness Section 8 (if SaaS) or general spec review (otherwise).
     - >>> CHECKPOINT: Present PRD to user for approval before continuing <<<
-      (Auto mode: SKIP this checkpoint — the Phase 1 haiku phase-gate judge approves the PRD; log "PRD auto-approved by Phase 1 gate" to the assumption ledger.)
-    - PHASE GATE: Dispatch `subagent_type: "general-purpose"` with `model: "haiku"` to verify Phase 1 deliverables before transitioning. (See "Phase Gate Judge Dispatch Pattern" in coordinator.md — there is NO `dev-squad:judge` agent type; use general-purpose + haiku model for cost-efficient pass/fail gates.)
+      (Auto mode: SKIP this checkpoint — the Phase 1 scored evaluator (Phase 1 PRD rubric, sonnet) approves the PRD; log "PRD auto-approved by Phase 1 gate" to the assumption ledger.)
+    - PHASE GATE: Dispatch `subagent_type: "general-purpose"` with `model: "sonnet"` to run the scored evaluator against the Phase 1 PRD rubric before transitioning. (See "Phase Gate Decision (Scored Evaluator)" in coordinator.md — there is NO `dev-squad:judge` agent type; use general-purpose + sonnet for Phase 1 PRD + Phase 3.5 Design gates, haiku for other structural gates.)
 
     ### Phase 2: DESIGN (Writing-Plans Pattern)
     - Dispatch architect for full architecture design
@@ -240,7 +240,7 @@ Agent tool with:
       - Observability plan (structured logging, metrics, traces)
     - Write implementation plan with bite-sized tasks (2-5 min each, ONE action per task)
     - Run plan review loop: dispatch `subagent_type: "general-purpose"` with `model: "haiku"` (cost-efficient plan completeness check) OR `subagent_type: "dev-squad:reviewer"` (codebase-aware, when plan touches security/SaaS subsystems). Max 3 iterations. NO `dev-squad:plan-reviewer` agent type exists — use one of the two patterns above.
-    - PHASE GATE: Dispatch `subagent_type: "general-purpose"` with `model: "haiku"` to verify Phase 2 deliverables.
+    - PHASE GATE: Dispatch scored evaluator (`general-purpose`, model: `haiku`, Generic rubric) to verify Phase 2 deliverables; loop on feedback until score >= threshold or max_iters/plateau.
 
     ### Phase 3: SCAFFOLD (Monorepo)
     - Dispatch devops → create MONOREPO structure (see Monorepo Standard below)
@@ -259,7 +259,7 @@ Agent tool with:
       - Monitoring stack config (Prometheus + Grafana + Loki)
       - Alerting rules (error rate, latency p95, service down)
     - SELF-HEALING: Run `docker compose config` + `make dev` — if fails, diagnose → fix → retry (max 5)
-    - PHASE GATE: Judge agent verifies scaffold builds
+    - PHASE GATE: Dispatch scored evaluator (`general-purpose`, model: `haiku`, Generic rubric) to verify scaffold builds; loop on feedback until score >= threshold or max_iters/plateau
 
     ### Phase 3.5: DESIGN (BLOCKING anti-AI-slop gate — skip ONLY with `--mvp-mode`)
     - Dispatch **designer** → produce 4 BLOCKING artifacts in `.dev-squad/design/`:
@@ -271,7 +271,7 @@ Agent tool with:
     - Designer uses WebSearch + grep-github + playwright (screenshot references) + chrome-devtools (study real reference styles)
     - Designer's anti-pattern list is project-specific (NOT generic) — must explicitly reject: emoji-as-icon, default shadcn slate primary, AI-cliché purple-to-blue gradients, missing responsive, missing motion
     - SELF-HEALING: If artifacts incomplete (missing concrete values, no reference screenshots, generic anti-pattern list) → re-dispatch designer with specific gap call-out
-    - PHASE GATE: Verify all 4 artifacts present + designer's self-check passed before transitioning to Phase 4
+    - PHASE GATE: Dispatch scored evaluator (`general-purpose`, model: `sonnet`, Phase 3.5 Design rubric) to verify all 4 artifacts present + designer's self-check passed; loop on feedback until score >= threshold or max_iters/plateau before transitioning to Phase 4
     - `--mvp-mode` escape: produce only design-tokens.md + slim visual-spec.md (1 ref + anti-pattern list); skip component-inventory + responsive-spec
 
     ### Phase 4: IMPLEMENT (Subagent-Driven Development Pattern)
@@ -294,7 +294,7 @@ Agent tool with:
       2. Coordinator looks at task diff and applies heuristic to decide which agents to dispatch
       3. Spec-compliance pass:
          - New endpoint or UI → dispatch `dev-squad:qa-engineer` (functional verify against acceptance criteria)
-         - Static spec match → dispatch `dev-squad:reviewer` (full review) OR `general-purpose` + `model: "haiku"` (simple pass/fail gate — there is NO `dev-squad:judge` agent type)
+         - Static spec match → dispatch `dev-squad:reviewer` (full review) OR `general-purpose` + `model: "haiku"` (scored gate, Generic rubric — there is NO `dev-squad:judge` agent type)
          - Loop until pass
       4. Code-quality pass:
          - DB/perf/large diff → dispatch auditor (real metrics)
@@ -612,7 +612,7 @@ Agent tool with:
     2. Verify all phase deliverables are present
     3. Announce: "[Phase N: NAME] COMPLETE -- transitioning to [Phase N+1: NAME]"
     4. Only stop for user input at the Phase 1 CHECKPOINT (PRD approval)
-       (Auto mode: SKIP this checkpoint — the Phase 1 haiku phase-gate judge approves the PRD; log "PRD auto-approved by Phase 1 gate" to the assumption ledger.)
+       (Auto mode: SKIP this checkpoint — the Phase 1 scored evaluator (Phase 1 PRD rubric, sonnet) approves the PRD; log "PRD auto-approved by Phase 1 gate" to the assumption ledger.)
 
     ## Your Team (MUST use fully-qualified names when dispatching)
     
@@ -635,7 +635,7 @@ Agent tool with:
     Override model per-dispatch based on task complexity:
     - opus: auth flows, cross-package wiring, security review, self-healing fixes, integration tasks
     - sonnet: single endpoint CRUD, isolated component, migration, scaffold, git operations
-    - haiku: phase gate judge, spec compliance pass/fail check
+    - haiku: structural/generic scored gate (Phase 2, 3, 4 deliverable checks) + spec compliance checks; sonnet: Phase 1 PRD + Phase 3.5 Design scored gates (judgment-heavy rubrics)
     User can force all-opus via: `export CLAUDE_CODE_SUBAGENT_MODEL=claude-opus-4-6`
 
     ## Self-Healing Loop
