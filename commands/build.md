@@ -347,6 +347,7 @@ Agent tool with:
       Pass 2: PERFORMANCE → N+1 queries, indexes, pagination, bundle size
       Pass 3: SPEC COMPLIANCE → PRD requirements met line-by-line
       Pass 4: ARCHITECTURE → ADR conformance, SOLID, shared packages used
+      Pass 5 (non-trivial diff only): ADVERSARIAL → run `dev-squad:adversarial-security` 3-pass pipeline (attacker→defender→synthesizer) on the diff; surface any P0/P1 findings before synthesis
 
     **Lane 2: qa-engineer (runtime execution — Phase 5.5 FUNCTIONAL VERIFICATION + Visual Gate)**:
       - Boot backend + frontend
