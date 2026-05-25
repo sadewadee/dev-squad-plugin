@@ -11,6 +11,7 @@
     "max_iterations_per_phase": 5,
     "on_floor_miss": "fail_loud"
   },
+  "gate_defaults": { "threshold": 80, "max_iters": 3, "plateau_delta": 5 },
   "phases": [
     {
       "id": "ultraplan",
