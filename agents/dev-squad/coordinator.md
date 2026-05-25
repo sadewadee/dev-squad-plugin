@@ -846,6 +846,11 @@ ITERATION 1-2: AUTHOR RETRIES
      d. Apply fix (author runs the fix command in their context)
      e. VERIFY: re-run the SAME command. If pass → done. If fail → INCREMENT iteration
 
+  NOTE — build / compile / type-check errors specifically: the author uses the
+  `dev-squad:build-error-resolver` skill (minimal-diff fix, re-runs the same build command
+  to verify). Its 2-attempt-then-escalate cap aligns with the thrashing rule below — two
+  failed fix-and-verify cycles on the same error feed directly into ITERATION 3 (fresh-eyes).
+
 ITERATION 3: FRESH-EYES INVESTIGATION (handoff to qa-engineer)
   Trigger conditions (any one):
   - Same error persists after iteration 1+2 (author thrashing)
