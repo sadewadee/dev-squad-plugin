@@ -37,5 +37,15 @@ rc=$(echo '{"hook_event_name":"PreToolUse","tool_name":"Task"}' | bash "$HOOK" >
 [ "$rc" -eq 0 ] || { echo "FAIL case5: expected 0 got $rc"; fail=1; }
 [ ! -f .dev-squad/auto-run.json ] || { echo "FAIL case5: should not create auto-run.json in interactive"; fail=1; }
 
+# Case 6: wall-clock exceeded -> block (exit 2) even when dispatch count is low
+mkdir -p .dev-squad
+cat > .dev-squad/workflow-active <<'JSON'
+{"mode":"auto","auto":{"started_at":"2000-01-01T00:00:00Z","max_total_dispatches":300,"wall_clock_cap_min":1}}
+JSON
+rm -f .dev-squad/auto-run.json
+out=$(echo '{"hook_event_name":"PreToolUse","tool_name":"Task"}' | bash "$HOOK" 2>&1); rc=$?
+[ "$rc" -eq 2 ] || { echo "FAIL case6 rc: expected 2 got $rc"; fail=1; }
+echo "$out" | grep -qi "wall_clock" || { echo "FAIL case6 msg: '$out'"; fail=1; }
+
 cd /; rm -rf "$TMP"
 if [ "$fail" -eq 0 ]; then echo "PASS test-auto-governor"; else exit 1; fi

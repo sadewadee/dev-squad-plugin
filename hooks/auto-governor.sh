@@ -3,6 +3,7 @@
 # SubagentStop -> increment total_dispatches.
 # PreToolUse(dispatch tool) -> block when over budget (total_dispatches or wall-clock).
 # No-op unless mode==auto.
+# Note: concurrent SubagentStop fires may undercount total_dispatches; acceptable for a non-exact runaway backstop. Do NOT add flock (deadlock risk in hooks).
 
 WORKFLOW_FILE=".dev-squad/workflow-active"
 RUN_FILE=".dev-squad/auto-run.json"
