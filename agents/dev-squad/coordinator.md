@@ -693,42 +693,74 @@ Every NON-TRIVIAL deliverable goes through TWO review passes before completion. 
 3. ONLY mark task complete after BOTH passes approve from all dispatched agents
 ```
 
-## Phase Gate Decision (Judge Pattern)
+## Phase Gate Decision (Scored Evaluator)
 
-Before transitioning between phases, dispatch a cheap pass/fail judge. **There is NO `dev-squad:judge` agent type.** The "judge" is a role played by `general-purpose` running with `model: "haiku"` for cost-efficient gate decisions.
+Before transitioning between phases, dispatch a SCORED EVALUATOR (not a binary judge). It scores the phase deliverables 0-100 against a rubric and returns actionable feedback. **There is NO `dev-squad:judge` agent type** — the evaluator is `general-purpose` with `model: "haiku"` (structural gates) or `model: "sonnet"` (Phase 1 PRD + Phase 3.5 Design, which are judgment-heavy).
 
 ```
 Agent({
   subagent_type: "general-purpose",
-  model: "haiku",                     // critical: haiku for cost-efficient pass/fail
-  description: "Phase {N} gate validation",
+  model: "haiku",   // sonnet for Phase 1 PRD + Phase 3.5 Design
+  description: "Phase {N} scored evaluation",
   prompt: |
-    You are a phase gate judge. Verify Phase {N} deliverables before transition.
+    You are a phase-gate evaluator. Score Phase {N} deliverables 0-100 against the rubric, then list specific actionable feedback.
 
-    **Phase deliverables checklist:**
-    {paste phase-specific checklist from commands/build.md}
+    **Rubric (weighted dimensions — overall = weighted sum):**
+    {paste the phase's rubric from "Gate Rubrics" below; use the Generic rubric if the phase has none}
 
-    **Current artifact state:**
-    - Files created: {list}
-    - Tests passing: {yes/no, count}
-    - Reviews complete: {yes/no}
+    **Artifact(s) to score:**
+    - Files: {paths}
+    - State: {tests passing? reviews done?}
 
-    **Decision:**
-    Return PASS or FAIL with one-line reason. Approve unless a deliverable is genuinely missing or broken.
-
-    **Output:**
-    Status: PASS | FAIL
-    Reason: (one line)
+    **Output (exactly this shape):**
+    SCORE: {0-100 overall}
+    DIMENSIONS:
+    - {dimension}: {0-100} — {one-line reason}
+    FEEDBACK:
+    - {specific, actionable change that would raise the score}   (write "none" if SCORE >= threshold)
 })
 ```
 
-Flow:
-1. Dispatch judge as shown above
-2. Judge returns PASS or FAIL with one-line reason
-3. PASS → transition to next phase
-4. FAIL → fix issues, re-dispatch (max 3 attempts → escalate to user)
+Flow (`threshold` / `max_iters` / `plateau_delta` from `zero-to-ship.json` `gate_defaults`; defaults 80 / 3 / 5):
+1. Dispatch evaluator → read SCORE + FEEDBACK.
+2. `SCORE >= threshold` → transition to next phase.
+3. `SCORE < threshold` AND `iter < max_iters`:
+   a. Re-dispatch the phase's LEAD agent with the FEEDBACK appended ("address these items to raise the gate score") → regenerate the artifact.
+   b. Re-evaluate; increment `iter`; record `iter`, score, feedback to `.dev-squad/iteration-log.md`.
+   c. **Plateau:** if `(new SCORE - previous SCORE) < plateau_delta` → stop looping (diminishing returns).
+   d. **Rollback:** if regeneration breaks a previously-passing check/test, `git restore` (same rule as the Phase 5 loop).
+4. Still `< threshold` after `max_iters` OR plateau:
+   - **Interactive mode:** escalate to the user with the SCORE + FEEDBACK (do not silently pass).
+   - **Auto mode** (`.dev-squad/workflow-active` `mode == auto`): record a quality-floor miss to `.dev-squad/iteration-log.md` (line `UNRESOLVED P1: phase {N} gate score {x} < {threshold}`) so SP1's `stop-verify.sh` fail-loud picks it up. Do NOT pass.
 
-**Anti-pattern**: `subagent_type: "judge"` or `subagent_type: "dev-squad:judge"` — both fail "agent type not available" → coordinator silently skips gate → phase transitions with broken deliverables. NEVER use those literal types. Use the canonical pattern above.
+**Anti-pattern:** `subagent_type: "judge"` / `"dev-squad:judge"` do not exist → fail "agent type not available" → gate silently skipped. Use the canonical `general-purpose` + model pattern above.
+
+### Gate Rubrics
+
+**Phase 1 PRD** (model: sonnet)
+| Dimension | Weight | High score = |
+|---|---|---|
+| Scope clarity | 0.25 | problem, target users, success criteria explicit |
+| Completeness | 0.25 | all PRD sections present + concrete (no TBD) |
+| Feasibility | 0.20 | scope matches stated stack/constraints |
+| Testability | 0.15 | acceptance criteria are verifiable |
+| Risk coverage | 0.15 | key risks/edge cases named |
+
+**Phase 3.5 Design** (model: sonnet)
+| Dimension | Weight | High score = |
+|---|---|---|
+| Token concreteness | 0.25 | real values (hex/rem/ms), not placeholders |
+| Reference grounding | 0.20 | >=3 real references with screenshots |
+| Responsive + motion | 0.20 | both specified across breakpoints |
+| Anti-pattern specificity | 0.20 | project-specific anti-pattern list (not generic) |
+| Component completeness | 0.15 | inventory covers the page set |
+
+**Generic** (any other gate; model: haiku)
+| Dimension | Weight | High score = |
+|---|---|---|
+| Completeness | 0.45 | every required deliverable present |
+| Correctness | 0.40 | builds/tests pass, no broken artifact |
+| No-placeholder | 0.15 | no TBD/TODO/stub left |
 
 ## Smart Model Routing
 
