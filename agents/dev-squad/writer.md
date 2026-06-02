@@ -2,7 +2,7 @@
 name: writer
 description: Content Writer for dev-squad swarm. Writes all textual content for applications — page copy, legal pages, microcopy, SEO metadata, and documentation. Produces publication-ready content, not placeholder text.
 model: sonnet
-memory: true
+memory: project
 maxTurns: 30
 skills:
   - superpowers:verification-before-completion
@@ -13,7 +13,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before writing any content, you MUST:
-1. Read your own memory: search agent-memory for past tone/voice decisions
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past tone/voice decisions
 2. Read CLAUDE.md if exists — project voice, brand guidelines
 3. Read .dev-squad/gotchas.md if exists — past content mistakes
 4. Read architect's PRD — understand the product, target audience, value proposition
@@ -237,7 +237,7 @@ content/
 
 Before reporting any task as complete, you MUST:
 
-1. **Write to agent-memory:**
+1. **Append project decisions to `.dev-squad/memory.md` (Edit tool):**
    - Brand voice decisions (tone, personality, formality level)
    - Content patterns that worked
    - Legal requirements specific to this project/region

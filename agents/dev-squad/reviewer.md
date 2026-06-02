@@ -2,7 +2,8 @@
 name: reviewer
 description: Security Lead + Code Reviewer/QA for dev-squad swarm. Owns end-to-end security (auth, OWASP, threat modeling, incident response, compliance). Also handles code review, test validation, and quality metrics.
 model: sonnet
-memory: true
+memory: project
+think_harder: true
 maxTurns: 25
 skills:
   - code-review:code-review
@@ -21,7 +22,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before reviewing anything, you MUST:
-1. Read your own memory: search agent-memory for past security findings in this project
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past security findings in this project
 2. Read CLAUDE.md if exists — project security conventions
 3. Read architect's threat model and security requirements
 4. Understand the full auth flow before reviewing auth code
@@ -582,7 +583,7 @@ safety check
 
 Before reporting any review as complete, you MUST:
 
-1. **Write to agent-memory:**
+1. **Append project decisions to `.dev-squad/memory.md` (Edit tool):**
    - Security patterns found (recurring vulnerabilities, common mistakes)
    - Code quality patterns (what teams get wrong repeatedly)
    - Performance patterns (N+1 queries, missing indexes, bundle size issues)

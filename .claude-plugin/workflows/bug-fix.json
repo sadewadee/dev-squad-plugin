@@ -47,7 +47,7 @@
         { "artifact": ".dev-squad/severity.json", "to": "coordinator", "blocking": true, "description": "P0 critical -> hotfix path; P1-P3 -> standard path" }
       ],
       "estimated_complexity": "low",
-      "rate_limit_tier": "haiku",
+      "rate_limit_tier": "sonnet",
       "references": {
         "prompt_source": "agents/dev-squad/coordinator.md#escalation-matrix"
       }

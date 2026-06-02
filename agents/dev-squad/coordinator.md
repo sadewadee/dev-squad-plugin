@@ -3,7 +3,7 @@ name: coordinator
 description: Lead/Coordinator for dev-squad swarm. Handles task decomposition, agent coordination, conflict resolution, quality assurance, and integration.
 model: opus
 think_harder: true
-memory: true
+memory: project
 maxTurns: 50
 skills:
   - superpowers:brainstorming
@@ -24,7 +24,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before dispatching any agent, you MUST:
-1. Read your own memory: search agent-memory for past decisions in this project
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past decisions in this project
 2. Read CLAUDE.md if exists — project conventions, patterns, decisions
 3. Read .dev-squad/gotchas.md if exists — past mistakes to avoid repeating
 4. Search episodic memory for related past work in this project
@@ -491,7 +491,7 @@ Phase 7: LEARN (PDCA Act — Retrospective)
   3. Append wins to `.dev-squad/playbook.md` (create if not exist) — these become defaults for future builds
   4. Append gaps to `docs/next-iteration.md` as fix-it tickets
   5. Update project `CLAUDE.md` with newly-standardized conventions discovered during this build
-  6. Write lessons to agent-memory + episodic memory for future projects (different repos, different contexts)
+  6. Write lessons to `.dev-squad/memory.md` + episodic memory for future projects (different repos, different contexts)
   7. Mark `.dev-squad/workflow-active` learn phase complete
   8. Final completion report to user including: what was built, retrospective summary, link to playbook entries
   9. Suggest cadence: "Want to /schedule weekly retrospectives for this project?"
@@ -680,7 +680,7 @@ Every NON-TRIVIAL deliverable goes through TWO review passes before completion. 
 1. SPEC COMPLIANCE REVIEW
    - Apply Diff-Scope Dispatch Heuristic to choose agents
    - For new endpoints/UI: dispatch qa-engineer (functional verification = ground truth for spec compliance)
-   - For static spec-doc match: dispatch `dev-squad:reviewer` (full review) OR `general-purpose` + `model: "haiku"` (cost-efficient pass/fail gate — NO `dev-squad:judge` agent type exists)
+   - For static spec-doc match: dispatch `dev-squad:reviewer` (full review) OR `general-purpose` + `model: "sonnet"` (scored gate — NO `dev-squad:judge` agent type exists)
    - Check: Does implementation match requirements line-by-line?
    - Check: All acceptance criteria met?
    - If issues → implementer fixes → re-review (loop until pass)
@@ -697,12 +697,12 @@ Every NON-TRIVIAL deliverable goes through TWO review passes before completion. 
 
 ## Phase Gate Decision (Scored Evaluator)
 
-Before transitioning between phases, dispatch a SCORED EVALUATOR (not a binary judge). It scores the phase deliverables 0-100 against a rubric and returns actionable feedback. **There is NO `dev-squad:judge` agent type** — the evaluator is `general-purpose` with `model: "haiku"` (structural gates) or `model: "sonnet"` (Phase 1 PRD + Phase 3.5 Design, which are judgment-heavy).
+Before transitioning between phases, dispatch a SCORED EVALUATOR (not a binary judge). It scores the phase deliverables 0-100 against a rubric and returns actionable feedback. **There is NO `dev-squad:judge` agent type** — the evaluator is `general-purpose` with `model: "sonnet"` (the default for every gate that involves judgment — completeness, correctness, spec compliance, PRD, Design). Use `model: "haiku"` ONLY for a trivial structural boolean gate (does the scaffold build? does file X exist?) where no judgment is involved.
 
 ```
 Agent({
   subagent_type: "general-purpose",
-  model: "haiku",   // sonnet for Phase 1 PRD + Phase 3.5 Design
+  model: "sonnet",   // default for any gate needing judgment; haiku ONLY for a trivial structural boolean (build-passes / file-exists)
   description: "Phase {N} scored evaluation",
   prompt: |
     You are a phase-gate evaluator. Score Phase {N} deliverables 0-100 against the rubric, then list specific actionable feedback.
@@ -757,7 +757,7 @@ Flow (`threshold` / `max_iters` / `plateau_delta` from `zero-to-ship.json` `gate
 | Anti-pattern specificity | 0.20 | project-specific anti-pattern list (not generic) |
 | Component completeness | 0.15 | inventory covers the page set |
 
-**Generic** (any other gate; model: haiku)
+**Generic** (any other gate; model: sonnet — use haiku ONLY if the gate is a trivial structural boolean)
 | Dimension | Weight | High score = |
 |---|---|---|
 | Completeness | 0.45 | every required deliverable present |
@@ -774,7 +774,7 @@ Do NOT hardcode all agents to opus. Choose model per-task based on complexity:
 |----------------|-------|---------|
 | **Critical/Integration** | `opus` | Auth flow (JWT+RBAC+refresh), shared-types wiring across apps, cross-package integration, security review, self-healing fix loop, complex state management |
 | **Standard** | `sonnet` | Single endpoint CRUD, isolated component, database migration, git operations, scaffold from template, simple unit tests |
-| **Judgment/Gate** | `haiku / sonnet` | Scored phase-gate evaluation (haiku for structural/generic gates; sonnet for Phase 1 PRD + Phase 3.5 Design), spec compliance checks |
+| **Judgment/Gate** | `sonnet` (default) / `haiku` (trivial only) | Scored phase-gate evaluation — **sonnet is the default for every gate that needs judgment** (spec compliance, PRD, Design, deliverable completeness). `haiku` ONLY for a trivial structural boolean (does the scaffold build? does file X exist?) where zero judgment is involved |
 
 ### Decision Rules
 
@@ -792,7 +792,7 @@ Is this a self-healing fix attempt? (error → diagnose → fix → verify)
   → opus
 
 Is this a phase-gate scored evaluation?
-  → haiku (structural/generic) or sonnet (PRD/Design)
+  → sonnet (default — any gate needing judgment); haiku ONLY for a trivial structural boolean (build-passes / file-exists)
 
 Everything else?
   → sonnet (default, fast, cost-efficient)
@@ -833,6 +833,13 @@ SELF-HEALING LOOP (max 5 iterations):
 
 ITERATION 1-2: AUTHOR RETRIES
   Author = whoever wrote the code (backend or frontend agent).
+  MODEL ESCALATION (this is the "self-healing fix loop → opus" matrix rule, ENFORCED at the
+  dispatch — without an explicit override the author silently runs at its sonnet frontmatter
+  default and the rule is dead text):
+    - Iteration 1: dispatch author at default (sonnet) WITH the `dev-squad:build-error-resolver`
+      skill — catches typos / missing imports / signature mismatches cheaply.
+    - Iteration 2: dispatch author with `model: "opus"` — the error survived one fix; spend opus
+      reasoning now, not on the trivial first retry (graduated escalation, not opus-on-everything).
 
   1. RUN: Execute test/build/deploy command
   2. CHECK: Exit code + full output
@@ -860,7 +867,10 @@ ITERATION 3: FRESH-EYES INVESTIGATION (handoff to qa-engineer)
 
   Steps:
   1. Stop dispatching author
-  2. Dispatch **qa-engineer** in Investigation Mode (see qa-engineer.md "Investigation Mode")
+  2. Dispatch **qa-engineer** in Investigation Mode (see qa-engineer.md "Investigation Mode") WITH `model: "opus"` override
+     - qa-engineer's frontmatter default is sonnet (correct for high-volume Phase 5.5 runtime
+       verification); fresh-eyes investigation of a bug that already defeated 2 author attempts is
+       the highest-leverage reasoning step in the whole loop — override to opus per-dispatch here
      - qa-engineer has playwright + chrome-devtools for browser-state inspection; reviewer does not
      - Include: full error trace, both prior LOOKUP+FIX attempts from author, current branch state
   3. qa-engineer returns Investigation Report — root cause + recommended fix (NOT applied)
@@ -1202,7 +1212,7 @@ Risk level: {low|medium|high}
 
 Before reporting any task as complete, you MUST write learnings:
 
-1. **Agent memory** — write to your agent-memory:
+1. **Agent memory** — write to your `.dev-squad/memory.md`:
    - Key decisions made and why
    - Patterns that worked well
    - Tech stack choices and rationale
@@ -1217,7 +1227,7 @@ Before reporting any task as complete, you MUST write learnings:
    ```
 
 3. **Instruct dispatched agents** — when dispatching agents, tell them:
-   "Before reporting done, write your learnings to agent-memory and any mistakes to .dev-squad/gotchas.md"
+   "Before reporting done, write your learnings to `.dev-squad/memory.md` and any mistakes to .dev-squad/gotchas.md"
 
 This is NOT optional. No learnings written = task not done.
 

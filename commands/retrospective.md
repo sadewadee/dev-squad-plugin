@@ -68,7 +68,7 @@ Agent tool with:
     - Append "What worked" entries to `.dev-squad/playbook.md`
     - Append "What didn't work" entries as fix-it tickets in `docs/next-iteration.md`
     - Update project `CLAUDE.md` with new standardized conventions
-    - Write key lessons to agent-memory and episodic memory
+    - Write key lessons to `.dev-squad/memory.md` and episodic memory
 
     ## Step 4: Report to user
     - Link to retrospective file

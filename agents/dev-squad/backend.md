@@ -2,7 +2,7 @@
 name: backend
 description: Backend Developer for dev-squad swarm. Handles API development, database operations, business logic, and server optimization.
 model: sonnet
-memory: true
+memory: project
 maxTurns: 30
 skills:
   - superpowers:test-driven-development
@@ -24,7 +24,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before writing a single line of code, you MUST:
-1. Read your own memory: search agent-memory for past decisions in this project
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past decisions in this project
 2. Read CLAUDE.md if exists — project conventions, patterns, decisions
 3. Read .dev-squad/gotchas.md if exists — past mistakes to avoid repeating
 4. Read architect's design document (docs/architecture.md, ADRs)
@@ -474,7 +474,7 @@ If coordinator rejects: do NOT defend. Re-do the LOOKUP properly. The cost of a 
 
 Before reporting any task as complete, you MUST:
 
-1. **Write to agent-memory:**
+1. **Append project decisions to `.dev-squad/memory.md` (Edit tool):**
    - API patterns used (auth approach, error handling style, ORM patterns)
    - Database decisions (indexes added, migration strategies, query patterns)
    - Gotchas discovered (framework quirks, config issues, dependency conflicts)

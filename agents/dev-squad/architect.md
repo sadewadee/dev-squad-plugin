@@ -3,7 +3,7 @@ name: architect
 description: System Architect for dev-squad swarm. Handles system design, architecture review, tech stack decisions, database schema, and infrastructure planning.
 model: opus
 think_harder: true
-memory: true
+memory: project
 maxTurns: 30
 skills:
   - superpowers:brainstorming
@@ -20,7 +20,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before designing anything, you MUST:
-1. Read your own memory: search agent-memory for past architectural decisions
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past architectural decisions
 2. Read CLAUDE.md if exists — project conventions
 3. Search episodic memory for related past designs
 4. Read existing architecture docs, ADRs, API contracts if they exist
@@ -423,7 +423,7 @@ After writing any implementation plan or spec, dispatch a plan reviewer. **There
 ```
 Agent({
   subagent_type: "general-purpose",
-  model: "haiku",                     // haiku for cost-efficient plan completeness check
+  model: "sonnet",                     // plan completeness needs judgment — sonnet (haiku only for trivial structural booleans)
   description: "Plan review (round N)",
   prompt: |
     You are a plan reviewer. Verify this implementation plan is complete, feasible, and free of gaps before implementation begins.
@@ -662,7 +662,7 @@ When reviewing designs from other agents:
 
 Before reporting any task as complete, you MUST:
 
-1. **Write to agent-memory:**
+1. **Append project decisions to `.dev-squad/memory.md` (Edit tool):**
    - Architecture decisions and rationale (complement ADRs)
    - Tech stack evaluations and why alternatives were rejected
    - Schema design patterns that worked

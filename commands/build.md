@@ -223,7 +223,7 @@ Agent tool with:
     - Run spec review loop: dispatch `subagent_type: "dev-squad:reviewer"` to check PRD completeness (max 3 iterations). Reviewer applies spec-document-reviewer check matrix from saas-readiness Section 8 (if SaaS) or general spec review (otherwise).
     - >>> CHECKPOINT: Present PRD to user for approval before continuing <<<
       (Auto mode: SKIP this checkpoint — the Phase 1 scored evaluator (Phase 1 PRD rubric, sonnet) approves the PRD; log "PRD auto-approved by Phase 1 gate" to the assumption ledger.)
-    - PHASE GATE: Dispatch `subagent_type: "general-purpose"` with `model: "sonnet"` to run the scored evaluator against the Phase 1 PRD rubric before transitioning. (See "Phase Gate Decision (Scored Evaluator)" in coordinator.md — there is NO `dev-squad:judge` agent type; use general-purpose + sonnet for Phase 1 PRD + Phase 3.5 Design gates, haiku for other structural gates.)
+    - PHASE GATE: Dispatch `subagent_type: "general-purpose"` with `model: "sonnet"` to run the scored evaluator against the Phase 1 PRD rubric before transitioning. (See "Phase Gate Decision (Scored Evaluator)" in coordinator.md — there is NO `dev-squad:judge` agent type; use general-purpose + sonnet for all judgment gates (PRD, Design, deliverable completeness, spec compliance), haiku only for a trivial structural boolean.)
 
     ### Phase 2: DESIGN (Writing-Plans Pattern)
     - Dispatch architect for full architecture design
@@ -239,8 +239,8 @@ Agent tool with:
       - Rate limiting strategy (per-endpoint limits)
       - Observability plan (structured logging, metrics, traces)
     - Write implementation plan with bite-sized tasks (2-5 min each, ONE action per task)
-    - Run plan review loop: dispatch `subagent_type: "general-purpose"` with `model: "haiku"` (cost-efficient plan completeness check) OR `subagent_type: "dev-squad:reviewer"` (codebase-aware, when plan touches security/SaaS subsystems). Max 3 iterations. NO `dev-squad:plan-reviewer` agent type exists — use one of the two patterns above.
-    - PHASE GATE: Dispatch scored evaluator (`general-purpose`, model: `haiku`, Generic rubric) to verify Phase 2 deliverables; loop on feedback until score >= threshold or max_iters/plateau.
+    - Run plan review loop: dispatch `subagent_type: "general-purpose"` with `model: "sonnet"` (plan completeness needs judgment) OR `subagent_type: "dev-squad:reviewer"` (codebase-aware, when plan touches security/SaaS subsystems). Max 3 iterations. NO `dev-squad:plan-reviewer` agent type exists — use one of the two patterns above.
+    - PHASE GATE: Dispatch scored evaluator (`general-purpose`, model: `sonnet`, Generic rubric) to verify Phase 2 deliverables; loop on feedback until score >= threshold or max_iters/plateau.
 
     ### Phase 3: SCAFFOLD (Monorepo)
     - Dispatch devops → create MONOREPO structure (see Monorepo Standard below)
@@ -259,7 +259,7 @@ Agent tool with:
       - Monitoring stack config (Prometheus + Grafana + Loki)
       - Alerting rules (error rate, latency p95, service down)
     - SELF-HEALING: Run `docker compose config` + `make dev` — if fails, diagnose → fix → retry (max 5)
-    - PHASE GATE: Dispatch scored evaluator (`general-purpose`, model: `haiku`, Generic rubric) to verify scaffold builds; loop on feedback until score >= threshold or max_iters/plateau
+    - PHASE GATE: Dispatch scored evaluator (`general-purpose`, model: `sonnet`, Generic rubric) to verify scaffold builds; loop on feedback until score >= threshold or max_iters/plateau
 
     ### Phase 3.5: DESIGN (BLOCKING anti-AI-slop gate — skip ONLY with `--mvp-mode`)
     - Dispatch **designer** → produce 4 BLOCKING artifacts in `.dev-squad/design/`:
@@ -294,7 +294,7 @@ Agent tool with:
       2. Coordinator looks at task diff and applies heuristic to decide which agents to dispatch
       3. Spec-compliance pass:
          - New endpoint or UI → dispatch `dev-squad:qa-engineer` (functional verify against acceptance criteria)
-         - Static spec match → dispatch `dev-squad:reviewer` (full review) OR `general-purpose` + `model: "haiku"` (scored gate, Generic rubric — there is NO `dev-squad:judge` agent type)
+         - Static spec match → dispatch `dev-squad:reviewer` (full review) OR `general-purpose` + `model: "sonnet"` (scored gate, Generic rubric — there is NO `dev-squad:judge` agent type)
          - Loop until pass
       4. Code-quality pass:
          - DB/perf/large diff → dispatch auditor (real metrics)
@@ -480,7 +480,7 @@ Agent tool with:
     - Append "What worked" entries to `.dev-squad/playbook.md` (create if not exist)
     - Append "What didn't work" entries as fix-it tickets in `docs/next-iteration.md`
     - Update project `CLAUDE.md` with conventions discovered during this build (e.g., "always use cursor pagination", "auth flow uses httpOnly cookies"). **Preserve the 12 rules at top of CLAUDE.md unchanged** — append new conventions as a "Project Conventions Discovered During Build" section BELOW. Do NOT inline conventions inside the 12 rules.
-    - Write lessons to agent-memory + episodic memory for future projects
+    - Write lessons to `.dev-squad/memory.md` + episodic memory for future projects
 
     **Step 3: Mark complete**
 
@@ -636,7 +636,7 @@ Agent tool with:
     Override model per-dispatch based on task complexity:
     - opus: auth flows, cross-package wiring, security review, self-healing fixes, integration tasks
     - sonnet: single endpoint CRUD, isolated component, migration, scaffold, git operations
-    - haiku: structural/generic scored gate (Phase 2, 3, 4 deliverable checks) + spec compliance checks; sonnet: Phase 1 PRD + Phase 3.5 Design scored gates (judgment-heavy rubrics)
+    - sonnet: ALL scored gates by default (Phase 2/3/4 deliverable checks, spec compliance, Phase 1 PRD, Phase 3.5 Design — every gate involves judgment); haiku: reserved ONLY for a trivial structural boolean (e.g. does the scaffold build / does file X exist)
     User can force all-opus via: `export CLAUDE_CODE_SUBAGENT_MODEL=claude-opus-4-6`
 
     ## Self-Healing Loop

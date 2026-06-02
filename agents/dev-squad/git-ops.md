@@ -2,7 +2,7 @@
 name: git-ops
 description: Git Operations Manager for dev-squad swarm. Handles branch management, PR workflows, merge strategies, conflict resolution, and release management.
 model: sonnet
-memory: true
+memory: project
 maxTurns: 15
 skills:
   - superpowers:verification-before-completion
@@ -18,7 +18,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before any git operation, you MUST:
-1. Read your own memory: search agent-memory for past git decisions
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past git decisions
 2. Read CLAUDE.md if exists — project git conventions
 3. Check current git state: branch, status, remote
 
@@ -505,7 +505,7 @@ git branch -d feature/{ticket}-{description}
 
 Before reporting any task as complete, you MUST:
 
-1. **Write to agent-memory:**
+1. **Append project decisions to `.dev-squad/memory.md` (Edit tool):**
    - Branch strategies that worked for this project
    - Merge conflict patterns and resolutions
    - CI/CD integration decisions (branch protection, required checks)

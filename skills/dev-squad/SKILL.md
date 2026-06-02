@@ -207,18 +207,18 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 | **Two-Stage Review** | Phase 4 (per task) | Spec compliance → Code quality, loop until both pass; agents chosen via Diff-Scope Heuristic |
 | **3-Way Phase 5 Review** | Phase 5 (full feature) | reviewer (static, incl. design lint) + qa-engineer (runtime + Visual Gate) + auditor (automated) dispatched in parallel; reviewer synthesizes single Metrics Report. Designer added as light pass for new UI surfaces. |
 | **Diff-Scope Dispatch Heuristic** | Every review dispatch | Coordinator picks reviewer / qa-engineer / auditor combo per diff scope; logs decision to .dev-squad/dispatch-log.md |
-| **Scored Phase Gate** | Between all phases | Scored evaluator (0-100 vs rubric) + retry-on-feedback + plateau detection; haiku for structural/generic gates, sonnet for PRD + Design |
+| **Scored Phase Gate** | Between all phases | Scored evaluator (0-100 vs rubric) + retry-on-feedback + plateau detection; **sonnet by default for every gate** (gates involve judgment), haiku ONLY for a trivial structural boolean (build-passes / file-exists) |
 | **Confidence Scoring** | Phase 5 review + phase gates | Score 0-100 per finding, filter < 80 as non-actionable (Phase 5 findings); scoring now also drives phase gate evaluation — generalized to gate evaluation across all phases |
 | **Multi-Angle Review** | Phase 5 reviewer lane | 4 review passes within reviewer's static lane: security, performance, spec, architecture |
-| **Systematic Debugging** | All agents | 4-phase: investigate → analyze → hypothesize → implement |
+| **Systematic Debugging** | All agents | 5-phase: recall (episodic + gotchas) → reproduce → locate → hypothesize → fix-verify |
 | **Plan Review Loop** | Phase 2 design | Dispatch reviewer for plan, max 3 iterations |
 | **Verification-Before-Completion** | Phase 6 + all tasks | Evidence before claims, run commands fresh |
 | **Agent Memory** | All agents | `memory: project` — persistent knowledge across sessions |
 | **CronCreate Monitoring** | Phase 6 post-deploy | Automated health checks, lighthouse, CVE scans |
-| **Smart Model Routing** | All dispatches | opus for complex/integration, sonnet for simple, haiku for gates |
+| **Smart Model Routing** | All dispatches | opus for complex/integration + self-healing iter-2/investigation, sonnet for simple + all judgment gates, haiku ONLY for trivial structural booleans |
 | **Self-Healing Loop** | Phase 3-6 | Run → error → diagnose → fix → retry (max 5, then escalate) |
 | **UltraPlan** | Phase 0 (before any dispatch) | Coordinator thinks deeply: scope, entities, tech stack, risks → master-plan.md |
-| **Continuous Learning** | All agents | Write learnings to agent-memory + gotchas.md before reporting done |
+| **Continuous Learning** | All agents | Write learnings to `.dev-squad/memory.md` + gotchas.md before reporting done |
 
 ## Known Gotchas (read once, apply forever)
 
@@ -248,13 +248,13 @@ dev-squad's Phase Gate Decision pattern and Smart Model Routing reference "haiku
 ```
 Agent({
   subagent_type: "general-purpose",
-  model: "haiku",                     // critical: explicit haiku for cost-efficient pass/fail
+  model: "sonnet",                    // default for gates that need judgment; haiku ONLY for a trivial structural boolean
   description: "Phase {N} gate validation",
   prompt: <phase deliverables checklist + current state + PASS/FAIL output format>
 })
 ```
 
-The role of "judge" is played by `general-purpose` running with `model: "haiku"` (structural/generic gates) or `model: "sonnet"` (Phase 1 PRD + Phase 3.5 Design). Agent tool's `model` parameter accepts `haiku | sonnet | opus`. See coordinator.md "Phase Gate Decision (Scored Evaluator)" for the full prompt template.
+The role of "judge" is played by `general-purpose` running with `model: "sonnet"` (the default — any gate needing judgment, including PRD + Design + deliverable completeness + spec compliance) or `model: "haiku"` (ONLY a trivial structural boolean gate). Agent tool's `model` parameter accepts `haiku | sonnet | opus`. See coordinator.md "Phase Gate Decision (Scored Evaluator)" for the full prompt template.
 
 This gotcha applies to: coordinator (every phase transition), commands/build.md (Phase 1 + Phase 2 gates).
 
@@ -268,7 +268,7 @@ Pattern A (cost-efficient, default):
 ```
 Agent({
   subagent_type: "general-purpose",
-  model: "haiku",
+  model: "sonnet",
   description: "Plan review",
   prompt: <plan path + spec path + check matrix: completeness/feasibility/gaps/risks/granularity>
 })
@@ -390,7 +390,7 @@ Phase 7: LEARN (PDCA Act — Retrospective)
     [Coordinator] → Append wins to .dev-squad/playbook.md (defaults for future builds)
     [Coordinator] → Append gaps to docs/next-iteration.md (fix-it tickets)
     [Coordinator] → Update CLAUDE.md with newly-standardized conventions
-    [Coordinator] → Write lessons to agent-memory + episodic memory
+    [Coordinator] → Write lessons to `.dev-squad/memory.md` + episodic memory
     Completion report to user — only NOW workflow is done
 ```
 
@@ -565,7 +565,7 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | Starting creative/design work | `superpowers:brainstorming` | Structures exploration before coding |
 | Planning multi-step tasks | `superpowers:writing-plans` | Creates actionable implementation plan |
 | Before writing ANY code | `superpowers:test-driven-development` | Enforces test-first discipline |
-| Investigating bugs | `dev-squad:debugging` (primary); `superpowers:systematic-debugging` (optional) | Self-contained 4-phase reproduce/locate/hypothesize/fix-verify loop |
+| Investigating bugs | `dev-squad:debugging` (primary); `superpowers:systematic-debugging` (optional) | Self-contained 5-phase recall/reproduce/locate/hypothesize/fix-verify loop (recall = episodic + gotchas first) |
 | Running 2+ independent tasks | `superpowers:dispatching-parallel-agents` | Parallel execution patterns |
 | Reviewing code | `code-review:code-review` | Structured review checklist |
 | Before claiming "done" | `superpowers:verification-before-completion` | Run tests, verify output |
@@ -584,12 +584,14 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | **SaaS pre-launch readiness + harden** (audit + sprint + product-surface gap) | `dev-squad:saas-readiness` | SIBLING to saas-patterns covering HOW to ship + harden. Part 1 readiness checklist (P0/P1/P2) + Part 2 sprint decomposition (6-A→6-H domains) + Part 3 product-surface gap audit (10 domains A-J) + Part 4 real-world patterns (provider abstraction, regional Indonesia/EU/US, re-platform discipline, wacrm case study). Load during Phase 5+ audit, Phase 6 SHIP gate, OR pre-existing project extension. |
 | Backend pattern reference | `dev-squad:backend-patterns` | RESTful, repository, service, middleware, caching, JWT+RBAC, rate limit, jobs, logging |
 | Frontend pattern reference | `dev-squad:frontend-patterns` | Composition, hooks, state mgmt, perf, forms, error boundaries, animations, a11y |
+| **React component/hook tests** (Phase 4 + 5.5 testing) | `dev-squad:react-testing` | RTL + Vitest/Jest + MSW network mocking + axe a11y assertions + the RTL-vs-Playwright-vs-E2E boundary (harvested from ECC) |
+| **WCAG 2.2 AA accessibility** (design + implement + audit) | `dev-squad:accessibility` | Semantic ARIA, focus management, target-size, POUR checks for Web + iOS/Android (harvested from ECC) |
 | Postgres / RLS reference | `dev-squad:postgres-patterns` | Index types, data types, common queries, anti-patterns, RLS, tuning |
 | Go pattern + testing reference | `dev-squad:golang-patterns` + `dev-squad:golang-testing` | Idiomatic Go + table-driven tests, parallel, mocking, benchmarks |
 | TDD workflow + security review | `dev-squad:tdd-workflow` + `dev-squad:security-review` | 7-step TDD + 10-area security checklist |
 | **Phase 5 security review on a non-trivial diff** | `dev-squad:adversarial-security` | Attacker→defender→synthesizer 3-pass on the diff; outputs severity+confidence findings |
 | **Before any agent claims a task/feature done** | `dev-squad:verification` | Self-contained build/type/lint/test/secrets/diff-review report card (no external dependency) |
-| **Any bug / test failure / unexpected behavior, before proposing a fix** | `dev-squad:debugging` | Self-contained 4-phase reproduce/locate/hypothesize/fix-verify loop; no external dependency |
+| **Any bug / test failure / unexpected behavior, before proposing a fix** | `dev-squad:debugging` | Self-contained 5-phase recall/reproduce/locate/hypothesize/fix-verify loop (recall = episodic + gotchas first); no external dependency |
 | **Build/compile/type errors during self-healing author retries** | `dev-squad:build-error-resolver` | Minimal-diff fix, iterate-until-green, 2-attempt escalation |
 
 ### MCP Servers (call directly) — USE FOR: External Data & Actions
@@ -884,23 +886,20 @@ If an agent fails:
 - [ ] Caching strategy defined for hot data
 - [ ] Connection pooling configured
 
-### Memory Management Standards
+### Memory Management Standards (4-tier — hook-enforced, single home in `.dev-squad/`)
 
-**Coordinator stores to memory:**
-- Project conventions (naming, structure)
-- Architecture decisions (ADRs)
-- Database technology choices
-- ORM preferences and patterns
-- Common pitfalls and solutions
+Memory is injected deterministically by the `SubagentStart` hook (`inject-workflow-state.sh`); capture is nudged by the `SubagentStop` hook (`check-workflow.sh`). It does NOT depend on an agent remembering to read/write memory in prose — that probabilistic approach is exactly what left memory dead before.
 
-**Memory file structure:**
-```
-/Users/sadewadee/.claude/projects/-Users-sadewadee--claude/memory/
-├── MEMORY.md           # Main patterns and conventions
-├── database.md         # Database-specific patterns
-├── performance.md      # Performance optimization patterns
-└── projects/           # Per-project memory
-```
+| Tier | Where | Holds | Capture | Recall |
+|---|---|---|---|---|
+| **L1 Episodic** | episodic-memory plugin (transcripts, cross-project) | The *why* — past-session decisions, rationale, tried-and-rejected approaches | Automatic (session-end sync) | `search-conversations` agent — MANDATORY Phase 0 of `dev-squad:debugging` |
+| **L2 Instincts** | `.dev-squad/instincts/*.md` | Auto-distilled confidence-scored patterns ("we do X here") | Observe hooks (continuous-learning — PR2) | High-confidence ones injected at SubagentStart |
+| **L3 Project memory** | `.dev-squad/memory.md` | Curated project decisions/conventions (shared across all agents) | Agents append via Edit; coordinator curates | Injected at SubagentStart (head 80 lines) |
+| **L4 Traps** | `.dev-squad/gotchas.md` | Mistakes NOT to repeat | Written on self-healing events (capture-nudged at SubagentStop) | Injected at SubagentStart |
+
+**Native per-agent memory** (`memory: project` frontmatter → `.claude/agent-memory/<agent>/MEMORY.md`) is the redundant per-agent safety-net the harness auto-injects. The canonical, hook-controlled project memory is `.dev-squad/memory.md` — it cannot silently die the way the `memory: true` (invalid value) bug did, because the SubagentStart hook owns its injection.
+
+**Coordinator curates `.dev-squad/memory.md` with:** project conventions (naming, structure), architecture decisions (ADRs), tech/ORM choices, and resolved pitfalls (the cautionary half of a pitfall goes to `gotchas.md`, the resulting convention to `memory.md`).
 
 ## Inter-Agent Communication
 

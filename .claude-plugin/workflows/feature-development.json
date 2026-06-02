@@ -19,7 +19,7 @@
         { "artifact": ".dev-squad/scope-tier.json", "to": "coordinator", "blocking": true, "description": "Diff-scope tier: trivial | tiny | new-endpoint | new-interactive-ui | new-ui-surface | db-change | auth-change | refactor | bug-fix | hotfix. Plus SaaS-touch flag: true if feature touches multi-tenancy/billing/webhooks/audit/api-keys/admin scope (triggers Section 34 readiness check before completion)." }
       ],
       "estimated_complexity": "low",
-      "rate_limit_tier": "haiku",
+      "rate_limit_tier": "sonnet",
       "external_skills": {
         "preferred": [
           { "skill": "superpowers:brainstorming", "rationale": "Decompose feature requirements", "graceful_degrade": true, "invoked_by": "coordinator" }

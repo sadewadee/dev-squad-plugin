@@ -2,6 +2,32 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.22.0] — Post-ship enforcement layer: memory resurrection + sharper debugging + less haiku
+
+**Why:** Post-zero2ship agents debugged wrong, the memory feature was dead, and gates leaned on haiku. Root cause was systemic — dev-squad routed its critical path (memory, gate dispatch, skill invocation, capture) through probabilistic prose instead of deterministic enforcement, and never verified the step happened.
+
+### Memory resurrection (the headline bug)
+- **`memory: true` → `memory: project` on all 11 agents.** `true` is an invalid value for Claude Code's `memory` frontmatter field (only `user|project|local`), so native subagent memory silently never activated. `SKILL.md` already documented `memory: project` — the implementation had drifted and nothing caught it.
+- Killed the dead `agent-memory` tool name (maps to no real tool) → concrete `.dev-squad/memory.md` paths everywhere.
+- New **4-tier memory model** documented (L1 episodic / L2 instincts / L3 `.dev-squad/memory.md` / L4 gotchas), single home in `.dev-squad/`, hook-owned so it cannot silently die again.
+
+### Enforcement layer (extends existing hooks — no new hook files)
+- `inject-workflow-state.sh` (SubagentStart) now deterministically injects project memory + gotchas + high-confidence instincts + a **mandatory episodic-recall directive**.
+- `check-workflow.sh` (SubagentStop) now nudges capture: self-healing ran but no trap written → non-blocking "CAPTURE REQUIRED".
+- `skills/debugging` gains **Phase 0: Recall** (episodic + gotchas before reproduce) — the wire from memory to "stop re-debugging solved bugs."
+
+### Sharper debugging + review
+- Self-healing model overrides now ENFORCED at dispatch (the matrix rule was dead text): iter-1 sonnet, **iter-2 opus**, **iter-3 qa-engineer Investigation Mode opus**, iter-4-5 architect opus.
+- `reviewer` + `auditor` gain `think_harder: true`.
+
+### Less haiku
+- Phase-gate evaluators now default to **sonnet**; `haiku` reserved ONLY for a trivial structural boolean (build-passes / file-exists). Propagated across coordinator, build.md, SKILL.md, architect, and two workflow JSONs.
+
+### ECC harvest
+- Added `react-testing` (RTL/Vitest/MSW/axe) and `accessibility` (WCAG 2.2 AA) skills (`origin: ECC`), wired into qa-engineer / frontend / designer. Dropped `recursive-decision-ledger` (poor fit for debugging — deferred to PR2's instinct ledger).
+
+Cross-project instinct learning (continuous-learning, dev-squad-native, no headless — user is subscription-only) is deferred to PR2; the L2 instinct-injection plumbing is already in place. See `docs/specs/2026-06-02-post-ship-enforcement-memory.md`.
+
 ## [4.17.0] — React 2026 stack: frontend-patterns refresh + new react-stack-2026 skill
 
 **Why:** v4.16.0 deferred 2 P1 frontend findings (useQuery anti-pattern, class ErrorBoundary) and the audit also surfaced that `frontend-patterns/SKILL.md` had **0 mentions** of React 19 / Server Components / Server Actions / TanStack Query v5 / shadcn / Tailwind v4 / Vite 6 / Vitest 3. Users on the modern React stack got guidance that taught them the React 18 way.

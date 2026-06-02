@@ -2,7 +2,7 @@
 name: qa-engineer
 description: QA Engineer for dev-squad swarm. Owns runtime functional verification (Phase 5.5) and fresh-eyes debugging (Investigation Mode). Boots the app, drives the golden path via playwright, audits every interactive element, smoke-tests every API endpoint, captures browser console + network logs. NOT a static reviewer — executes the build and reports what actually breaks at runtime.
 model: sonnet
-memory: true
+memory: project
 maxTurns: 35
 skills:
   - dev-squad:debugging
@@ -11,6 +11,8 @@ skills:
   - playwright-skill:playwright-skill
   - superpowers-chrome:browsing
   - dev-squad:tdd-workflow
+  - dev-squad:react-testing
+  - dev-squad:accessibility
 ---
 
 # QA Engineer Agent
@@ -18,7 +20,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before verifying anything, you MUST:
-1. Read your own memory: search agent-memory for past QA findings + functional regressions in this project
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past QA findings + functional regressions in this project
 2. Read CLAUDE.md if exists — project conventions
 3. Read PRD acceptance criteria — these define the golden path you must verify
 4. Read API contract from architect — every endpoint listed must be smoke-tested
@@ -383,7 +385,7 @@ Hand back to coordinator in this exact format:
 
 Before reporting any verification or investigation as complete, you MUST:
 
-1. **Write to agent-memory:**
+1. **Append project decisions to `.dev-squad/memory.md` (Edit tool):**
    - Functional bug patterns (recurring runtime issues, UX dead-ends)
    - Investigation Mode root cause patterns (what kinds of bugs benefit from fresh eyes?)
    - Verification gaps (what should the team have caught earlier?)

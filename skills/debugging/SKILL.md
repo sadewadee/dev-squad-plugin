@@ -7,12 +7,25 @@ description: Self-contained structured debugging protocol for dev-squad agents. 
 
 ## INSTRUCTIONS: When this skill is invoked
 
-Work through the four phases below in order before writing any fix. Do not propose a solution until you have completed Phase 1 (you can reproduce the failure) and Phase 3 (you have a single, stated hypothesis about the root cause). If a fix does not eliminate the failure, revert it and start Phase 3 again — do not stack speculative changes on top of each other.
+Work through the five phases below in order before writing any fix. **Phase 0 (recall) is mandatory and comes first** — never treat a bug as new before searching past sessions and known traps. Do not propose a solution until you have completed Phase 1 (you can reproduce the failure) and Phase 3 (you have a single, stated hypothesis about the root cause). If a fix does not eliminate the failure, revert it and start Phase 3 again — do not stack speculative changes on top of each other.
 
 Core rules:
 - **Fix root cause, not symptom.** A symptom fix hides the bug; a root-cause fix removes it.
 - **One change at a time.** Multiple simultaneous changes make it impossible to know which one (if any) worked.
 - **Evidence before claims.** Never assert the fix worked — re-run the exact failing command and show the output.
+
+---
+
+## Phase 0: Recall (before anything else)
+
+Goal: do not re-debug a solved problem or re-try an approach already rejected in a past session.
+
+1. Dispatch the `search-conversations` agent (episodic-memory) for this bug's symptom, the verbatim error text, and the component/file involved. If agent dispatch is unavailable, call the episodic-memory `search` MCP tool directly, then `read` the top 2-5 hits.
+2. Read `.dev-squad/gotchas.md` (also injected at session start by the SubagentStart hook) — this exact trap may already be logged.
+3. If recall surfaces a prior root cause or a rejected fix: state it explicitly and start from there. Do not silently re-derive it.
+4. If recall returns nothing relevant, say so in one line and proceed. Recall is not optional — only its result is.
+
+Record: what past sessions / gotchas said about this symptom (or "no prior record").
 
 ---
 

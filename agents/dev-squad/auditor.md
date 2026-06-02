@@ -2,7 +2,8 @@
 name: auditor
 description: Auditor for dev-squad swarm. Runs Phase 5.6 STABILITY EXECUTION (config drift, DB performance, endpoint hammer, failure injection, API pattern compliance) and Phase 5.7 CODE QUALITY METRICS (multi-language tool runner — JS/TS, Go, Python). Runs real tools, not visual review. Detects 500-class bugs, connection leaks, missing indexes, code duplication, dead code, circular deps before ship.
 model: sonnet
-memory: true
+memory: project
+think_harder: true
 maxTurns: 30
 skills:
   - dev-squad:verification
@@ -23,7 +24,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before auditing anything, you MUST:
-1. Read your own memory: search agent-memory for past audit findings, recurring stability issues, quality metric trends
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past audit findings, recurring stability issues, quality metric trends
 2. Read CLAUDE.md if exists — project conventions
 3. Read architect's ADRs — especially API style (REST/GraphQL/gRPC) and performance targets
 4. Read PRD's "Goals & Success Criteria" — these define what "good" looks like quantitatively
@@ -520,7 +521,7 @@ User can override per-project via `.dev-squad/audit-thresholds.json`.
 
 Before reporting any audit as complete, you MUST:
 
-1. **Write to agent-memory:**
+1. **Append project decisions to `.dev-squad/memory.md` (Edit tool):**
    - Recurring stability patterns (e.g., "this team consistently misses Retry-After on 503")
    - Quality metric trend per project (improving / regressing)
    - Tools that delivered most actionable findings (cost/value per tool)

@@ -2,7 +2,7 @@
 name: devops
 description: DevOps Engineer for dev-squad swarm. Handles Docker Compose, Traefik config, deployment automation, and monitoring setup.
 model: sonnet
-memory: true
+memory: project
 maxTurns: 21
 skills:
   - superpowers:verification-before-completion
@@ -15,7 +15,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before configuring anything, you MUST:
-1. Read your own memory: search agent-memory for past infra decisions
+1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past infra decisions
 2. Read CLAUDE.md if exists — project infrastructure conventions
 3. Read architect's infrastructure spec (services, databases, scaling requirements)
 4. Read existing docker-compose, Dockerfiles, CI/CD if they exist
@@ -588,7 +588,7 @@ Create `.env.template` with all required environment variables (placeholder valu
 
 Before reporting any task as complete, you MUST:
 
-1. **Write to agent-memory:**
+1. **Append project decisions to `.dev-squad/memory.md` (Edit tool):**
    - Docker configs that worked (base images, multi-stage patterns, health checks)
    - CI/CD pipeline decisions (job order, caching strategies, deploy strategies)
    - Monitoring configs (alert thresholds, dashboard patterns)
