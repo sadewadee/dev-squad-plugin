@@ -12,6 +12,7 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 - `/dev-squad build <description> [--auto]` - Zero-to-ship: build a full project through 9 automated PDCA phases (Plan → Do → Check → Act). Add `--auto` to run unattended after kickoff (no questions; decisions inferred + logged to `.dev-squad/assumption-ledger.md`). See commands/build.md "Auto Mode".
 - `/dev-squad bootstrap` - Auto-install dev-squad companion plugins + MCP servers (one-shot setup)
 - `/dev-squad retrospective [scope]` - Run a PDCA Act-phase retrospective on completed work (feature, sprint, post-incident)
+- `/dev-squad evolve` - Distill captured observations into confidence-scored instincts and propose high-confidence ones for graduation into reusable learned skills (in-session, no headless)
 - `/dev-squad db <description>` - Start database workflow (schema, migrations, optimization)
 - `/dev-squad schema <description>` - Schema design workflow
 - `/dev-squad migrate <description>` - Database migration workflow
@@ -219,6 +220,7 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 | **Self-Healing Loop** | Phase 3-6 | Run → error → diagnose → fix → retry (max 5, then escalate) |
 | **UltraPlan** | Phase 0 (before any dispatch) | Coordinator thinks deeply: scope, entities, tech stack, risks → master-plan.md |
 | **Continuous Learning** | All agents | Write learnings to `.dev-squad/memory.md` + gotchas.md before reporting done |
+| **Instinct Learning** | Capture: observe hook → `.dev-squad/observations.jsonl`. Distill: Phase 7 + `/dev-squad evolve` → confidence-scored `.dev-squad/instincts/*.md`. Recall: SubagentStart injects `confidence >= 0.8`. Graduate: → `skills/dev-squad-learned/` | Cross-project self-improvement, dev-squad-native (no headless daemon) |
 
 ## Known Gotchas (read once, apply forever)
 
@@ -593,6 +595,8 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | **Before any agent claims a task/feature done** | `dev-squad:verification` | Self-contained build/type/lint/test/secrets/diff-review report card (no external dependency) |
 | **Any bug / test failure / unexpected behavior, before proposing a fix** | `dev-squad:debugging` | Self-contained 5-phase recall/reproduce/locate/hypothesize/fix-verify loop (recall = episodic + gotchas first); no external dependency |
 | **Build/compile/type errors during self-healing author retries** | `dev-squad:build-error-resolver` | Minimal-diff fix, iterate-until-green, 2-attempt escalation |
+| **Phase 7 LEARN + `/dev-squad evolve`** (distill observations → instincts) | `dev-squad:continuous-learning` | In-session distillation of `.dev-squad/observations.jsonl` → confidence-scored project instincts → graduation to `skills/dev-squad-learned/` (no headless daemon) |
+| **Repeated rollouts / evidence-tracked decisions** (backs instinct confidence) | `dev-squad:recursive-decision-ledger` | Ledger discipline: prior winner + fresh evidence + trial count + promotion gate; confidence is evidence, not proof (harvested from ECC) |
 
 ### MCP Servers (call directly) — USE FOR: External Data & Actions
 MCP tools fetch real-time data from external services. Call them directly — no Skill wrapper needed.

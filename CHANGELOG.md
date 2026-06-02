@@ -2,6 +2,25 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.23.0] — Continuous learning: project instincts (PR2 of the enforcement layer)
+
+**Why:** v4.22.0 resurrected memory and added the hook-enforced recall/capture layer, but dev-squad still started every project from zero — no cross-project learning. This implements the deferred PR2 from that spec, **adapted dev-squad-native**: ECC's background-Haiku observer is replaced by **in-session distillation** because the user is subscription-only (no API key for headless agents).
+
+### Three tiers
+- **Capture (deterministic hook):** new `hooks/observe-learning.sh` (PostToolUse `Write|Edit|Bash`, async) appends one compact JSONL signal per tool call to `.dev-squad/observations.jsonl`. No LLM; no-ops outside dev-squad projects; flags error→fix resolutions via outcome keywords.
+- **Distill (in-session):** new `dev-squad:continuous-learning` skill owns the algorithm — observations → confidence-scored, project-scoped `.dev-squad/instincts/*.md`. Runs automatically at Phase 7 LEARN and manually via the new **`/dev-squad evolve`** command. No headless agent.
+- **Recall (deterministic hook):** the v4.22.0 SubagentStart hook already injects `confidence >= 0.8` instincts into every agent.
+
+### Graduation
+- Instincts with `confidence >= 0.8` AND `evidence_count >= 3` are proposed for graduation into `skills/dev-squad-learned/` — behind a **manual confirm gate** (auto-generated skills are not trusted blind).
+
+### Added
+- `hooks/observe-learning.sh` + hooks.json wiring. Functionally tested: captures `err:1`/`err:0` correctly, no-ops without `.dev-squad/`.
+- `skills/continuous-learning/` (algorithm + instinct schema) and `skills/recursive-decision-ledger/` (harvested from ECC — backs the instinct confidence/evidence ledger; confidence is evidence, not proof).
+- `commands/evolve.md` (`/dev-squad evolve`); coordinator Phase 7 LEARN distillation step; coordinator auto-loads both new skills.
+
+Stacked on the v4.22.0 branch; rebases onto main after it merges. See `docs/specs/2026-06-02-continuous-learning-instincts.md`.
+
 ## [4.22.0] — Post-ship enforcement layer: memory resurrection + sharper debugging + less haiku
 
 **Why:** Post-zero2ship agents debugged wrong, the memory feature was dead, and gates leaned on haiku. Root cause was systemic — dev-squad routed its critical path (memory, gate dispatch, skill invocation, capture) through probabilistic prose instead of deterministic enforcement, and never verified the step happened.

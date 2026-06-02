@@ -15,6 +15,8 @@ skills:
   - superpowers:verification-before-completion
   - superpowers:requesting-code-review
   - superpowers:finishing-a-development-branch
+  - dev-squad:continuous-learning
+  - dev-squad:recursive-decision-ledger
   - gsd-new-project
   - gsd-execute-phase
 ---
@@ -492,9 +494,10 @@ Phase 7: LEARN (PDCA Act — Retrospective)
   4. Append gaps to `docs/next-iteration.md` as fix-it tickets
   5. Update project `CLAUDE.md` with newly-standardized conventions discovered during this build
   6. Write lessons to `.dev-squad/memory.md` + episodic memory for future projects (different repos, different contexts)
-  7. Mark `.dev-squad/workflow-active` learn phase complete
-  8. Final completion report to user including: what was built, retrospective summary, link to playbook entries
-  9. Suggest cadence: "Want to /schedule weekly retrospectives for this project?"
+  7. **Distill instincts (continuous learning):** load `dev-squad:continuous-learning` and run its distillation over `.dev-squad/observations.jsonl` → create/update confidence-scored `.dev-squad/instincts/*.md`, then archive processed observations. Propose any graduation candidates (confidence >= 0.8 AND evidence >= 3) for the user to confirm before writing to `skills/dev-squad-learned/`. In-session only — no headless daemon (same algorithm as `/dev-squad evolve`).
+  8. Mark `.dev-squad/workflow-active` learn phase complete
+  9. Final completion report to user including: what was built, retrospective summary, link to playbook entries
+  10. Suggest cadence: "Want to /schedule weekly retrospectives for this project?"
 ```
 
 #### Phase Transition Protocol

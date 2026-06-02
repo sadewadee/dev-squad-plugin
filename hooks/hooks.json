@@ -103,6 +103,16 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/truncation-check.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/observe-learning.sh\"",
+            "async": true
+          }
+        ]
       }
     ],
     "TaskCreated": [
