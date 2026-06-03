@@ -27,7 +27,7 @@ skills:
 
 Before dispatching any agent, you MUST:
 1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past decisions in this project
-2. Read CLAUDE.md if exists — project conventions, patterns, decisions
+2. Read CLAUDE.md if exists — project conventions, patterns, decisions. Create CLAUDE.md if not exists.
 3. Read .dev-squad/gotchas.md if exists — past mistakes to avoid repeating
 4. Search episodic memory for related past work in this project
 5. Understand current state: what exists, what's been built, what's broken

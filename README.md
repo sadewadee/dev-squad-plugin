@@ -183,7 +183,7 @@ Copy the plugin contents to your Claude plugins directory:
 cp -r dev-squad-plugin/ ~/.claude/plugins/dev-squad/
 ```
 
-Ensure `skills/dev-squad/`, `agents/dev-squad/`, and `hooks/` are placed under your `~/.claude/` directory (or wherever your Claude configuration lives).
+Ensure `skills/dev-squad/`, `agents/`, and `hooks/` are placed under your `~/.claude/` directory (or wherever your Claude configuration lives).
 
 ## Usage
 

@@ -704,4 +704,4 @@ Using React Compiler?
 - Core React patterns → `frontend-patterns/SKILL.md`
 - TypeScript-specific patterns → `rules/typescript/patterns.md`
 - SaaS frontend admin dashboard → `saas-patterns/SKILL.md` Part 2 (URL state, drill-down, virtualized tables)
-- Designer artifacts (tokens, visual spec, component inventory) → `agents/dev-squad/designer.md` Phase 3.5 outputs
+- Designer artifacts (tokens, visual spec, component inventory) → `agents/designer.md` Phase 3.5 outputs

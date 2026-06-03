@@ -27,8 +27,8 @@
         "fallback": "Manual via architect agent prompt"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#refactoring",
-        "agent_prompt": "agents/dev-squad/architect.md"
+        "prompt_source": "agents/coordinator.md#refactoring",
+        "agent_prompt": "agents/architect.md"
       }
     },
     {
@@ -47,7 +47,7 @@
         "fallback": "Direct via auditor Phase 5.7 multi-language tools"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/auditor.md#phase-57-code-quality-metrics"
+        "prompt_source": "agents/auditor.md#phase-57-code-quality-metrics"
       }
     },
     {
@@ -71,7 +71,7 @@
         "fallback": "Manual via designer agent prompt"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/designer.md"
+        "prompt_source": "agents/designer.md"
       }
     },
     {
@@ -94,7 +94,7 @@
         "fallback": "Direct via implementer agents"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#refactoring"
+        "prompt_source": "agents/coordinator.md#refactoring"
       }
     },
     {
@@ -115,7 +115,7 @@
         "fallback": "Manual via qa-engineer Phase 5.5 protocol"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/qa-engineer.md"
+        "prompt_source": "agents/qa-engineer.md"
       }
     },
     {
@@ -140,7 +140,7 @@
         "fallback": "Direct via auditor Phase 5.7 tools (re-run same tools as baseline)"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/auditor.md#phase-57-code-quality-metrics"
+        "prompt_source": "agents/auditor.md#phase-57-code-quality-metrics"
       }
     },
     {
@@ -162,7 +162,7 @@
         "fallback": "Manual via reviewer agent prompt"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#refactoring"
+        "prompt_source": "agents/coordinator.md#refactoring"
       }
     }
   ]

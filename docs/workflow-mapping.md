@@ -182,7 +182,7 @@ Run `/dev-squad bootstrap` to auto-install MCPs and get plugin install commands.
 
 When you change a workflow:
 1. **Edit the JSON** in `.claude-plugin/workflows/<workflow-id>.json` first.
-2. Update affected agent prompts in `agents/dev-squad/*.md`.
+2. Update affected agent prompts in `agents/*.md`.
 3. **Update this file** to match the JSON.
 4. Run `bash hooks/validate-workflow-schema.sh`.
 

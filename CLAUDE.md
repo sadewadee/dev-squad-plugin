@@ -50,7 +50,7 @@ Conformance > taste inside the codebase. If you genuinely think a convention is 
 
 ## Repository Type
 
-This is a **Claude Code plugin**, not a runtime application. There is no build/compile/test step — the plugin is consumed by Claude Code directly from the filesystem. "Editing" means modifying agent prompts (`agents/dev-squad/*.md`), command definitions (`commands/*.md`), the skill entrypoint (`skills/dev-squad/SKILL.md`), or hook shell scripts (`hooks/*.sh`).
+This is a **Claude Code plugin**, not a runtime application. There is no build/compile/test step — the plugin is consumed by Claude Code directly from the filesystem. "Editing" means modifying agent prompts (`agents/*.md`), command definitions (`commands/*.md`), the skill entrypoint (`skills/dev-squad/SKILL.md`), or hook shell scripts (`hooks/*.sh`).
 
 The plugin is `dev-squad` — an 8-agent swarm (coordinator, architect, backend, frontend, reviewer, devops, git-ops, writer) for full-stack development. Current version is in `.claude-plugin/plugin.json` (also mirrored in `.claude-plugin/marketplace.json` — both must be bumped together when releasing).
 
@@ -63,7 +63,7 @@ The plugin is wired together via three layers that you must understand to make n
 - `commands/status.md` — slash command `/dev-squad status`. Reads `.dev-squad/workflow-active` in the user's project.
 - `skills/dev-squad/SKILL.md` — entrypoint when invoked as a skill (e.g. via `/dev-squad`, `/dev-squad start`, or `/dev-squad <db|schema|migrate|optimize|deploy-db>`). Routes to the coordinator with the right prompt.
 
-### 2. Agents (`agents/dev-squad/*.md`)
+### 2. Agents (`agents/*.md`)
 Each agent is a markdown file with YAML frontmatter. Frontmatter fields actually consumed by Claude Code:
 - `name` (e.g. `coordinator`) — what the agent is dispatched as. Always referenced as `dev-squad:<name>` from outside the plugin.
 - `description` — shown to the dispatcher; also the trigger description.
@@ -108,9 +108,9 @@ Earlier versions had `tools: Bash, Read, Write, Edit, Grep, Glob, Skill` in agen
 Edit both `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (the `version` field appears in both). Tag the commit `vX.Y.Z` so `auto-update.sh` picks it up on user sessions.
 
 ### Add a new agent
-1. Create `agents/dev-squad/<name>.md` with frontmatter (no `tools:` field).
+1. Create `agents/<name>.md` with frontmatter (no `tools:` field).
 2. Add it to the team rosters in `commands/build.md` (the "Your Team" table) and `skills/dev-squad/SKILL.md` (the "Team Members" table).
-3. Add an entry in `agents/dev-squad/config.json` `members` array if relevant for the config-driven invocation.
+3. Add an entry in `agents/config.json` `members` array if relevant for the config-driven invocation.
 4. Bump version.
 
 ### Edit the zero-to-ship workflow

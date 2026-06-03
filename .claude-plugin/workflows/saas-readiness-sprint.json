@@ -38,7 +38,7 @@
       },
       "references": {
         "prompt_source": "skills/saas-readiness/SKILL.md#section-8",
-        "agent_prompt": "agents/dev-squad/coordinator.md"
+        "agent_prompt": "agents/coordinator.md"
       }
     },
     {
@@ -72,7 +72,7 @@
       },
       "references": {
         "prompt_source": "skills/saas-readiness/SKILL.md#section-10-1",
-        "agent_prompt": "agents/dev-squad/backend.md"
+        "agent_prompt": "agents/backend.md"
       }
     },
     {
