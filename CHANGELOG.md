@@ -2,6 +2,21 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.24.0] — Fix agent dispatch: flatten `agents/` to remove double-prefix namespace
+
+**Why:** Agents lived in a nested subdirectory `agents/dev-squad/*.md`. Claude Code derives a plugin agent's namespace from its path, so the nested folder produced a **double-prefixed** registered type — `dev-squad:dev-squad:architect` — while every orchestration prompt, workflow JSON, and `CLAUDE.md` instructs the single form `dev-squad:architect`. The coordinator followed the prompts, dispatched the single form, and the harness rejected it → frequent **"Error: Agent type not found"**, after which the coordinator self-corrected to the registered double form. Net effect: noisy, repeated dispatch errors on every phase even though work eventually proceeded.
+
+**Root cause (evidence-backed):** the official plugin layout (`plugins-reference.md`) places agent files **directly** in `agents/` (flat). The nested `agents/dev-squad/` was non-standard; the second `dev-squad` token in the registered name came solely from that subdirectory. The single-prefix convention in all prompts was correct — only the folder was wrong.
+
+### Changed
+- **Flattened `agents/dev-squad/*.md` → `agents/*.md`** (11 agent files, via `git mv` to preserve history). Registered type is now the single `dev-squad:<name>` that every prompt already uses. No agent frontmatter changed (`name:` was already correct).
+- **`hooks/validate-workflow-schema.sh`** — `AGENTS_DIR` + the source-repo guard + the fix-it hint now point at `agents/` instead of `agents/dev-squad/`.
+- **`.claude-plugin/workflows/*.json`** (zero-to-ship, feature-development, refactoring, bug-fix, saas-readiness-sprint) — `agent_prompt` / `prompt_source` path refs flattened. Dispatch names (`lead_agent`/`parallel_agents`) were already single-prefix and unchanged.
+- **Current docs** — `CLAUDE.md`, `README.md`, `.claude-plugin/workflows/README.md`, `docs/workflow-mapping.md`, `docs/companion-plugins.md`, `docs/saas-build-checklist.md`, `skills/react-stack-2026/SKILL.md` path refs flattened. Historical records (`CHANGELOG.md`, `docs/plans/*`, `docs/specs/*`) left intact as dated artifacts.
+
+### Note
+- `CLAUDE.md` "Add a new agent" still references `agents/config.json` (`members` array) for config-driven invocation — that file does not currently exist in the repo; only the directory portion of the path was flattened. Flagged for a follow-up cleanup, out of scope here.
+
 ## [4.23.0] — Continuous learning: project instincts (PR2 of the enforcement layer)
 
 **Why:** v4.22.0 resurrected memory and added the hook-enforced recall/capture layer, but dev-squad still started every project from zero — no cross-project learning. This implements the deferred PR2 from that spec, **adapted dev-squad-native**: ECC's background-Haiku observer is replaced by **in-session distillation** because the user is subscription-only (no API key for headless agents).

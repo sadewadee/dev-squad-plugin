@@ -19,7 +19,7 @@ This directory contains the **canonical runtime contract** for dev-squad workflo
 When you change a workflow:
 1. Edit the relevant `<workflow-id>.json` first.
 2. Validate: `jq empty <file>.json` and check against `_schema.json`.
-3. Update affected agent prompts in `agents/dev-squad/*.md` to match.
+3. Update affected agent prompts in `agents/*.md` to match.
 4. Update `docs/workflow-mapping.md` (the human-readable view).
 5. Run `bash hooks/validate-workflow-schema.sh` to detect drift.
 
@@ -90,5 +90,5 @@ for f in *.json; do jq empty "$f" || echo "INVALID: $f"; done
 - `docs/workflow-mapping.md` - human-readable mapping view (table + mermaid diagrams)
 - `docs/companion-plugins.md` - companion plugin integration guide
 - `commands/build.md` - descriptive prompt (canonical = JSON; prompt = view)
-- `agents/dev-squad/coordinator.md` - reads workflow JSON in bootstrap context
+- `agents/coordinator.md` - reads workflow JSON in bootstrap context
 - `hooks/validate-workflow-schema.sh` - drift detection (dev-only)

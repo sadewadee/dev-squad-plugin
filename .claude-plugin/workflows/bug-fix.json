@@ -33,8 +33,8 @@
         "fallback": "Manual via systematic debugging methodology"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#bug-fix",
-        "agent_prompt": "agents/dev-squad/qa-engineer.md"
+        "prompt_source": "agents/coordinator.md#bug-fix",
+        "agent_prompt": "agents/qa-engineer.md"
       }
     },
     {
@@ -49,7 +49,7 @@
       "estimated_complexity": "low",
       "rate_limit_tier": "sonnet",
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#escalation-matrix"
+        "prompt_source": "agents/coordinator.md#escalation-matrix"
       }
     },
     {
@@ -75,7 +75,7 @@
         "fallback": "Direct fix via implementer agent prompt"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#bug-fix"
+        "prompt_source": "agents/coordinator.md#bug-fix"
       }
     },
     {
@@ -100,7 +100,7 @@
         "fallback": "Manual via qa-engineer Phase 5.5 protocol"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#bug-fix"
+        "prompt_source": "agents/coordinator.md#bug-fix"
       }
     },
     {
@@ -121,7 +121,7 @@
         "fallback": "Manual via gh CLI"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/git-ops.md#hotfix-procedure"
+        "prompt_source": "agents/git-ops.md#hotfix-procedure"
       }
     }
   ]

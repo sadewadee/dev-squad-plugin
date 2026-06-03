@@ -43,7 +43,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/coordinator.md"
+        "agent_prompt": "agents/coordinator.md"
       }
     },
     {
@@ -74,7 +74,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/architect.md"
+        "agent_prompt": "agents/architect.md"
       }
     },
     {
@@ -108,7 +108,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/architect.md"
+        "agent_prompt": "agents/architect.md"
       }
     },
     {
@@ -141,7 +141,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/devops.md"
+        "agent_prompt": "agents/devops.md"
       }
     },
     {
@@ -186,7 +186,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/designer.md"
+        "agent_prompt": "agents/designer.md"
       }
     },
     {
@@ -226,7 +226,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/coordinator.md"
+        "agent_prompt": "agents/coordinator.md"
       }
     },
     {
@@ -266,7 +266,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/reviewer.md"
+        "agent_prompt": "agents/reviewer.md"
       }
     },
     {
@@ -305,7 +305,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/devops.md"
+        "agent_prompt": "agents/devops.md"
       }
     },
     {
@@ -340,7 +340,7 @@
       },
       "references": {
         "prompt_source": "commands/build.md",
-        "agent_prompt": "agents/dev-squad/coordinator.md"
+        "agent_prompt": "agents/coordinator.md"
       }
     }
   ]

@@ -21,12 +21,12 @@ if [ "$PLUGIN_NAME" != "dev-squad" ]; then
 fi
 
 # Verify cwd is the source repo (has agents/ + workflows/ source dirs)
-if [ ! -d "${PLUGIN_ROOT}/.claude-plugin/workflows" ] || [ ! -d "${PLUGIN_ROOT}/agents/dev-squad" ]; then
+if [ ! -d "${PLUGIN_ROOT}/.claude-plugin/workflows" ] || [ ! -d "${PLUGIN_ROOT}/agents" ]; then
   exit 0
 fi
 
 WORKFLOWS_DIR="${PLUGIN_ROOT}/.claude-plugin/workflows"
-AGENTS_DIR="${PLUGIN_ROOT}/agents/dev-squad"
+AGENTS_DIR="${PLUGIN_ROOT}/agents"
 
 DRIFT_COUNT=0
 WARNINGS=()
@@ -79,7 +79,7 @@ if [ $DRIFT_COUNT -gt 0 ]; then
   for w in "${WARNINGS[@]}"; do
     echo "  - $w" >&2
   done
-  echo "  Edit .claude-plugin/workflows/*.json + agents/dev-squad/*.md to resolve." >&2
+  echo "  Edit .claude-plugin/workflows/*.json + agents/*.md to resolve." >&2
 fi
 
 exit 0

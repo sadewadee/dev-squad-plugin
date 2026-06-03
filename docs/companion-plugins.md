@@ -254,4 +254,4 @@ Opus quota remains untouched by companion invocation. Designer (sonnet think_har
 
 - `.claude-plugin/workflows/` — canonical workflow JSONs that reference companion skills
 - `docs/workflow-mapping.md` — phase-by-phase mapping with skill columns
-- `agents/dev-squad/coordinator.md` — companion-skill bootstrap context
+- `agents/coordinator.md` — companion-skill bootstrap context

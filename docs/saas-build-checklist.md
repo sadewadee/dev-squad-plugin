@@ -40,7 +40,7 @@ If your project meets all 4 + most of "typically" — proceed with this checklis
 | Phase | Owner | dev-squad reference | Checklist sections (this doc) |
 |---|---|---|---|
 | **0 ULTRAPLAN** | Coordinator | `commands/build.md` Phase 0 + Step 2.5 | "Phase 0 — SaaS Mode Detection" + "Architectural Decisions" |
-| **1 DISCOVER** | Architect | `agents/dev-squad/architect.md` | "Phase 1 — PRD with SaaS Specifics" |
+| **1 DISCOVER** | Architect | `agents/architect.md` | "Phase 1 — PRD with SaaS Specifics" |
 | **2 DESIGN** | Architect (+ Reviewer threat model) | ADR-001..006 + saas-patterns Part 1 design | "Phase 2 — ADRs + Architectural Foundations" |
 | **3 SCAFFOLD** | DevOps + Git-Ops | saas-patterns Part 1 module list | "Phase 3 — Backend Module Scaffold" |
 | **3.5 DESIGN UI/UX** | Designer | saas-patterns Part 2 | "Phase 3.5 — Design Tokens + Drill-Down Spec" |

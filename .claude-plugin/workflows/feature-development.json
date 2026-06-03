@@ -27,8 +27,8 @@
         "fallback": "Manual scope assessment via Diff-Scope Heuristic table"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#diff-scope-dispatch-heuristic",
-        "agent_prompt": "agents/dev-squad/coordinator.md"
+        "prompt_source": "agents/coordinator.md#diff-scope-dispatch-heuristic",
+        "agent_prompt": "agents/coordinator.md"
       }
     },
     {
@@ -55,8 +55,8 @@
         "fallback": "Manual via architect agent prompt + context7"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#feature-development",
-        "agent_prompt": "agents/dev-squad/architect.md"
+        "prompt_source": "agents/coordinator.md#feature-development",
+        "agent_prompt": "agents/architect.md"
       }
     },
     {
@@ -87,8 +87,8 @@
         "fallback": "Manual via WebSearch references"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/designer.md",
-        "agent_prompt": "agents/dev-squad/designer.md"
+        "prompt_source": "agents/designer.md",
+        "agent_prompt": "agents/designer.md"
       }
     },
     {
@@ -115,7 +115,7 @@
         "fallback": "Direct dispatch via Agent tool with worktree isolation"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#feature-development"
+        "prompt_source": "agents/coordinator.md#feature-development"
       }
     },
     {
@@ -147,7 +147,7 @@
         "fallback": "Manual via 3-way parallel Agent dispatch"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#diff-scope-dispatch-heuristic"
+        "prompt_source": "agents/coordinator.md#diff-scope-dispatch-heuristic"
       }
     },
     {
@@ -170,7 +170,7 @@
         "fallback": "Manual via gh CLI"
       },
       "references": {
-        "prompt_source": "agents/dev-squad/coordinator.md#feature-development"
+        "prompt_source": "agents/coordinator.md#feature-development"
       }
     }
   ]
