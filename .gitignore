@@ -13,3 +13,4 @@ __pycache__/
 
 # Local plugin state
 .dev-squad/
+.playwright-mcp/
