@@ -185,6 +185,44 @@ If `ui-ux-pro-max` skill is installed, invoke it FIRST. It generates a complete 
 
 **Suppression rule:** Do NOT invoke `ui-ux-pro-max` outside Phase 3.5 (e.g. during Phase 5 design compliance light pass). Auto-activation on UI keywords would conflict with controlled phase dispatch. Phase 3.5 is the single invocation point.
 
+### Step 0.5: Direction Shotgun (BEFORE Artifact 1 — variant exploration)
+
+<!-- Variant exploration pattern adapted from garrytan/gstack design-shotgun (MIT). HTML mockups instead of image-API PNGs; taste memory simplified (no decay). -->
+
+Explore 3 distinct design directions BEFORE committing to tokens. The winner drives all 4 artifacts. Skipped automatically when Phase 3.5 is skipped (`--mvp-mode`).
+
+**Interaction with Step 0:** if `ui-ux-pro-max` produced a design system, that system becomes ONE of the 3 variants (it earns no special status — it competes); generate 2 deliberately different directions alongside it. If Step 0 was skipped, generate all 3 from scratch.
+
+**1. Read taste memory.** If `.dev-squad/design/taste.json` exists, read it:
+
+```json
+{
+  "version": 1,
+  "dimensions": {
+    "fonts":      { "approved": [{"value": "Geist", "count": 3, "last_seen": "2026-06-01"}], "rejected": [] },
+    "colors":     { "approved": [], "rejected": [] },
+    "layouts":    { "approved": [], "rejected": [] },
+    "aesthetics": { "approved": [], "rejected": [] }
+  }
+}
+```
+
+Bias concepts toward strong approved signals (higher `count`, weight recent `last_seen` higher); avoid strong rejections. If the current request contradicts a strong signal (e.g. user asks "playful" but taste history strongly prefers minimal), flag it: proceed with the request, but ask whether this is a one-off or a taste update. If no file exists, explore wide.
+
+**2. Generate 3 concepts.** One line each — a named direction plus a visual description. Ground them in the PRD, architect's design doc, and taste memory.
+
+**Anti-convergence directive (hard requirement):** each variant MUST use a different font family, different color palette, and different layout approach. Test: if the headline text could be swapped between two variants without anyone noticing, one of them failed — regenerate it with a deliberately different direction. The three variants should feel like they came from three different design teams, not the same team at three different coffee levels.
+
+**3. Confirm concepts** via AskUserQuestion before building: generate all 3 / change one / add a direction / drop one. Max 2 revision rounds. (Auto mode: skip confirmation, proceed with all 3.)
+
+**4. Build variants.** For each concept, one **self-contained HTML/CSS mockup** of the product's core screen (per the architect's route map) at `.dev-squad/design/variants/variant-{a,b,c}.html`. Self-contained = inline CSS, no build step, no external deps beyond a font CDN link, realistic content (no lorem ipsum). Then build `.dev-squad/design/variants/comparison.html` — all three side by side in labeled iframes with the concept names. Open it in the browser (`open` on macOS; otherwise playwright). No image-generation APIs.
+
+**5. Pick.** AskUserQuestion: which variant wins? Options: variant A / B / C / remix (user names which elements from which variants to combine). The winner's font, palette, and layout become the foundation of the 4 blocking artifacts.
+
+**6. Update taste memory.** Write `.dev-squad/design/taste.json`: the winner's font/colors/layout/aesthetic → `approved` (increment `count` if present, else add with count 1; stamp `last_seen` with today). Any variant the user explicitly called out negatively → `rejected`. Silence about a losing variant is NOT rejection — only explicit negative feedback is.
+
+**Auto mode:** no user available to pick. Self-select the variant that best satisfies the visual-spec rubric (brand fit, hierarchy, accessibility contrast), log the choice + reasoning to the assumption ledger, and still update taste.json.
+
 ### Step 1+: Produce 4 BLOCKING artifacts in `.dev-squad/design/`
 
 ### Artifact 1: `.dev-squad/design/design-tokens.md`

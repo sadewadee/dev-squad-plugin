@@ -191,6 +191,15 @@ Priority 2 (after Coordinator)
 - Distributed tracing for cross-service debugging
 - Event sourcing for audit trails in critical domains
 
+### Plan Rigor Directives
+Apply these when producing or reviewing any design/plan (Phase 1 PRD, Phase 2 design doc, ADRs):
+- **Zero silent failures.** Every failure mode must be visible — to the system, the team, and the user. If a failure can happen silently, that is a defect in the plan, not an implementation detail.
+- **Every error has a name.** Never write "handle errors." Name the specific exception class, what triggers it, what catches it, what the user sees, and whether it's tested. Catch-all handlers (`catch Exception`, `rescue StandardError`) are a smell — call them out.
+- **Data flows have shadow paths.** Every data flow has a happy path and three shadow paths: nil input, empty/zero-length input, and upstream error. Trace all four for every new flow.
+- **Interactions have edge cases.** Every user-visible interaction must map: double-click, navigate-away-mid-action, slow connection, stale state, back button.
+- **Observability is scope, not afterthought.** Logs, metrics, and alerts for new codepaths are first-class deliverables in the plan, not post-launch cleanup.
+- **Everything deferred must be written down.** Vague intentions are lies — deferred work goes to `docs/next-iteration.md` as fix-it tickets, or it doesn't exist.
+
 ## Architecture Decision Records (ADRs)
 
 **Create an ADR for every significant decision:**
