@@ -17,7 +17,7 @@ Handle this directly in the main session (do NOT dispatch to the coordinator —
 ### Phase 1: Context Gathering
 
 1. If inside a project: read `CLAUDE.md`, `docs/next-iteration.md` (if present), run `git log --oneline -20`. If the idea is greenfield with no repo, skip.
-2. Check episodic-memory (if available) for prior conversations about this idea. If a relevant prior conversation IS found, treat it exactly like a prior-pitch hit in Phase 2.5: surface a 1-line summary and ask build-on vs start-fresh (one combined question if Phase 2.5 also finds a doc — don't ask twice).
+2. Check episodic-memory (if available) for prior conversations about this idea. If a relevant prior conversation IS found, treat it exactly like a prior-pitch hit in Phase 1.5: surface a 1-line summary and ask build-on vs start-fresh (one combined question if Phase 1.5 also finds a doc — don't ask twice; if the two sources point to DIFFERENT prior work, list both in the same question and let the user pick which to build on, or neither).
 3. **Ask: what's your goal with this?** This is a real question, not a formality — the answer determines how the session runs. Separate AskUserQuestion call from step 4 (the stage options only make sense after you know the goal). Via AskUserQuestion:
    - Building a startup (or thinking about it)
    - Intrapreneurship — internal project at a company, need to ship fast
@@ -29,6 +29,13 @@ Handle this directly in the main session (do NOT dispatch to the coordinator —
 4. **Startup mode only — assess product stage:** pre-product (idea only) / has users (not paying) / has paying customers.
 
 Output (only AFTER step 4 completes — the summary must include the stage): "Here's what I understand about this idea and its context: ..."
+
+### Phase 1.5: Prior Pitch Discovery
+
+Run this right after Phase 1's understanding summary and BEFORE the Phase 2 questions — a prior doc found here is what lets the forcing questions smart-skip. Grep `.dev-squad/pitch/*-design.md` for 3-5 keywords from the idea as understood so far. If a prior pitch overlaps, surface it ("Related pitch found: {title}, {date} — key overlap: {1 line}") and ask: build on it or start fresh? If none, proceed silently.
+
+- **If "build on it":** read the prior doc fully. Its Agreed Premises enter Phase 4 as pre-confirmed (re-present them in one batch for a quick re-confirm, don't re-derive); its Evidence counts toward the forcing questions (smart-skip questions it already answers); the new design doc's header gets a `Supersedes: {prior filename}` line. If the new idea pulls back IN anything from the prior doc's "Explicitly OUT of scope" list, surface each such item by name — it re-enters scope only with the user's explicit confirmation, never silently (the prior cut was a decision; reversing it is too).
+- **If "start fresh":** ignore the prior doc entirely; the new doc does NOT supersede it.
 
 ### Phase 2A: Startup Mode — Product Diagnostic
 
@@ -73,7 +80,7 @@ Stage routing (don't always ask all six):
 5. **Observation & Surprise** — "Have you watched someone use this without helping them? What surprised you?" Push until: a specific surprise that contradicted an assumption. Red flags: "we sent a survey", "demo calls went well", "nothing surprising". Surveys lie, demos are theater. The gold: users doing something the product wasn't designed for — that's the real product trying to emerge.
 6. **Future-Fit** — "If the world looks meaningfully different in 3 years — and it will — does this become more essential or less?" Push until: a specific claim about how the users' world changes and why that makes this more valuable. Red flags: "the market grows 20% a year" (every competitor cites the same stat), "AI keeps getting better so we do too."
 
-**Smart-skip:** if earlier answers already cover a later question, skip it.
+**Smart-skip:** if earlier answers already cover a later question, skip it. If a question is only PARTIALLY answered, ask only the unanswered remainder — don't re-ask what's known, don't skip what isn't. (Same rule applies to the Builder-mode questions in Phase 2B, including when the idea description itself already answers the first question.)
 
 **Escape hatch:** if the user says "just do it" / "skip the questions": say the hard questions ARE the value, then ask only the 2 most critical remaining questions for their stage. If they push back a second time, respect it — proceed immediately. Full skip only if they brought a formed plan with real evidence (users, revenue, named customers) — even then, still run Phase 3 and Phase 4.
 
@@ -96,13 +103,6 @@ End with concrete build steps, not business validation tasks.
 
 **Mode upgrade:** if the user mentions customers, revenue, or "this could be a real company" mid-session — say "Okay, now we're talking — let me ask harder questions" and switch to Phase 2A.
 
-### Phase 2.5: Prior Pitch Discovery
-
-After the problem statement is clear, grep `.dev-squad/pitch/*-design.md` for 3-5 keywords from it. If a prior pitch overlaps, surface it ("Related pitch found: {title}, {date} — key overlap: {1 line}") and ask: build on it or start fresh? If none, proceed silently.
-
-- **If "build on it":** read the prior doc fully. Its Agreed Premises enter Phase 4 as pre-confirmed (re-present them in one batch for a quick re-confirm, don't re-derive); its Evidence counts toward the forcing questions (smart-skip questions it already answers); the new design doc's header gets a `Supersedes: {prior filename}` line.
-- **If "start fresh":** ignore the prior doc entirely; the new doc does NOT supersede it.
-
 ### Phase 3: Landscape Check
 
 Understand conventional wisdom so you can evaluate where it's wrong. **Privacy gate first** (AskUserQuestion): "I'd like to search the web for what the world thinks about this space. This sends generalized category terms — never your specific idea or product name. OK?" If declined or WebSearch unavailable: skip, note it, proceed on in-distribution knowledge.
@@ -122,7 +122,9 @@ Before any solution talk, state the premises the design depends on:
 3. What existing code/tools already partially solve this?
 4. If the deliverable is a distributable artifact (CLI, library, app): how do users GET it? Code without a distribution channel is code nobody can use — name the channel or explicitly defer it.
 
-Present premises as numbered statements; the user agrees/disagrees with each via AskUserQuestion. On disagreement: revise THAT premise to incorporate the user's objection, restate the revised version, and re-confirm it — only re-open the originating Phase 2 forcing question if the objection invalidates the evidence behind it (not just the wording). Do not proceed past a disputed premise. If after 2 revisions a premise still can't be agreed, record it in the design doc as "CONTESTED — {both positions}" and continue; a contested premise is itself a finding.
+**Builder mode adaptation:** same gate, different language — frame the premises around delight and shareability ("the most exciting version of this is X", "this is worth a weekend because Y", "Z already exists and yours differs by W") instead of demand/pain language.
+
+Present premises as numbered statements; the user agrees/disagrees with each via AskUserQuestion. On disagreement: revise THAT premise to incorporate the user's objection, restate the revised version, and re-confirm it — only re-open the originating Phase 2 forcing question if the objection invalidates the evidence behind it (not just the wording). Do not proceed past a disputed premise. If after 2 revised versions (counting from AFTER the original statement — original, revision 1, revision 2, then stop) a premise still can't be agreed, record it in the design doc as "CONTESTED — {both positions}" and continue; a contested premise is itself a finding.
 
 ### Phase 4.5: Second Opinion (optional)
 
@@ -182,6 +184,8 @@ Date: {date} | Mode: {Startup|Builder} | Stage: {stage or n/a}
 ## Next Action
 {ONE concrete thing to do next — an action, not a strategy}
 ```
+
+**Builder mode fields:** Stage is `n/a`; Evidence holds enthusiasm signals instead of demand evidence (who they'd show it to, what made them say "whoa", the most exciting version surfaced in Phase 2B); Next Action is a concrete build step, never a validation task.
 
 Self-review the doc before saving: no placeholders, no contradictions with the premises, scope matches the chosen approach.
 
