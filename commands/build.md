@@ -81,6 +81,12 @@ Agent tool with:
     
     Use ultrathink. Take your time. This phase determines the quality of everything that follows.
     
+    **Step 0: Pitch Design Doc Check** — Before any analysis, check for a prior idea diagnostic:
+    - If `.dev-squad/pitch/*-design.md` exists, read the MOST RECENT one (output of `/dev-squad pitch`).
+    - Treat its agreed premises, chosen approach, and narrowest wedge as pre-answered input — do NOT re-derive scope the pitch already locked. Record "scope grounded in pitch doc {filename}" in master-plan.md.
+    - If the build description contradicts the pitch doc, surface the conflict to the user before proceeding (auto mode: log the conflict to the assumption ledger and prefer the build description as more recent).
+    - If no pitch doc exists, proceed normally.
+
     **Step 1: Deep Analysis** — Answer these questions in writing:
     - What is the TRUE scope? (MVP? Full product? Prototype?)
     - How many entities/models are needed? List them all.
@@ -156,6 +162,15 @@ Agent tool with:
 
     **Auto mode:** do NOT run the 3 AskUserQuestion blocks. Infer all 10 dimensions: the 4 irreversible ones use the conservative-defaults table above (logged `confidence: low`); the other 6 are inferred from the description. Write every inference to the assumption ledger. Do not require Phase 1 clarification for unanswered dimensions (there is no human) — record them as low-confidence assumptions instead.
 
+    **Step 2.7: Ambition Posture** — lock how ambitious this build should be. Skip the question if a pitch doc from Step 0 already locked scope (its "Narrowest Wedge" + "Explicitly OUT of scope" sections answer this). Otherwise, one AskUserQuestion with three postures:
+    - **"Narrowest wedge"** — the smallest version that ships value. Everything else goes to `docs/next-iteration.md` as fix-it tickets. Be ruthless about cuts.
+    - **"As described"** (DEFAULT/RECOMMENDED) — build what was asked, bulletproof. Do not silently expand OR reduce scope.
+    - **"10x expansion"** — before writing master-plan, run a 10x check (what version is 10x more valuable for 2x the effort?) and a platonic-ideal pass (if the best engineer in the world built this with perfect taste, what would the USER FEEL using it? Start from experience, not architecture). Distill those visions into concrete scope proposals and present EACH as its own AskUserQuestion — options: Add to scope / Defer to `docs/next-iteration.md` / Skip. Never silently add scope. Accepted items become master-plan scope; deferred items get written down.
+
+    Record the chosen posture in master-plan.md under `## Scope`. Once locked, execute it faithfully — do not drift toward a different posture in later phases.
+
+    **Auto mode:** skip the question. Infer the posture from the description (default: as-described) and log the inference + confidence to the assumption ledger. Never apply 10x expansion in auto mode — expansion requires a human opt-in.
+
     **Step 3: Write Master Plan** — Create `.dev-squad/master-plan.md`:
     ```markdown
     # Master Plan: {project name}
@@ -183,6 +198,7 @@ Agent tool with:
     - **Q10 Compliance Jurisdiction**: [GDPR, PDP-UU-27, CCPA, LGPD, SOC2-Type1, EU-AI-Act, none]
     
     ## Scope
+    Ambition posture: {narrowest-wedge | as-described | 10x-expansion} (locked in Step 2.7)
     {MVP scope, explicitly what's IN and OUT}
     
     ## Entities
@@ -210,6 +226,8 @@ Agent tool with:
     - Am I defaulting to patterns I know vs what fits?
     - Could this be simpler?
     - Did I miss any entity or relationship?
+    - 10x check: what would make this 10x better for 2x the effort — and if it's compelling, did the user actually opt in (Step 2.7)? Never smuggle expansion in.
+    - Platonic ideal: re-read the plan from what the user will FEEL using the product, not from the architecture. If the experience reads flat, the architecture doesn't matter — fix the experience in the plan.
     
     Only AFTER master-plan.md is written, proceed to Phase 1.
 

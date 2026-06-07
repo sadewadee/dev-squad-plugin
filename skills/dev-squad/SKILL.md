@@ -9,6 +9,7 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 
 **Command Format:**
 - `/dev-squad` or `/dev-squad start` - Start coordinator for new task
+- `/dev-squad pitch <idea>` - Pre-build idea diagnostic: forcing questions challenge the premise BEFORE any code (Startup mode: hard YC-style diagnostic; Builder mode: design partner). Produces `.dev-squad/pitch/<date>-<slug>-design.md` which build Phase 0 auto-reads. Run BEFORE `/dev-squad build` for unvalidated ideas. See commands/pitch.md — handled in main session, NOT dispatched to coordinator.
 - `/dev-squad build <description> [--auto]` - Zero-to-ship: build a full project through 9 automated PDCA phases (Plan → Do → Check → Act). Add `--auto` to run unattended after kickoff (no questions; decisions inferred + logged to `.dev-squad/assumption-ledger.md`). See commands/build.md "Auto Mode".
 - `/dev-squad bootstrap` - Auto-install dev-squad companion plugins + MCP servers (one-shot setup)
 - `/dev-squad retrospective [scope]` - Run a PDCA Act-phase retrospective on completed work (feature, sprint, post-incident)
@@ -490,6 +491,7 @@ When user invokes `/dev-squad` or any variant:
 
 ### 1. Parse Command
 Extract the command type and description:
+- `pitch`: Pre-build idea diagnostic -- do NOT dispatch to coordinator; handle directly in the main session per `commands/pitch.md` (every phase needs AskUserQuestion with the user)
 - `build`: Zero-to-ship workflow -- launch coordinator with full 6-phase build prompt
 - `db` or `database`: General database workflow
 - `schema`: Schema design workflow
