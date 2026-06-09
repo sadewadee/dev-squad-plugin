@@ -212,7 +212,7 @@ These patterns are adopted from proven plugins (superpowers, code-review, double
 | **Scored Phase Gate** | Between all phases | Scored evaluator (0-100 vs rubric) + retry-on-feedback + plateau detection; **sonnet by default for every gate** (gates involve judgment), haiku ONLY for a trivial structural boolean (build-passes / file-exists) |
 | **Confidence Scoring** | Phase 5 review + phase gates | Score 0-100 per finding, filter < 80 as non-actionable (Phase 5 findings); scoring now also drives phase gate evaluation — generalized to gate evaluation across all phases |
 | **Multi-Angle Review** | Phase 5 reviewer lane | 4 review passes within reviewer's static lane: security, performance, spec, architecture |
-| **Systematic Debugging** | All agents | 5-phase: recall (episodic + gotchas) → reproduce → locate → hypothesize → fix-verify |
+| **Systematic Debugging** | All agents | recall (episodic + gotchas) first, then 7-step: reproduce → challenge → isolate → evaluate → fix → verify → refine |
 | **Plan Review Loop** | Phase 2 design | Dispatch reviewer for plan, max 3 iterations |
 | **Verification-Before-Completion** | Phase 6 + all tasks | Evidence before claims, run commands fresh |
 | **Agent Memory** | All agents | `memory: project` — persistent knowledge across sessions |
@@ -569,7 +569,7 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | Starting creative/design work | `superpowers:brainstorming` | Structures exploration before coding |
 | Planning multi-step tasks | `superpowers:writing-plans` | Creates actionable implementation plan |
 | Before writing ANY code | `superpowers:test-driven-development` | Enforces test-first discipline |
-| Investigating bugs | `dev-squad:debugging` (primary); `superpowers:systematic-debugging` (optional) | Self-contained 5-phase recall/reproduce/locate/hypothesize/fix-verify loop (recall = episodic + gotchas first) |
+| Investigating bugs | `dev-squad:debugging` (primary); `superpowers:systematic-debugging` (optional) | Self-contained 7-step reproduce/challenge/isolate/evaluate/fix/verify/refine loop (recall = episodic + gotchas first) |
 | Running 2+ independent tasks | `superpowers:dispatching-parallel-agents` | Parallel execution patterns |
 | Reviewing code | `code-review:code-review` | Structured review checklist |
 | Before claiming "done" | `superpowers:verification-before-completion` | Run tests, verify output |
@@ -595,7 +595,7 @@ Skills define HOW you work. They load instructions, checklists, and workflows in
 | TDD workflow + security review | `dev-squad:tdd-workflow` + `dev-squad:security-review` | 7-step TDD + 10-area security checklist |
 | **Phase 5 security review on a non-trivial diff** | `dev-squad:adversarial-security` | Attacker→defender→synthesizer 3-pass on the diff; outputs severity+confidence findings |
 | **Before any agent claims a task/feature done** | `dev-squad:verification` | Self-contained build/type/lint/test/secrets/diff-review report card (no external dependency) |
-| **Any bug / test failure / unexpected behavior, before proposing a fix** | `dev-squad:debugging` | Self-contained 5-phase recall/reproduce/locate/hypothesize/fix-verify loop (recall = episodic + gotchas first); no external dependency |
+| **Any bug / test failure / unexpected behavior, before proposing a fix** | `dev-squad:debugging` | Self-contained 7-step reproduce/challenge/isolate/evaluate/fix/verify/refine loop (recall = episodic + gotchas first); no external dependency |
 | **Build/compile/type errors during self-healing author retries** | `dev-squad:build-error-resolver` | Minimal-diff fix, iterate-until-green, 2-attempt escalation |
 | **Phase 7 LEARN + `/dev-squad evolve`** (distill observations → instincts) | `dev-squad:continuous-learning` | In-session distillation of `.dev-squad/observations.jsonl` → confidence-scored project instincts → graduation to `skills/dev-squad-learned/` (no headless daemon) |
 | **Repeated rollouts / evidence-tracked decisions** (backs instinct confidence) | `dev-squad:recursive-decision-ledger` | Ledger discipline: prior winner + fresh evidence + trial count + promotion gate; confidence is evidence, not proof (harvested from ECC) |

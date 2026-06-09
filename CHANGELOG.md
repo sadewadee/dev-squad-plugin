@@ -2,6 +2,19 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.26.0] — Debugging protocol: expand to a 7-step root-cause loop (add Challenge + Refine)
+
+**Why:** The `dev-squad:debugging` skill ran a 5-phase loop (recall → reproduce → locate → hypothesize → fix-verify). Two failure modes were not covered explicitly: (1) agents narrowed and fixed on top of an unchallenged baseline — a flaky repro or a misread "symptom-site = origin" assumption silently wasted every step that followed; (2) once a test went green the work was treated as done, leaving debug artifacts behind and regression tests that pass today but cannot fail when the logic regresses (Rule 9). The expanded loop makes "doubt your assumptions" and "leave it clean" first-class steps.
+
+**What it is NOT:** No new skill, command, or agent. The skill is invoked exactly as before — `dev-squad:debugging`, auto-loaded by backend/qa-engineer/auditor/reviewer/devops and used by the `/dev-squad fix` workflow. Editing the skill body propagates the new flow to every caller with zero changes to calling sites.
+
+### Changed
+- **`skills/debugging/SKILL.md`** — expanded from 5-phase to a 7-step loop, **Reproduce → Challenge → Isolate → Evaluate → Fix → Verify → Refine** (Phase 0 Recall preserved and still mandatory). New **Phase 2: Challenge** (doubt repro determinism, the bug framing, and symptom-vs-origin before isolating) and **Phase 7: Refine** (remove debug artifacts, harden the regression test's intent per Rule 9, log the trap to `.dev-squad/gotchas.md`). Renamed Locate→Isolate and Hypothesize→Evaluate; split Fix+Verify into separate Fix (Phase 5) and Verify (Phase 6) steps. Iteration Rule and Output Format updated to the new numbering.
+- **`skills/dev-squad/SKILL.md`** — synced the three description strings that summarized the old "5-phase recall/reproduce/locate/hypothesize/fix-verify" loop to the new 7-step wording (Orchestration Patterns table, skill table, trigger table).
+
+### Note
+- Agent Skill Selection Matrices reference the skill by name (`dev-squad:debugging`) only, not by phase number — unchanged. The local per-agent debugging mini-protocols in `backend.md`/`frontend.md` (their own Phase 0–4 numbering) are independent of the skill and were left intact. Historical `docs/specs/*` records describing the earlier 4-phase/5-phase loop are dated artifacts and were not rewritten.
+
 ## [4.24.0] — Fix agent dispatch: flatten `agents/` to remove double-prefix namespace
 
 **Why:** Agents lived in a nested subdirectory `agents/dev-squad/*.md`. Claude Code derives a plugin agent's namespace from its path, so the nested folder produced a **double-prefixed** registered type — `dev-squad:dev-squad:architect` — while every orchestration prompt, workflow JSON, and `CLAUDE.md` instructs the single form `dev-squad:architect`. The coordinator followed the prompts, dispatched the single form, and the harness rejected it → frequent **"Error: Agent type not found"**, after which the coordinator self-corrected to the registered double form. Net effect: noisy, repeated dispatch errors on every phase even though work eventually proceeded.
