@@ -29,12 +29,15 @@ Project: {description from workflow file}
 Started: {timestamp}
 
 Phase Progress:
+  [x] ULTRAPLAN -- {status}
   [x] DISCOVER  -- {status}
-  [x] DESIGN    -- {status}
+  [ ] DESIGN    -- {status}
   [ ] SCAFFOLD  -- {status}
+  [ ] UI_DESIGN -- {status}
   [ ] IMPLEMENT -- {status}
   [ ] REVIEW    -- {status}
   [ ] SHIP      -- {status}
+  [ ] LEARN     -- {status}
 
 Active Agents:
   - {agent}: {current task}

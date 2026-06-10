@@ -2,6 +2,21 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.26.2] — Per-file review fixes across agents, commands, and skills
+
+**Why:** A per-file defect review of all 11 agents, 5 commands, and 19 skills (continuation of the 4.26.1 audit) surfaced four concrete defects. Style and soft-ambiguity findings were deliberately not acted on.
+
+### Fixed
+- **`commands/status.md`** — the `/dev-squad status` report template listed only 6 phases; users tracking a zero-to-ship run never saw ULTRAPLAN (0), UI_DESIGN (3.5), or LEARN (7). Template now shows all 9 phases.
+- **`agents/coordinator.md`, `agents/architect.md`, `agents/backend.md`** — the SaaS-mode trigger list claimed `.dev-squad/scope-tier.json` is "set by coordinator's Diff-Scope Heuristic in `/dev-squad start`". The artifact is actually produced by the coordinator in phase 1 of the feature-development workflow (per `feature-development.json` outputs) — corrected to `/dev-squad feature` in all three files.
+- **`skills/recursive-decision-ledger/SKILL.md`** — removed the `tools: Read, Write, Edit, Bash, Grep, Glob` frontmatter whitelist, the same silently-restricting pattern the plugin removed from agent frontmatter (see "Why no tools whitelist" in CLAUDE.md). Only file in the repo that still had one.
+- **`agents/designer.md`** — leftover non-English word in a section heading ("screenshot referensi" → "screenshot references").
+
+### Review notes (verified non-issues, left alone)
+- `commands/build.md` "Your Team" table listing 10 agents is correct — it instructs the coordinator, which does not dispatch itself.
+- backend/frontend local Phase 0-4 debugging mini-protocols are independent of the `dev-squad:debugging` skill's 7-step numbering — intentional.
+- All other agent/command/skill files came back clean: frontmatter valid, no dead `dev-squad:*` references, no stale debugging-loop descriptions, no hardcoded `mcp__*` identifiers, config.json members match the 11 agents.
+
 ## [4.26.1] — Audit fixes: rm -rf guard false positives + CLAUDE.md drift
 
 **Why:** A three-way audit (cross-file consistency, hook layer, prompt-layer conventions) found one real runtime bug and a cluster of stale claims in CLAUDE.md that mislead anyone (human or agent) editing the plugin.
