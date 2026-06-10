@@ -13,11 +13,10 @@ fi
 # NOTE: force-push is only blocked when targeting protected branches (main/master).
 # Force-push to feature branches is legitimate workflow (rebase, history cleanup).
 # Both long-form (--force), short-form (-f), and force-with-lease variants caught.
+# NOTE: rm -rf is handled by RM_ROOT_REGEX below, not this list — substring matching
+# on "rm -rf /" or "rm -rf ." false-positives on legitimate subpaths like
+# "rm -rf /tmp/scratch" or "rm -rf ./node_modules".
 BLOCKED_PATTERNS=(
-  "rm -rf /"
-  "rm -rf ~"
-  "rm -rf ."
-  'rm -rf $HOME'
   "DROP DATABASE"
   "DROP TABLE"
   "TRUNCATE TABLE"
@@ -39,6 +38,16 @@ BLOCKED_PATTERNS=(
   "terraform destroy"
   "aws s3 rb"
 )
+
+# rm -rf (or -fr) targeting a filesystem root exactly — /, ~, ., $HOME — optionally
+# with a trailing slash or quotes. Subpaths (rm -rf /tmp/x, rm -rf ./node_modules,
+# rm -rf ~/scratch) are allowed.
+RM_ROOT_REGEX='rm -(rf|fr)[[:space:]]+"?(/|~|\.|\$HOME)/?"?([[:space:]]|$|;)'
+
+if echo "$COMMAND" | grep -Eq "$RM_ROOT_REGEX"; then
+  echo "BLOCKED by dev-squad safety guard: rm -rf targeting a filesystem root (/, ~, ., \$HOME). If this is intentional, run it manually outside dev-squad."
+  exit 2
+fi
 
 for pattern in "${BLOCKED_PATTERNS[@]}"; do
   if echo "$COMMAND" | grep -qiF "$pattern"; then

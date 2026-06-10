@@ -2,6 +2,22 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.26.1] — Audit fixes: rm -rf guard false positives + CLAUDE.md drift
+
+**Why:** A three-way audit (cross-file consistency, hook layer, prompt-layer conventions) found one real runtime bug and a cluster of stale claims in CLAUDE.md that mislead anyone (human or agent) editing the plugin.
+
+### Fixed
+- **`hooks/guard-dangerous-ops.sh`** — the `rm -rf` patterns used fixed-substring matching, so `"rm -rf /"` blocked ANY absolute-path deletion (`rm -rf /tmp/scratch`) and `"rm -rf ."` blocked any `./`-prefixed path (`rm -rf ./node_modules`), breaking legitimate cleanup in every dev-squad session. Replaced the four `rm` substring patterns with `RM_ROOT_REGEX`, which blocks only filesystem-root targets (`/`, `~`, `.`, `$HOME`, with optional trailing slash/quotes, including the `-fr` flag order) and allows subpaths. Verified with a 21-case mocked-stdin matrix (12 must-block, 9 must-allow — all pass; existing `hooks/tests/*` harnesses still pass).
+
+### Changed
+- **`CLAUDE.md`** — synced five stale claims to reality: "8-agent swarm" → 11 agents (designer, qa-engineer, auditor were missing); "7-phase" zero-to-ship → 9 phases (0-7 + 3.5 design gate); `think_harder` is on coordinator/architect/designer/reviewer/auditor, not "only coordinator and architect" (the three additions were deliberate per CHANGELOG 4.x entries); "Add a new agent" step 3 pointed at nonexistent `agents/config.json` → corrected to `skills/dev-squad/config.json`; hooks table rebuilt to match `hooks/hooks.json` (was missing `validate-workflow-schema.sh`, `check-companions.sh`, `auto-governor.sh`, `guard-unsafe-code.py`, `auto-guard.sh`, `observe-learning.sh`, and the `TeammateIdle` event). Entrypoints section now also lists `pitch`/`evolve`/`retrospective` commands.
+
+### Audit notes (verified non-issues, left alone)
+- Phase-name contract is consistent across `commands/build.md`, `hooks/check-workflow.sh`, `skills/dev-squad/SKILL.md`, and `zero-to-ship.json` (9 phases incl. `ui_design` numbered 3.5).
+- Workflow JSON `version: 4.15.3` fields are correct per `_schema.json` semantics ("tracks changes to phase definitions") — not a drift.
+- No hardcoded `mcp__*` identifiers, no `tools:` whitelists, all dispatch names fully qualified, all hook scripts wired/executable/syntax-clean, all referenced skills exist, no orphan skills.
+- Hook stdin-JSON fallback patterns and absent `set -euo pipefail` are intentional (hooks must not crash sessions) — not changed.
+
 ## [4.26.0] — Debugging protocol: expand to a 7-step root-cause loop (add Challenge + Refine)
 
 **Why:** The `dev-squad:debugging` skill ran a 5-phase loop (recall → reproduce → locate → hypothesize → fix-verify). Two failure modes were not covered explicitly: (1) agents narrowed and fixed on top of an unchallenged baseline — a flaky repro or a misread "symptom-site = origin" assumption silently wasted every step that followed; (2) once a test went green the work was treated as done, leaving debug artifacts behind and regression tests that pass today but cannot fail when the logic regresses (Rule 9). The expanded loop makes "doubt your assumptions" and "leave it clean" first-class steps.
