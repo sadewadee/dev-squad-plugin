@@ -188,6 +188,16 @@ Build/compile errors detected?         → Use SKILL (issuetracker)
 9. **Never** hardcode secrets, config values, or environment-specific data
 10. **Never** skip input validation at system boundaries
 
+### Code Quality Contract (applies to every line you commit)
+Complements the Operational Rules above. Canonical conventions live in the plugin's `rules/` directory (`rules/common/` + `rules/golang/` or `rules/typescript/` per language) — these are the enforceable core:
+
+1. **Smallest change that solves the task.** No speculative abstractions, no config options nobody asked for, no features beyond the task scope. If only one call site needs it, don't build a framework for it.
+2. **Match the surrounding code.** Before writing, read the neighboring module's naming, error style, and file layout — your diff should read as if the original author wrote it. Conformance beats taste.
+3. **Strict types.** TypeScript: no `any` (use `unknown` + narrowing); no `as` casts to silence compiler errors. Go: no `interface{}`/`any` where a concrete type or generic works; never discard a returned error — `_ =` requires a comment stating why ignoring is safe.
+4. **Ship no debug artifacts.** No leftover `console.log`/`fmt.Println`/`print()`, no commented-out code blocks, no TODOs without an issue reference, in any committed change.
+5. **Decompose at limits.** Typical file 200-400 lines (800 hard max); functions max 50 lines, each doing exactly one thing (rules/common/coding-style.md). Hitting a limit means extract a module/helper, not push past it.
+6. **Tests encode intent.** Each test asserts a behavior the business cares about and is named for that behavior. A test that cannot fail when the business logic regresses is not a test — strengthen it or delete it.
+
 ## Role
 Backend Developer of the dev-squad team. You are responsible for:
 - API development and implementation

@@ -2,6 +2,20 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.27.0] — Code Quality Contract for implementer agents (clean + accurate output)
+
+**Why:** An inventory of clean-code/accuracy levers across the implementer prompts showed the accuracy side was already strong (mandatory context7 lookups, read-before-write bootstrap, input validation, error handling, verification gate) but five cleanliness levers were enforced nowhere: minimal-diff/YAGNI, unified strict-typing (backend had no `any`/`interface{}` rule), no-debug-artifacts as a writer-side rule, file/function size limits, and tests-encode-intent. Separately, the entire `rules/` directory (1,777 lines of concrete conventions) was referenced by no agent — written but never read.
+
+### Added
+- **`agents/backend.md`, `agents/frontend.md`** — new "Code Quality Contract" section after Operational Rules, six enforceable rules each, tailored per agent: (1) smallest change that solves the task — no speculative abstraction; (2) match the surrounding code — diff reads as if the original author wrote it; (3) strict types — TS: no `any`/no silencing `as` casts, server data parsed not cast (frontend), Go: no `interface{}` where a concrete type works, discarded errors require a justification comment (backend); (4) no debug artifacts or commented-out blocks in committed code; (5) decompose at the `rules/common/coding-style.md` limits (file 200-400/800 max, function 50); (6) tests encode intent — a test that cannot fail when the logic regresses gets strengthened or deleted. The contract names `rules/` as the canonical convention source, wiring the orphaned directory into the implementer prompts.
+- **`skills/verification/SKILL.md`** — Step 7 Diff Self-Review gains question 6 (over-engineering: single-caller abstractions "for the future", commented-out blocks), so the writer-side contract has a gate-side enforcer. Verdict line updated to six answers.
+
+### Fixed
+- **`skills/react-testing/SKILL.md`** — "Related" block pointed entirely at things that don't exist in this repo (rules/react/, react-patterns, e2e-testing skills; react-reviewer/tdd-guide agents; /react-test, /react-review commands — leftovers from an upstream source). Now points at the real siblings: rules/typescript/testing.md, frontend-patterns, react-stack-2026, accessibility, tdd-workflow, dev-squad:reviewer, dev-squad:qa-engineer.
+
+### Not changed (already strong, verified)
+- context7-before-coding mandates, Bootstrap Context read-before-write, input-validation and error-handling rules in both implementers; verification skill's existing build/type/lint/test/secrets steps; backend-patterns/frontend-patterns content (pattern references, not policy).
+
 ## [4.26.2] — Per-file review fixes across agents, commands, and skills
 
 **Why:** A per-file defect review of all 11 agents, 5 commands, and 19 skills (continuation of the 4.26.1 audit) surfaced four concrete defects. Style and soft-ambiguity findings were deliberately not acted on.

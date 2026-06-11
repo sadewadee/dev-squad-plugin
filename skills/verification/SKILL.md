@@ -179,6 +179,7 @@ Read the full diff of your changes and answer these questions before reporting d
 3. **Leftover debug output** — Any `console.log`, `fmt.Println`, `print()`, or similar debug statements that should not be in production code?
 4. **Skipped logic** — Any function that returns early, panics, or throws "not implemented" that the task required to be finished?
 5. **File hygiene** — Any accidentally committed build artifacts, lock file conflicts, or `.DS_Store` / `__pycache__` entries?
+6. **Over-engineering** — Any abstraction, config option, or generic layer with a single caller introduced "for the future"? Any commented-out code blocks left in the diff?
 
 Run:
 ```
@@ -189,7 +190,7 @@ or, if changes are staged:
 git diff --staged
 ```
 
-Record result: PASS if all five answers are clean, FAIL and list the specific issue for each that is not clean.
+Record result: PASS if all six answers are clean, FAIL and list the specific issue for each that is not clean.
 
 ---
 
