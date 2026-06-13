@@ -2,6 +2,64 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.27.0] — Code Quality Contract for implementer agents (clean + accurate output)
+
+**Why:** An inventory of clean-code/accuracy levers across the implementer prompts showed the accuracy side was already strong (mandatory context7 lookups, read-before-write bootstrap, input validation, error handling, verification gate) but five cleanliness levers were enforced nowhere: minimal-diff/YAGNI, unified strict-typing (backend had no `any`/`interface{}` rule), no-debug-artifacts as a writer-side rule, file/function size limits, and tests-encode-intent. Separately, the entire `rules/` directory (1,777 lines of concrete conventions) was referenced by no agent — written but never read.
+
+### Added
+- **`agents/backend.md`, `agents/frontend.md`** — new "Code Quality Contract" section after Operational Rules, six enforceable rules each, tailored per agent: (1) smallest change that solves the task — no speculative abstraction; (2) match the surrounding code — diff reads as if the original author wrote it; (3) strict types — TS: no `any`/no silencing `as` casts, server data parsed not cast (frontend), Go: no `interface{}` where a concrete type works, discarded errors require a justification comment (backend); (4) no debug artifacts or commented-out blocks in committed code; (5) decompose at the `rules/common/coding-style.md` limits (file 200-400/800 max, function 50); (6) tests encode intent — a test that cannot fail when the logic regresses gets strengthened or deleted. The contract names `rules/` as the canonical convention source, wiring the orphaned directory into the implementer prompts.
+- **`skills/verification/SKILL.md`** — Step 7 Diff Self-Review gains question 6 (over-engineering: single-caller abstractions "for the future", commented-out blocks), so the writer-side contract has a gate-side enforcer. Verdict line updated to six answers.
+
+### Fixed
+- **`skills/react-testing/SKILL.md`** — "Related" block pointed entirely at things that don't exist in this repo (rules/react/, react-patterns, e2e-testing skills; react-reviewer/tdd-guide agents; /react-test, /react-review commands — leftovers from an upstream source). Now points at the real siblings: rules/typescript/testing.md, frontend-patterns, react-stack-2026, accessibility, tdd-workflow, dev-squad:reviewer, dev-squad:qa-engineer.
+
+### Not changed (already strong, verified)
+- context7-before-coding mandates, Bootstrap Context read-before-write, input-validation and error-handling rules in both implementers; verification skill's existing build/type/lint/test/secrets steps; backend-patterns/frontend-patterns content (pattern references, not policy).
+
+## [4.26.2] — Per-file review fixes across agents, commands, and skills
+
+**Why:** A per-file defect review of all 11 agents, 5 commands, and 19 skills (continuation of the 4.26.1 audit) surfaced four concrete defects. Style and soft-ambiguity findings were deliberately not acted on.
+
+### Fixed
+- **`commands/status.md`** — the `/dev-squad status` report template listed only 6 phases; users tracking a zero-to-ship run never saw ULTRAPLAN (0), UI_DESIGN (3.5), or LEARN (7). Template now shows all 9 phases.
+- **`agents/coordinator.md`, `agents/architect.md`, `agents/backend.md`** — the SaaS-mode trigger list claimed `.dev-squad/scope-tier.json` is "set by coordinator's Diff-Scope Heuristic in `/dev-squad start`". The artifact is actually produced by the coordinator in phase 1 of the feature-development workflow (per `feature-development.json` outputs) — corrected to `/dev-squad feature` in all three files.
+- **`skills/recursive-decision-ledger/SKILL.md`** — removed the `tools: Read, Write, Edit, Bash, Grep, Glob` frontmatter whitelist, the same silently-restricting pattern the plugin removed from agent frontmatter (see "Why no tools whitelist" in CLAUDE.md). Only file in the repo that still had one.
+- **`agents/designer.md`** — leftover non-English word in a section heading ("screenshot referensi" → "screenshot references").
+
+### Review notes (verified non-issues, left alone)
+- `commands/build.md` "Your Team" table listing 10 agents is correct — it instructs the coordinator, which does not dispatch itself.
+- backend/frontend local Phase 0-4 debugging mini-protocols are independent of the `dev-squad:debugging` skill's 7-step numbering — intentional.
+- All other agent/command/skill files came back clean: frontmatter valid, no dead `dev-squad:*` references, no stale debugging-loop descriptions, no hardcoded `mcp__*` identifiers, config.json members match the 11 agents.
+
+## [4.26.1] — Audit fixes: rm -rf guard false positives + CLAUDE.md drift
+
+**Why:** A three-way audit (cross-file consistency, hook layer, prompt-layer conventions) found one real runtime bug and a cluster of stale claims in CLAUDE.md that mislead anyone (human or agent) editing the plugin.
+
+### Fixed
+- **`hooks/guard-dangerous-ops.sh`** — the `rm -rf` patterns used fixed-substring matching, so `"rm -rf /"` blocked ANY absolute-path deletion (`rm -rf /tmp/scratch`) and `"rm -rf ."` blocked any `./`-prefixed path (`rm -rf ./node_modules`), breaking legitimate cleanup in every dev-squad session. Replaced the four `rm` substring patterns with `RM_ROOT_REGEX`, which blocks only filesystem-root targets (`/`, `~`, `.`, `$HOME`, with optional trailing slash/quotes, including the `-fr` flag order) and allows subpaths. Verified with a 21-case mocked-stdin matrix (12 must-block, 9 must-allow — all pass; existing `hooks/tests/*` harnesses still pass).
+
+### Changed
+- **`CLAUDE.md`** — synced five stale claims to reality: "8-agent swarm" → 11 agents (designer, qa-engineer, auditor were missing); "7-phase" zero-to-ship → 9 phases (0-7 + 3.5 design gate); `think_harder` is on coordinator/architect/designer/reviewer/auditor, not "only coordinator and architect" (the three additions were deliberate per CHANGELOG 4.x entries); "Add a new agent" step 3 pointed at nonexistent `agents/config.json` → corrected to `skills/dev-squad/config.json`; hooks table rebuilt to match `hooks/hooks.json` (was missing `validate-workflow-schema.sh`, `check-companions.sh`, `auto-governor.sh`, `guard-unsafe-code.py`, `auto-guard.sh`, `observe-learning.sh`, and the `TeammateIdle` event). Entrypoints section now also lists `pitch`/`evolve`/`retrospective` commands.
+
+### Audit notes (verified non-issues, left alone)
+- Phase-name contract is consistent across `commands/build.md`, `hooks/check-workflow.sh`, `skills/dev-squad/SKILL.md`, and `zero-to-ship.json` (9 phases incl. `ui_design` numbered 3.5).
+- Workflow JSON `version: 4.15.3` fields are correct per `_schema.json` semantics ("tracks changes to phase definitions") — not a drift.
+- No hardcoded `mcp__*` identifiers, no `tools:` whitelists, all dispatch names fully qualified, all hook scripts wired/executable/syntax-clean, all referenced skills exist, no orphan skills.
+- Hook stdin-JSON fallback patterns and absent `set -euo pipefail` are intentional (hooks must not crash sessions) — not changed.
+
+## [4.26.0] — Debugging protocol: expand to a 7-step root-cause loop (add Challenge + Refine)
+
+**Why:** The `dev-squad:debugging` skill ran a 5-phase loop (recall → reproduce → locate → hypothesize → fix-verify). Two failure modes were not covered explicitly: (1) agents narrowed and fixed on top of an unchallenged baseline — a flaky repro or a misread "symptom-site = origin" assumption silently wasted every step that followed; (2) once a test went green the work was treated as done, leaving debug artifacts behind and regression tests that pass today but cannot fail when the logic regresses (Rule 9). The expanded loop makes "doubt your assumptions" and "leave it clean" first-class steps.
+
+**What it is NOT:** No new skill, command, or agent. The skill is invoked exactly as before — `dev-squad:debugging`, auto-loaded by backend/qa-engineer/auditor/reviewer/devops and used by the `/dev-squad fix` workflow. Editing the skill body propagates the new flow to every caller with zero changes to calling sites.
+
+### Changed
+- **`skills/debugging/SKILL.md`** — expanded from 5-phase to a 7-step loop, **Reproduce → Challenge → Isolate → Evaluate → Fix → Verify → Refine** (Phase 0 Recall preserved and still mandatory). New **Phase 2: Challenge** (doubt repro determinism, the bug framing, and symptom-vs-origin before isolating) and **Phase 7: Refine** (remove debug artifacts, harden the regression test's intent per Rule 9, log the trap to `.dev-squad/gotchas.md`). Renamed Locate→Isolate and Hypothesize→Evaluate; split Fix+Verify into separate Fix (Phase 5) and Verify (Phase 6) steps. Iteration Rule and Output Format updated to the new numbering.
+- **`skills/dev-squad/SKILL.md`** — synced the three description strings that summarized the old "5-phase recall/reproduce/locate/hypothesize/fix-verify" loop to the new 7-step wording (Orchestration Patterns table, skill table, trigger table).
+
+### Note
+- Agent Skill Selection Matrices reference the skill by name (`dev-squad:debugging`) only, not by phase number — unchanged. The local per-agent debugging mini-protocols in `backend.md`/`frontend.md` (their own Phase 0–4 numbering) are independent of the skill and were left intact. Historical `docs/specs/*` records describing the earlier 4-phase/5-phase loop are dated artifacts and were not rewritten.
+
 ## [4.24.0] — Fix agent dispatch: flatten `agents/` to remove double-prefix namespace
 
 **Why:** Agents lived in a nested subdirectory `agents/dev-squad/*.md`. Claude Code derives a plugin agent's namespace from its path, so the nested folder produced a **double-prefixed** registered type — `dev-squad:dev-squad:architect` — while every orchestration prompt, workflow JSON, and `CLAUDE.md` instructs the single form `dev-squad:architect`. The coordinator followed the prompts, dispatched the single form, and the harness rejected it → frequent **"Error: Agent type not found"**, after which the coordinator self-corrected to the registered double form. Net effect: noisy, repeated dispatch errors on every phase even though work eventually proceeded.

@@ -142,7 +142,7 @@ Use `mermaid-mcp` for:
 **DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` or `dev-squad:saas-readiness` skills, and do NOT write multi-tenancy / RLS / `tenant_id` columns / billing module / webhooks / API keys / audit logs, UNLESS at least ONE trigger is TRUE:
 
 1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled` (set by Phase 0 Step 2.5 user confirmation in `/dev-squad build`)
-2. `.dev-squad/scope-tier.json` contains `"saas_touch": true` (set by coordinator's Diff-Scope Heuristic in `/dev-squad start`)
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true` (set by coordinator's Diff-Scope Heuristic in `/dev-squad feature`)
 3. User explicitly invoked workflow with `--saas` flag
 4. Existing project ALREADY has SaaS subsystems present (verify via file structure: `tenants/`, `billing/`, `webhooks/`, `audit-log/`, `plans/`)
 
@@ -187,6 +187,16 @@ Build/compile errors detected?         → Use SKILL (issuetracker)
 8. **Never** guess API usage - look up the docs (MCP)
 9. **Never** hardcode secrets, config values, or environment-specific data
 10. **Never** skip input validation at system boundaries
+
+### Code Quality Contract (applies to every line you commit)
+Complements the Operational Rules above. Canonical conventions live in the plugin's `rules/` directory (`rules/common/` + `rules/golang/` or `rules/typescript/` per language) — these are the enforceable core:
+
+1. **Smallest change that solves the task.** No speculative abstractions, no config options nobody asked for, no features beyond the task scope. If only one call site needs it, don't build a framework for it.
+2. **Match the surrounding code.** Before writing, read the neighboring module's naming, error style, and file layout — your diff should read as if the original author wrote it. Conformance beats taste.
+3. **Strict types.** TypeScript: no `any` (use `unknown` + narrowing); no `as` casts to silence compiler errors. Go: no `interface{}`/`any` where a concrete type or generic works; never discard a returned error — `_ =` requires a comment stating why ignoring is safe.
+4. **Ship no debug artifacts.** No leftover `console.log`/`fmt.Println`/`print()`, no commented-out code blocks, no TODOs without an issue reference, in any committed change.
+5. **Decompose at limits.** Typical file 200-400 lines (800 hard max); functions max 50 lines, each doing exactly one thing (rules/common/coding-style.md). Hitting a limit means extract a module/helper, not push past it.
+6. **Tests encode intent.** Each test asserts a behavior the business cares about and is named for that behavior. A test that cannot fail when the business logic regresses is not a test — strengthen it or delete it.
 
 ## Role
 Backend Developer of the dev-squad team. You are responsible for:

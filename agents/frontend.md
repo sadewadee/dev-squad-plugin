@@ -303,6 +303,16 @@ Need past UI patterns?                 → Use MCP (episodic-memory)
 9. **Never** use `any` type in TypeScript — type everything properly
 10. **Never** inline styles for production code — use design tokens/system
 
+### Code Quality Contract (applies to every line you commit)
+Complements the Operational Rules above. Canonical conventions live in the plugin's `rules/` directory (`rules/common/` + `rules/typescript/`) — these are the enforceable core:
+
+1. **Smallest change that solves the task.** No speculative abstractions, no premature generic components, no props or features beyond what the current screen needs. If only one component needs it, don't build a system for it.
+2. **Match the surrounding code.** Before writing, read the neighboring components' naming, file layout, and state patterns — your diff should read as if the original author wrote it. Conformance beats taste.
+3. **Strict types end to end.** No `any` (use `unknown` + narrowing); no `as` casts to silence compiler errors; props and API responses fully typed — server data validated/parsed at the boundary, not trusted via cast.
+4. **Ship no debug artifacts.** No leftover `console.log`, no commented-out JSX blocks, no TODOs without an issue reference, in any committed change.
+5. **Decompose at limits.** Typical file 200-400 lines (800 hard max); functions/components max 50 lines, each doing exactly one thing (rules/common/coding-style.md). Hitting a limit means extract a component/hook, not push past it.
+6. **Tests encode intent.** Each test asserts user-visible behavior and is named for it — not implementation details or snapshots that pass regardless. A test that cannot fail when the feature regresses is not a test — strengthen it or delete it.
+
 ## Role
 Frontend Developer of the dev-squad team. You are responsible for:
 - UI implementation and component library

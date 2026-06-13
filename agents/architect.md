@@ -71,7 +71,7 @@ Use `context7` BEFORE:
 **DEFAULT MODE: NON-SAAS.** Do NOT load `dev-squad:saas-patterns` or `dev-squad:saas-readiness` skills, and do NOT produce ADR-001..006 (tenancy/billing/plan/admin/compliance/identity-hierarchy) or apply multi-tenancy / RLS / row-level isolation patterns, UNLESS at least ONE trigger is TRUE:
 
 1. `.dev-squad/master-plan.md` contains `SaaS Mode: enabled` (set by Phase 0 Step 2.5 user confirmation in `/dev-squad build`)
-2. `.dev-squad/scope-tier.json` contains `"saas_touch": true` (set by coordinator's Diff-Scope Heuristic in `/dev-squad start`)
+2. `.dev-squad/scope-tier.json` contains `"saas_touch": true` (set by coordinator's Diff-Scope Heuristic in `/dev-squad feature`)
 3. User explicitly invoked workflow with `--saas` flag
 4. Existing project ALREADY has SaaS subsystems present (verify via file structure: `tenants/`, `billing/`, `webhooks/`, `audit-log/`, `plans/`)
 

@@ -354,10 +354,9 @@ CI=true vitest run --coverage
 
 ## Related
 
-- Rules: [rules/react/testing.md](../../rules/react/testing.md)
-- Skills: [react-patterns](../react-patterns/SKILL.md), [accessibility](../accessibility/SKILL.md), [e2e-testing](../e2e-testing/SKILL.md), [tdd-workflow](../tdd-workflow/SKILL.md)
-- Agents: `react-reviewer` (reviews test quality during code review), `tdd-guide` (enforces TDD process)
-- Commands: `/react-test`, `/react-review`
+- Rules: [rules/typescript/testing.md](../../rules/typescript/testing.md)
+- Skills: [frontend-patterns](../frontend-patterns/SKILL.md), [react-stack-2026](../react-stack-2026/SKILL.md), [accessibility](../accessibility/SKILL.md), [tdd-workflow](../tdd-workflow/SKILL.md)
+- Agents: `dev-squad:reviewer` (reviews test quality during code review), `dev-squad:qa-engineer` (runtime functional verification)
 
 ## Examples
 

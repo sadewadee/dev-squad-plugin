@@ -74,7 +74,7 @@ Use `chrome-devtools` (`use_browser`) to:
 - Capture spacing scales by measuring DOM
 - Extract real font weights and line heights from production sites
 
-### playwright (screenshot referensi)
+### playwright (screenshot references)
 Use `playwright` MCP for:
 - `browser_navigate` to each reference site → `browser_take_screenshot` per breakpoint (375px, 768px, 1280px)
 - Save screenshots to `.dev-squad/design/refs/{ref-name}-{breakpoint}.png`

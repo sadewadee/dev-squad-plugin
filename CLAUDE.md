@@ -52,15 +52,16 @@ Conformance > taste inside the codebase. If you genuinely think a convention is 
 
 This is a **Claude Code plugin**, not a runtime application. There is no build/compile/test step — the plugin is consumed by Claude Code directly from the filesystem. "Editing" means modifying agent prompts (`agents/*.md`), command definitions (`commands/*.md`), the skill entrypoint (`skills/dev-squad/SKILL.md`), or hook shell scripts (`hooks/*.sh`).
 
-The plugin is `dev-squad` — an 8-agent swarm (coordinator, architect, backend, frontend, reviewer, devops, git-ops, writer) for full-stack development. Current version is in `.claude-plugin/plugin.json` (also mirrored in `.claude-plugin/marketplace.json` — both must be bumped together when releasing).
+The plugin is `dev-squad` — an 11-agent swarm (coordinator, architect, designer, backend, frontend, reviewer, qa-engineer, auditor, devops, git-ops, writer) for full-stack development. Current version is in `.claude-plugin/plugin.json` (also mirrored in `.claude-plugin/marketplace.json` — both must be bumped together when releasing).
 
 ## Architecture (read this before editing)
 
 The plugin is wired together via three layers that you must understand to make non-trivial changes:
 
 ### 1. Entrypoints
-- `commands/build.md` — slash command `/dev-squad build <description>`. Contains the entire 7-phase zero-to-ship orchestration prompt that the coordinator agent receives. Editing this changes what zero-to-ship runs.
+- `commands/build.md` — slash command `/dev-squad build <description>`. Contains the entire 9-phase zero-to-ship orchestration prompt (phases 0-7 plus the 3.5 design gate) that the coordinator agent receives. Editing this changes what zero-to-ship runs.
 - `commands/status.md` — slash command `/dev-squad status`. Reads `.dev-squad/workflow-active` in the user's project.
+- `commands/pitch.md`, `commands/evolve.md`, `commands/retrospective.md` — slash commands for the pre-build idea diagnostic, instinct distillation, and PDCA retrospective respectively.
 - `skills/dev-squad/SKILL.md` — entrypoint when invoked as a skill (e.g. via `/dev-squad`, `/dev-squad start`, or `/dev-squad <db|schema|migrate|optimize|deploy-db>`). Routes to the coordinator with the right prompt.
 
 ### 2. Agents (`agents/*.md`)
@@ -68,7 +69,7 @@ Each agent is a markdown file with YAML frontmatter. Frontmatter fields actually
 - `name` (e.g. `coordinator`) — what the agent is dispatched as. Always referenced as `dev-squad:<name>` from outside the plugin.
 - `description` — shown to the dispatcher; also the trigger description.
 - `model` — `opus` for coordinator/architect, `sonnet` for the rest.
-- `think_harder: true` — only on coordinator and architect.
+- `think_harder: true` — on coordinator, architect, designer, reviewer, and auditor (the judgment-heavy roles).
 - `memory: true`, `maxTurns: <n>` — runtime limits.
 - `skills: [...]` — skills the agent auto-loads.
 
@@ -79,15 +80,20 @@ Hooks fire on Claude Code lifecycle events and inject context or block actions. 
 
 | Event | Script | Purpose |
 |-------|--------|---------|
-| `SessionStart` | `auto-update.sh`, `session-gotchas.sh` | Auto-pull plugin updates from git tags; remind agent to read `.dev-squad/gotchas.md` |
+| `SessionStart` | `auto-update.sh`, `session-gotchas.sh`, `validate-workflow-schema.sh`, `check-companions.sh` | Auto-pull plugin updates from git tags; remind agent to read `.dev-squad/gotchas.md`; validate workflow JSONs; warn about missing companion plugins |
 | `SubagentStart` | `inject-workflow-state.sh` | Injects `.dev-squad/workflow-active` JSON so subagents resume from current phase |
-| `SubagentStop` | `check-workflow.sh` | Checks if zero-to-ship workflow has incomplete phases (non-blocking reminder) |
-| `PreToolUse` (Bash) | `guard-dangerous-ops.sh` | Blocks `rm -rf /`, `DROP DATABASE`, force-push to main, etc. |
+| `SubagentStop` | `check-workflow.sh`, `auto-governor.sh` | Checks if zero-to-ship workflow has incomplete phases (non-blocking reminder); enforce auto-mode dispatch budget |
+| `PreToolUse` (Bash) | `guard-dangerous-ops.sh` | Blocks `rm -rf` of filesystem roots, `DROP DATABASE`, force-push to main, etc. |
+| `PreToolUse` (Write\|Edit\|MultiEdit\|NotebookEdit) | `guard-unsafe-code.py` | Blocks introducing dangerous code patterns (eval, injection, etc.) |
+| `PreToolUse` (AskUserQuestion) | `auto-guard.sh` | In `--auto` mode, block user questions — agent must infer + log to ledger instead |
+| `PreToolUse` (*) | `auto-governor.sh` | Auto-mode runaway backstop (dispatch budget, wall clock) |
 | `PostToolUse` (Write\|Edit) | `auto-lint.sh` (async) | Auto-formats edited files |
 | `PostToolUse` (Grep\|Bash) | `truncation-check.sh` | Detects truncated tool output |
+| `PostToolUse` (Write\|Edit\|Bash) | `observe-learning.sh` (async) | Captures observations for continuous learning |
 | `TaskCreated` / `TaskCompleted` | `validate-task-scope.sh`, `validate-task.sh` | Validate task scope and completion |
 | `PreCompact` | `pre-compact-save.sh` | Save state before context compaction |
 | `Stop` | `stop-verify.sh` (300s timeout) | Final verification before stopping |
+| `TeammateIdle` | `check-teammate.sh` | Block teammate from going idle while workflow tasks are incomplete |
 
 When adding a new hook script, make it executable (`chmod +x`) and reference it in `hooks/hooks.json` using `${CLAUDE_PLUGIN_ROOT}` for the path.
 
@@ -110,7 +116,7 @@ Edit both `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (th
 ### Add a new agent
 1. Create `agents/<name>.md` with frontmatter (no `tools:` field).
 2. Add it to the team rosters in `commands/build.md` (the "Your Team" table) and `skills/dev-squad/SKILL.md` (the "Team Members" table).
-3. Add an entry in `agents/config.json` `members` array if relevant for the config-driven invocation.
+3. Add an entry in `skills/dev-squad/config.json` `members` array if relevant for the config-driven invocation.
 4. Bump version.
 
 ### Edit the zero-to-ship workflow
