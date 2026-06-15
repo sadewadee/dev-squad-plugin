@@ -2,6 +2,37 @@
 
 All notable changes to the dev-squad plugin are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this plugin adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.29.0] — Auth endpoint gate + large output truncation guidance
+
+**Why:** Two recurring silent failures in production builds. (1) Auth endpoint checks (login, protected-route-no-token, expired-token) were buried in Phase 5.5's wall of steps with no dedicated output section — agents could complete `functional-verification.md` without ever running them, leaving broken login or open protected routes undetected through Phase 5. (2) Backend/frontend agents running large build or test commands hit Claude Code's ~85k char output truncation limit mid-workflow and either lost the error output or silently skipped diagnosis.
+
+### Added
+- **`agents/qa-engineer.md`** — new `Phase 5.5-A Auth Endpoint Gate` section that runs immediately after boot, before all other verification steps. Seven concrete `curl` checks: register, login valid, login invalid, protected-no-token, protected-bad-token, refresh token, logout. Output template gains a required Auth Gate table — any empty row blocks Phase 5.5 PASS. Veto rule updated to list auth gate as the first block condition (evaluated before P0 count).
+- **`agents/reviewer.md`** — new `Pre-Synthesis Auth Gate Check (BLOCKING)` section: reviewer must confirm `functional-verification.md` has a completed 5.5-A section before writing the Phase 5 Metrics Report. If missing, reviewer sends an explicit block message to coordinator requesting qa-engineer re-dispatch. Operational rule #8 added to enforce this on every synthesis.
+
+### Fixed
+- **`commands/build.md`** — added rule #21 to "Common Beginner Mistakes": `NEVER pipe large build/test commands raw to stdout` — redirect to `.dev-squad/logs/<agent>-<phase>.log` and read selectively with `tee + grep`.
+- **`hooks/truncation-check.sh`** — improved warning message from generic 3-bullet hint to a concrete `tee + grep` pattern pointing at `.dev-squad/logs/`, including the ~85k char limit callout so agents know the threshold.
+
+## [4.28.0] — `/dev-squad init` for existing projects + 3 skill fixes
+
+**Why:** Dev-squad had no entry point for existing codebases. `/dev-squad build` creates a project from scratch; teams with an existing repo had no way to bring dev-squad's architecture mapping, tech-debt triage, or gotchas into a running project. Adding `/dev-squad init` closes this gap with a safe, idempotent onboarding command.
+
+### Added
+- **`commands/init.md`** — new `/dev-squad init` command. Checks idempotency (exits cleanly if all three artifacts already exist; `--force` overrides). Reads project context (CLAUDE.md, top-level listing, git log), then dispatches `dev-squad:coordinator` which runs two parallel subagents:
+  - `dev-squad:architect` → writes `docs/architecture.md` (tech stack, directory structure, entry points, key modules, external integrations, deployment topology)
+  - `dev-squad:reviewer` → writes `docs/tech-debt.md` (TODOs/FIXMEs by severity, anti-patterns, complexity hotspots, testing gaps, top-3 priority recommendations)
+  Coordinator then synthesizes `.dev-squad/gotchas.md` (curated pitfalls from both docs) and seeds or appends a `dev-squad context` block to `CLAUDE.md`.
+- **`hooks/suggest-init.sh`** — SessionStart hint: if the user's project directory lacks `.dev-squad/` and has no prior init artifacts, the hook prints a one-line suggestion to run `/dev-squad init`. Non-blocking; only fires once per directory.
+
+### Fixed
+- **`skills/code-review/SKILL.md`** — added missing `name:` frontmatter field, removed `allowed-tools` whitelist (same silent-restriction pattern fixed in agent frontmatter v4.24.0), removed emoji, fixed broken documentation URL.
+- **`skills/code-simplifier/SKILL.md`** — generalized JS/TS-specific convention references to be CLAUDE.md-driven (read project conventions from CLAUDE.md instead of hardcoding language-specific rules).
+- **`skills/frontend-design/SKILL.md`** — removed reference to `LICENSE.txt` which does not exist in this repository.
+
+### Changed
+- **`README.md`** — added `/dev-squad init` to Usage section, Supported Workflows, and Examples. Fixed directory structure tree (agents are flat in `agents/*.md`, not nested under `agents/dev-squad/`). Added `init.md`, `pitch.md`, `evolve.md`, `retrospective.md` to the commands listing.
+
 ## [4.27.0] — Code Quality Contract for implementer agents (clean + accurate output)
 
 **Why:** An inventory of clean-code/accuracy levers across the implementer prompts showed the accuracy side was already strong (mandatory context7 lookups, read-before-write bootstrap, input validation, error handling, verification gate) but five cleanliness levers were enforced nowhere: minimal-diff/YAGNI, unified strict-typing (backend had no `any`/`interface{}` rule), no-debug-artifacts as a writer-side rule, file/function size limits, and tests-encode-intent. Separately, the entire `rules/` directory (1,777 lines of concrete conventions) was referenced by no agent — written but never read.
