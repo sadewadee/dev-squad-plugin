@@ -108,6 +108,61 @@ You MUST complete this phase before reviewer can APPROVE. No exceptions, even fo
    - Wait for both to be healthy (poll `/health` + frontend root)
    - If boot fails → P0 finding, do not proceed
 
+### 5.5-A: Auth Endpoint Gate (MANDATORY — runs immediately after boot, before all other steps)
+
+**Every row must have an actual result. Empty rows = P0. Phase 5.5 CANNOT be marked PASS until this gate is complete.**
+
+Read the auth routes from architect's API contract or `apps/backend/src/routes/`. Then run these checks with `curl` (adjust paths to match actual project routes):
+
+```bash
+# 1. Register — new user
+curl -s -o /tmp/reg.json -w "%{http_code}" -X POST http://localhost:3000/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"qa-gate@test.dev","password":"QaGate123!"}'
+# Expect: 201 + token or user object
+
+# 2. Login valid credentials
+curl -s -o /tmp/login.json -w "%{http_code}" -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"qa-gate@test.dev","password":"QaGate123!"}'
+# Expect: 200 + access token; save token: TOKEN=$(jq -r '.token // .accessToken // .data.token' /tmp/login.json)
+
+# 3. Login invalid credentials
+curl -s -w "%{http_code}" -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"qa-gate@test.dev","password":"wrongpassword"}'
+# Expect: 401 (NOT 500, NOT 200)
+
+# 4. Protected route — no token
+curl -s -w "%{http_code}" http://localhost:3000/api/v1/me
+# Expect: 401 (NOT 200, NOT 403, NOT 500)
+
+# 5. Protected route — invalid/expired token
+curl -s -w "%{http_code}" http://localhost:3000/api/v1/me \
+  -H 'Authorization: Bearer invalid.token.value'
+# Expect: 401 (NOT 500 — a 500 here = broken auth middleware)
+
+# 6. Refresh token (if project has refresh flow)
+curl -s -w "%{http_code}" -X POST http://localhost:3000/api/v1/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<refresh_token_from_login>"}'
+# Expect: 200 + new access token
+
+# 7. Logout (if project has logout endpoint)
+curl -s -w "%{http_code}" -X POST http://localhost:3000/api/v1/auth/logout \
+  -H "Authorization: Bearer $TOKEN"
+# Expect: 200; token should be invalidated after this
+```
+
+**Auth Gate findings severity:**
+- Any 500 on checks 3-5 = **P0** (broken auth middleware — most critical auth bug)
+- Check 4 or 5 returning 200 = **P0** (protected routes are open)
+- Check 2 returning non-200 = **P0** (login broken — app is unusable)
+- Check 1 returning non-201 = **P0** (registration broken)
+- Check 6/7 returning 500 = **P1**
+
+Record all results in `functional-verification.md` Auth Endpoint Gate table (see output template below) before proceeding to steps 2-7.
+
 2. **Drive the golden path** (via `playwright` MCP)
    - For each user flow listed in PRD acceptance criteria, navigate through it end-to-end
    - Take a screenshot at each step (`browser_take_screenshot`)
@@ -190,6 +245,21 @@ You MUST complete this phase before reviewer can APPROVE. No exceptions, even fo
 **Boot status:** ✅ backend up | ✅ frontend up
 **MCP used:** playwright | superpowers-chrome | (note if degraded/unavailable)
 
+## Auth Endpoint Gate (5.5-A) — REQUIRED BEFORE ALL OTHER SECTIONS
+❌ Any empty cell in "Actual status" = Phase 5.5 BLOCKED. Do not fill Verdict until every row has a result.
+
+| Check | Endpoint | Expected | Actual status | Pass? | Severity |
+|---|---|---|---|---|---|
+| Register | POST /auth/register | 201 + user/token | | | |
+| Login valid | POST /auth/login | 200 + token | | | |
+| Login invalid | POST /auth/login | 401 (not 500) | | | |
+| Protected — no token | GET /api/v1/me (or equiv) | 401 | | | |
+| Protected — bad token | GET /api/v1/me + bad Bearer | 401 (not 500) | | | |
+| Refresh token | POST /auth/refresh | 200 + new token | | N/A if not in contract | |
+| Logout | POST /auth/logout | 200 | | N/A if not in contract | |
+
+**Auth Gate verdict:** ✅ PASS / ❌ BLOCK (circle one before proceeding)
+
 ## Golden Path Results
 | Flow (from PRD) | Steps completed | Outcome | Console errors | Network 4xx/5xx | Severity |
 |---|---|---|---|---|---|
@@ -223,11 +293,12 @@ You MUST complete this phase before reviewer can APPROVE. No exceptions, even fo
 | Anti-pattern: "purple-to-blue gradient hero" | ❌ found | P1 | Hero.tsx:24 uses `from-purple-500 to-blue-500` |
 
 ## Verdict
+- Auth Gate (5.5-A): ✅ PASS / ❌ BLOCK (must be PASS before counting below)
 - P0 count: 2  → BLOCK approve
 - P1 count: 5 (3 functional + 2 visual gate)
 - P2 count: 1
 
-Approve only allowed if P0 = 0 AND P1 ≤ existing budget. Visual Gate findings auto-CC'd to designer.
+Approve only allowed if Auth Gate = PASS AND P0 = 0 AND P1 ≤ existing budget. Visual Gate findings auto-CC'd to designer.
 ```
 
 ### Graceful degrade if MCP unavailable
@@ -240,6 +311,7 @@ If `playwright` or `superpowers-chrome` MCP is not installed:
 ### Veto rule (you have authority)
 
 You can block APPROVE on:
+- **Auth Gate (5.5-A) incomplete** — any untested row or unexpected status = immediate block, before counting P0/P1
 - P0 functional findings (runtime crash, missing endpoint, broken auth flow, button with no action wired)
 - P1 functional findings count > 0 in golden path (golden path must be 100% clean)
 
