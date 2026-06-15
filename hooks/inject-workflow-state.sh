@@ -1,12 +1,13 @@
 #!/bin/bash
 # dev-squad: SubagentStart hook
 # Deterministic context injection (fires 100% — does NOT depend on the agent
-# remembering to read memory in prose). Injects, in order:
+# remembering to read memory in prose). Injects layered memory in priority order:
+#   0. L0 System of Record (.dev-squad/record.md) — AUTHORITATIVE, overrides on conflict
 #   1. Workflow state (resume from current phase)
-#   2. L3 curated project memory (.dev-squad/memory.md)
+#   2. L3 working memory (.dev-squad/memory.md)
 #   3. L4 known traps (.dev-squad/gotchas.md)
-#   4. L2 high-confidence learned instincts (.dev-squad/instincts/ — populated by continuous-learning, PR2)
-#   5. L1 mandatory episodic-recall directive (the instruction fires 100%; the recall is the agent's to run)
+#   4. L2 semantic/instincts (.dev-squad/instincts/ — populated by continuous-learning)
+#   5. L1 mandatory episodic-recall directive
 
 DS=".dev-squad"
 WORKFLOW_FILE="$DS/workflow-active"
@@ -17,6 +18,13 @@ rm -f "$DS/.hook-reminded" 2>/dev/null
 # Nothing to inject outside a dev-squad project
 [ -d "$DS" ] || exit 0
 
+# 0. L0 — System of Record (structured, versioned, authoritative; injected FIRST — wins on conflict)
+if [ -f "$DS/record.md" ]; then
+  echo "=== SYSTEM OF RECORD (.dev-squad/record.md — AUTHORITATIVE: on conflict with any other memory, this wins) ==="
+  cat "$DS/record.md"
+  echo ""
+fi
+
 # 1. Workflow state
 if [ -f "$WORKFLOW_FILE" ]; then
   echo "=== DEV-SQUAD WORKFLOW STATE ==="
@@ -26,7 +34,7 @@ if [ -f "$WORKFLOW_FILE" ]; then
   echo ""
 fi
 
-# 2. L3 — curated project memory (decisions/conventions). Head-limited to keep context small.
+# 2. L3 — working memory (decisions/conventions). Head-limited to keep context small.
 if [ -f "$DS/memory.md" ]; then
   echo "=== PROJECT MEMORY (.dev-squad/memory.md — read before acting; do NOT re-derive decisions already made) ==="
   head -80 "$DS/memory.md"

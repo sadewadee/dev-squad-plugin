@@ -92,6 +92,7 @@ Cancellation = remaining dimensions marked `UNANSWERED — REQUIRE Phase 1 clari
 
 ## Supported Workflows
 
+- **Existing Project Onboarding** -- `/dev-squad init` analyzes the codebase and generates `docs/architecture.md` (architect), `docs/tech-debt.md` (reviewer), `.dev-squad/gotchas.md` (curated pitfalls), and seeds or updates `CLAUDE.md`. Idempotent — safe to re-run with `--force`.
 - **Zero-to-Ship** -- build a full project from a single description through 9 automated PDCA phases: ULTRAPLAN, DISCOVER, DESIGN, SCAFFOLD, **UI DESIGN (3.5 — anti-AI-slop gate)**, IMPLEMENT, REVIEW, SHIP, LEARN
 - **Feature Development** -- coordinator orchestrates architect design, parallel backend+frontend implementation, security review, deployment, and PR creation
 - **Bug Fix** -- reviewer does root cause analysis, implementor applies TDD fix, validation, and hotfix path for critical issues
@@ -188,6 +189,10 @@ Ensure `skills/dev-squad/`, `agents/`, and `hooks/` are placed under your `~/.cl
 ## Usage
 
 ```bash
+# Onboard dev-squad to an EXISTING project
+/dev-squad init                    # Analyze codebase → generate docs/architecture.md, docs/tech-debt.md, .dev-squad/gotchas.md, CLAUDE.md
+/dev-squad init --force            # Re-generate all init artifacts even if they already exist
+
 # Zero-to-ship: build a full project from scratch
 /dev-squad build <description>
 
@@ -201,6 +206,13 @@ Ensure `skills/dev-squad/`, `agents/`, and `hooks/` are placed under your `~/.cl
 /dev-squad migrate <description>   # Database migration
 /dev-squad optimize <description>  # Query optimization
 /dev-squad deploy-db <description> # Database deployment
+
+# Pre-build idea diagnostic (before /dev-squad build)
+/dev-squad pitch <idea>            # Diagnose idea risks + scope before committing to a build
+
+# Project intelligence (after phases complete)
+/dev-squad evolve                  # Distill cross-session observations into project instincts
+/dev-squad retrospective           # PDCA retrospective: playbook + fix-it backlog
 
 # Status and help
 /dev-squad status                  # Check swarm progress
@@ -229,6 +241,9 @@ Phase 7:   LEARN      --> PDCA Act retrospective: playbook + fix-it backlog + CL
 ### Examples
 
 ```bash
+# Onboard dev-squad to an existing project
+/dev-squad init
+
 # Zero-to-ship: build a complete project
 /dev-squad build A real-time collaborative task manager with team workspaces and Kanban boards
 
@@ -297,6 +312,10 @@ dev-squad-plugin/
 │   └── marketplace.json     # Marketplace configuration
 ├── commands/
 │   ├── build.md             # /dev-squad build -- zero-to-ship workflow
+│   ├── init.md              # /dev-squad init -- onboard existing project
+│   ├── pitch.md             # /dev-squad pitch -- pre-build idea diagnostic
+│   ├── evolve.md            # /dev-squad evolve -- distill observations into instincts
+│   ├── retrospective.md     # /dev-squad retrospective -- PDCA Act retrospective
 │   └── status.md            # /dev-squad status -- swarm progress
 ├── hooks/
 │   ├── hooks.json                # All hook event wiring (SessionStart, SubagentStart/Stop, PreToolUse, PostToolUse, etc.)
@@ -312,19 +331,18 @@ dev-squad-plugin/
 │   ├── postgres-patterns/        # PostgreSQL patterns
 │   ├── security-review/          # Security review checklist
 │   └── tdd-workflow/             # TDD workflow definition
-├── agents/
-│   └── dev-squad/
-│       ├── coordinator.md        # Coordinator agent (opus)
-│       ├── architect.md          # System Architect agent (opus)
-│       ├── designer.md           # UI/UX Designer agent — Phase 3.5 anti-AI-slop gate (sonnet, think_harder)
-│       ├── backend.md            # Backend Developer agent (sonnet)
-│       ├── frontend.md           # Frontend Developer agent — implements designer's spec (sonnet)
-│       ├── reviewer.md           # Security Lead + Static Code Reviewer agent (sonnet)
-│       ├── qa-engineer.md        # Runtime QA + Visual Gate + Investigation Mode agent (sonnet)
-│       ├── auditor.md            # Stability + Quality Metrics agent (sonnet)
-│       ├── devops.md             # DevOps Engineer agent (sonnet)
-│       ├── git-ops.md            # Git Operations Manager agent (sonnet)
-│       └── writer.md             # Content Writer agent (sonnet)
+├── agents/                       # Flat directory — all 11 agents live directly here (dev-squad:<name>)
+│   ├── coordinator.md            # Coordinator agent (opus)
+│   ├── architect.md              # System Architect agent (opus)
+│   ├── designer.md               # UI/UX Designer agent — Phase 3.5 anti-AI-slop gate (sonnet, think_harder)
+│   ├── backend.md                # Backend Developer agent (sonnet)
+│   ├── frontend.md               # Frontend Developer agent — implements designer's spec (sonnet)
+│   ├── reviewer.md               # Security Lead + Static Code Reviewer agent (sonnet)
+│   ├── qa-engineer.md            # Runtime QA + Visual Gate + Investigation Mode agent (sonnet)
+│   ├── auditor.md                # Stability + Quality Metrics agent (sonnet)
+│   ├── devops.md                 # DevOps Engineer agent (sonnet)
+│   ├── git-ops.md                # Git Operations Manager agent (sonnet)
+│   └── writer.md                 # Content Writer agent (sonnet)
 ├── rules/                        # Reference rules (common, golang, typescript)
 ├── CHANGELOG.md
 ├── CLAUDE.md
@@ -333,13 +351,11 @@ dev-squad-plugin/
 
 ## Guardrails
 
-- Maximum 21 parallel agents (3-5 preferred for focused work)
 - Review required before every merge -- no exceptions
 - Tests required before every PR -- no exceptions
 - Security check required for auth/data/API changes
 - ADR required for architecture changes
 - Maximum PR size: 500 lines (larger PRs must be split)
-- Maximum task duration: 120 minutes per agent
 - Rollback plan required for migrations
 - All migrations must be reversible
 

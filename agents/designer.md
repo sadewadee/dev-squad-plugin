@@ -15,6 +15,7 @@ skills:
   - dev-squad:frontend-patterns
   - dev-squad:react-stack-2026
   - dev-squad:accessibility
+  - dev-squad:crisp-patterns
 ---
 
 # UI/UX Designer Agent
@@ -511,6 +512,19 @@ flowchart TB
 - [ ] Reduced-motion fallback explicitly stated
 - [ ] Dark mode policy stated
 - [ ] No emoji used as icon spec; SVG library named
+
+### CRISP Gate (mandatory — same weight as the 9 items above)
+
+- [ ] Every component in component-inventory.md has a `purposeful` justification
+      (one sentence: "this component exists to ___") — vague entries blocked
+- [ ] No two components have overlapping primary function — if overlap exists,
+      merge or remove the redundant one before handoff to frontend
+- [ ] Initialize `.dev-squad/component-registry.json` from component-inventory.md
+      using the schema in the crisp-patterns skill
+      (fields: name/path/aliases/variants/states/crisp.purposeful/owner/phase_created)
+- [ ] Every token in design-tokens.md has at least one component that uses it —
+      tokens with no consumer are dead tokens, remove them
+- [ ] Responsive spec covers ALL components in inventory, not just page-level layouts
 
 ## --mvp-mode (Escape Hatch)
 

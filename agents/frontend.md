@@ -14,6 +14,7 @@ skills:
   - dev-squad:react-stack-2026
   - dev-squad:react-testing
   - dev-squad:accessibility
+  - dev-squad:crisp-patterns
 ---
 
 # Frontend Developer Agent
@@ -36,6 +37,43 @@ Do NOT start coding until you understand the full picture.
 ## DESIGN ARTIFACTS WORKFLOW (Before Coding ANY UI)
 
 **You do NOT design. The designer agent designs.** Your job is to translate designer's spec into code with zero deviation.
+
+### Step 0: Reuse-First Protocol (BLOCKING — before any component work)
+
+Before creating ANY new component file, you MUST:
+
+1. **Query component registry**
+   Read `.dev-squad/component-registry.json` if it exists.
+   Search for your intended component name AND its common aliases (e.g. searching
+   for "Button" should also check "Btn", "CTA", "ActionButton").
+
+2. **Decision tree:**
+   - Registry has an **exact or alias match** → USE the existing component.
+     Do not create a new file. Extend via a new variant or prop if needed.
+   - Registry has a **partial match** (similar name or function) → EXTEND the
+     existing component via a new variant/prop. Update the registry entry.
+   - **No match** → CREATE the new file. Then ADD an entry to the registry
+     with ALL fields filled: name, path, aliases, variants, states,
+     crisp.purposeful, owner, phase_created.
+   - Registry **doesn't exist yet** → Designer hasn't completed Phase 3.5.
+     Flag this to coordinator before writing any component.
+
+3. **Registry update after creating a new component (mandatory):**
+   Edit `.dev-squad/component-registry.json` and add the new entry.
+   `crisp.purposeful` must be a real one-sentence justification — not empty,
+   not "general purpose". Empty purposeful = incomplete task, coordinator rejects.
+
+4. **CRISP self-check before submitting each component:**
+   - **Consistent:** every value comes from design-tokens.md — no inline `text-[#abc]` or `mt-[17px]`
+   - **Responsive:** breakpoints match responsive-spec.md at 375px / 768px / 1280px
+   - **Intuitive:** hover/focus/disabled/loading states visually distinct; errors near their source
+   - **Simple:** no props unused by any currently-rendered screen; file ≤ 200 lines
+   - **Purposeful:** `crisp.purposeful` in registry is filled and you'd stand behind it in a review
+
+The hook `check-component-reuse.sh` will emit a warning if it detects a new
+`src/components/**/*.tsx` file whose name fuzzy-matches an existing registry entry.
+Do not dismiss the warning without either (a) updating the registry to explain the
+distinction, or (b) reusing the existing component instead.
 
 ### Step 1: Read ALL 4 Designer Artifacts (BLOCKING — cannot skip)
 

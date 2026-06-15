@@ -142,9 +142,7 @@ Works without any setup. Coordinator dispatches agents sequentially via Agent to
   "coordination_mode": "hierarchical",
   "conflict_resolution": "coordinator_decides",
   "context_sync": "real-time",
-  "max_parallel_agents": 21,
-  "require_review_before_merge": true,
-  "max_task_duration_minutes": 120
+  "require_review_before_merge": true
 }
 ```
 
@@ -863,11 +861,9 @@ If an agent fails:
 
 ## Guardrails (Database Specific)
 
-- Maximum 21 parallel agents (prefer 3-5 for focused work)
 - All migrations MUST be reversible (down migration required)
 - Require EXPLAIN review for queries on tables > 10k rows
 - Coordinator must approve schema changes
-- 120-minute timeout per agent task
 - No DROP TABLE/COLUMN without confirmation and backup
 - Always test migrations on staging before production
 - Backup required before destructive migrations
@@ -892,16 +888,42 @@ If an agent fails:
 - [ ] Caching strategy defined for hot data
 - [ ] Connection pooling configured
 
-### Memory Management Standards (4-tier — hook-enforced, single home in `.dev-squad/`)
+### Memory Management Standards (5-layer layered architecture — hook-enforced, single home in `.dev-squad/`)
 
-Memory is injected deterministically by the `SubagentStart` hook (`inject-workflow-state.sh`); capture is nudged by the `SubagentStop` hook (`check-workflow.sh`). It does NOT depend on an agent remembering to read/write memory in prose — that probabilistic approach is exactly what left memory dead before.
+Implements the **Layered Memory Architecture** pattern (explicit layers, clear boundaries — not "state collapsed into prompt context"). Each layer has a distinct role, capture mechanism, and recall surface. Memory is injected deterministically by the `SubagentStart` hook (`inject-workflow-state.sh`); capture is nudged by the `SubagentStop` hook (`check-workflow.sh`). Does NOT depend on an agent remembering to read/write memory in prose.
 
-| Tier | Where | Holds | Capture | Recall |
-|---|---|---|---|---|
-| **L1 Episodic** | episodic-memory plugin (transcripts, cross-project) | The *why* — past-session decisions, rationale, tried-and-rejected approaches | Automatic (session-end sync) | `search-conversations` agent — MANDATORY Phase 0 of `dev-squad:debugging` |
-| **L2 Instincts** | `.dev-squad/instincts/*.md` | Auto-distilled confidence-scored patterns ("we do X here") | Observe hooks (continuous-learning — PR2) | High-confidence ones injected at SubagentStart |
-| **L3 Project memory** | `.dev-squad/memory.md` | Curated project decisions/conventions (shared across all agents) | Agents append via Edit; coordinator curates | Injected at SubagentStart (head 80 lines) |
-| **L4 Traps** | `.dev-squad/gotchas.md` | Mistakes NOT to repeat | Written on self-healing events (capture-nudged at SubagentStop) | Injected at SubagentStart |
+| Layer | Where | Holds | Capture | Recall | Priority |
+|---|---|---|---|---|---|
+| **L0 System of Record** | `.dev-squad/record.md` | Structured, versioned, authoritative decisions — tech stack, SaaS mode lock, ADR log, phase completions. Append-only with timestamps. | Coordinator writes at Phase 0 (build) or Step D (init) and on each irreversible decision | Injected at SubagentStart FIRST — overrides all other memory on conflict | **Highest** |
+| **L1 Episodic** | episodic-memory plugin (transcripts, cross-project) | The *why* — past-session decisions, rationale, tried-and-rejected approaches | Automatic (session-end sync) | `search-conversations` agent — MANDATORY Phase 0 of `dev-squad:debugging` | High |
+| **L2 Semantic / Instincts** | `.dev-squad/instincts/*.md` | Auto-distilled confidence-scored patterns ("we do X here") | Observe hooks (continuous-learning) | High-confidence ones injected at SubagentStart | Medium |
+| **L3 Working memory** | `.dev-squad/memory.md` | Curated project decisions/conventions (shared across all agents) | Agents append via Edit; coordinator curates | Injected at SubagentStart (head 80 lines) | Medium |
+| **L4 Working / Traps** | `.dev-squad/gotchas.md` | Mistakes NOT to repeat | Written on self-healing events (capture-nudged at SubagentStop) | Injected at SubagentStart | Medium |
+
+**On conflict:** L0 System of Record wins. It is the single authoritative source — if `memory.md` says "use Stripe" and `record.md` says "payment provider: Xendit (locked 2026-06-15)", `record.md` is correct.
+
+**`record.md` format (append-only, structured):**
+```markdown
+# System of Record
+_Append-only. On conflict with other memory, this file is authoritative._
+
+## Project Identity
+- Project: {name}  Created: {ISO date}  Mode: {standard | saas}
+
+## Locked Decisions
+| Date | Decision | Value | Source |
+|------|----------|-------|--------|
+| 2026-06-15 | SaaS Mode | disabled | Phase 0 coordinator |
+| 2026-06-15 | Backend | Go 1.24 / Gin | Phase 0 coordinator |
+
+## ADR Log
+| ID | Title | Status | Date |
+|----|-------|--------|------|
+
+## Phase Completions
+| Phase | Completed | Lead Agent | Key output |
+|-------|-----------|------------|-----------|
+```
 
 **Native per-agent memory** (`memory: project` frontmatter → `.claude/agent-memory/<agent>/MEMORY.md`) is the redundant per-agent safety-net the harness auto-injects. The canonical, hook-controlled project memory is `.dev-squad/memory.md` — it cannot silently die the way the `memory: true` (invalid value) bug did, because the SubagentStart hook owns its injection.
 
