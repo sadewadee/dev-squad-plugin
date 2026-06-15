@@ -25,7 +25,7 @@ except:
 
 if [ "$TRUNCATED" = "true" ]; then
   # Non-blocking warning (exit 0, not exit 2)
-  echo '{"additionalContext": "WARNING: Tool output was truncated. You may be missing important information. Either: (1) read the full file with offset/limit, (2) narrow your search scope, or (3) use grep with a more specific pattern."}'
+  echo '{"additionalContext": "WARNING: Tool output was truncated (~85k char limit). For large build/test commands, redirect to file and read selectively: `<command> 2>&1 | tee .dev-squad/logs/<agent>-<phase>.log && grep -E \"error:|Error|FAIL\" .dev-squad/logs/<agent>-<phase>.log`. For existing files: use Read with offset/limit. For search: use grep with a more specific pattern."}'
   exit 0
 fi
 

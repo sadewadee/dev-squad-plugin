@@ -221,6 +221,36 @@ Agent tool with:
     {rough sizing per phase. SaaS-mode-enabled adds Phase 6 sub-phase decomposition 6-A..6-H per saas-readiness §9 if Intake reveals 10+ P0+P1 across 4+ domains.}
     ```
     
+    **Step 3b: Create System of Record** — Alongside `master-plan.md`, create `.dev-squad/record.md` as the authoritative, append-only, versioned record for this project. Write once now; append (never overwrite) on each irreversible decision throughout all phases.
+
+    ```markdown
+    # System of Record
+    _Append-only. On conflict with any other memory (.dev-squad/memory.md, gotchas, instincts), this file is authoritative._
+
+    ## Project Identity
+    - Project: {name}
+    - Created: {ISO date}
+    - Mode: {standard | saas}
+
+    ## Locked Decisions
+    | Date | Decision | Value | Source |
+    |------|----------|-------|--------|
+    | {date} | SaaS Mode | {disabled \| enabled} | Phase 0 coordinator |
+    | {date} | Backend stack | {e.g. Go 1.24 / Gin / PostgreSQL 17} | Phase 0 coordinator |
+    | {date} | Frontend stack | {e.g. Next.js 15 / React 19 / Tailwind v4} | Phase 0 coordinator |
+    | {date} | Infra | {e.g. Docker + Traefik} | Phase 0 coordinator |
+
+    ## ADR Log
+    | ID | Title | Status | Date |
+    |----|-------|--------|------|
+
+    ## Phase Completions
+    | Phase | Completed | Lead Agent | Key output |
+    |-------|-----------|------------|-----------|
+    ```
+
+    Populate the "Locked Decisions" table from your Step 2 Architecture Pre-Decision output. As phases complete, append rows to "Phase Completions". Architect appends ADR rows in Phase 2. Never edit existing rows — append new rows for corrections.
+
     **Step 4: Validate** — Re-read your master plan. Ask yourself:
     - Is this overengineered for the scope?
     - Am I defaulting to patterns I know vs what fits?
@@ -624,6 +654,7 @@ Agent tool with:
     18. **NEVER put business logic in controllers** — controllers validate + delegate to services
     19. **NEVER skip tests for auth flows** — auth is critical path, 100% coverage
     20. **NEVER deploy without rollback plan** — document how to undo every change
+    21. **NEVER pipe large build/test commands raw to stdout** — redirect to `.dev-squad/logs/<agent>-<phase>.log` and read selectively: `npm run build 2>&1 | tee .dev-squad/logs/build.log && grep -E "error:|Error" .dev-squad/logs/build.log`
 
     ## Phase Transition Protocol
     After completing each phase:
