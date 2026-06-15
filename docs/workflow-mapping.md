@@ -7,6 +7,7 @@
 
 | Workflow | Trigger | Phases | When to use |
 |---|---|---|---|
+| **init** | `/dev-squad init` | 3 steps | Onboard existing project (architecture.md + tech-debt.md + gotchas.md + CLAUDE.md). Not a JSON workflow — runs directly from `commands/init.md`. |
 | **zero-to-ship** | `/dev-squad build` | 9 | Full project from nothing -> shippable |
 | **feature-development** | `/dev-squad feature` | 6 | Add feature to existing project |
 | **bug-fix** | `/dev-squad fix` | 5 | Reproduce -> fix -> verify |

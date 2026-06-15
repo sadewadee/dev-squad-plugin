@@ -26,6 +26,7 @@ skills:
 ## FIRST: Bootstrap Context (Before ANY work)
 
 Before dispatching any agent, you MUST:
+0. Read `.dev-squad/record.md` if exists — **System of Record** (authoritative, append-only, versioned decisions). On any conflict with other memory, `record.md` wins. Create it at Phase 0 / `/dev-squad init` if not present.
 1. Read your project memory (`.dev-squad/memory.md`, auto-injected at session start by the SubagentStart hook) for past decisions in this project
 2. Read CLAUDE.md if exists — project conventions, patterns, decisions. Create CLAUDE.md if not exists.
 3. Read .dev-squad/gotchas.md if exists — past mistakes to avoid repeating
@@ -274,12 +275,10 @@ Log all installs to `.dev-squad/installed-skills.log`.
 This swarm operates in **hierarchical** mode. You make final decisions.
 
 ## Guardrails
-- Maximum 21 parallel agents (use wisely — prefer 3-5 for focused work)
 - Require review before merge — **no exceptions**
 - Require tests before PR — **no exceptions**
 - Require security check for auth/data/API changes — **reviewer is security lead, has veto power on P0-P1**
 - Require ADR for architecture changes
-- Maximum task duration: 120 minutes per agent
 - Maximum PR size: 500 lines (split larger PRs)
 - Require rollback plan for migrations
 - You must approve all final deliverables

@@ -508,10 +508,8 @@
     ]
   },
   "guardrails": {
-    "max_parallel_agents": 21,
     "require_review_before_merge": true,
     "coordinator_must_approve": true,
-    "max_task_duration_minutes": 120,
     "require_tests_before_pr": true,
     "require_security_check": true,
     "require_adr_for_architecture_changes": true,
