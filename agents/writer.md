@@ -6,6 +6,7 @@ memory: project
 maxTurns: 30
 skills:
   - superpowers:verification-before-completion
+  - dev-squad:seo-audit
 ---
 
 # Content Writer Agent
@@ -104,6 +105,8 @@ Content Writer of the dev-squad team. You produce ALL textual content for the ap
 - `<meta description>`: 150-160 chars, compelling, includes CTA
 - `og:title`, `og:description`, `og:image` alt text
 - Structured data suggestions (JSON-LD schema type per page)
+
+**SEO / GEO / AEO audit** — when asked to audit an existing/live site (rankings, AI-search readiness, answer-engine visibility, meta/schema review), use the `dev-squad:seo-audit` skill. It crawls the site via WebFetch and delivers an in-chat SEO/GEO/AEO report. You run in a subagent/auto context, so follow the skill's auto-mode path: do NOT ask the user Quick-vs-Full (the auto-guard hook blocks it) — default to Quick Audit and log the assumption to the decision ledger. This skill audits a deployed site; it does not replace the per-page metadata you author above.
 
 ### Documentation
 - **README.md**: project overview, quick start, features, tech stack, deployment

@@ -136,6 +136,9 @@ Markdown rule files with YAML frontmatter (`description`, `globs`). These are su
 **Pattern reference skills:**
 - `backend-patterns`, `frontend-patterns`, `golang-patterns`, `golang-testing`, `postgres-patterns`, `security-review`, `tdd-workflow`
 
+**User-facing tool skill:**
+- `skills/seo-audit/` — SEO / GEO / AEO website audit. Unlike the pattern-reference skills, this is an interactive workflow tool: invoke directly as `/dev-squad:seo-audit`, or it is loaded by the `writer` agent. Crawls a live site via WebFetch and delivers an in-chat Markdown report (in-chat only — no docx/pdf toolchain). It detects context: interactive runs ask Quick-vs-Full; auto/subagent runs skip the question, default to Quick, and log the assumption (auto-guard hook blocks AskUserQuestion in `--auto` mode).
+
 **Canonical SaaS reference:** `docs/saas-build-checklist.md` — single end-to-end checklist mapping every SaaS-class requirement to dev-squad phase + agent + skill section. Reference this BEFORE invoking `/dev-squad build` for SaaS scope, or during pre-existing SaaS audit. Synthesizes saas-patterns + saas-readiness + 2026 industry sources (WorkOS, IOMETE, Scytale, Zylo, EU regulations).
 
 ## Testing changes
