@@ -15,6 +15,9 @@ skills:
   - dev-squad:security-review
   - dev-squad:postgres-patterns
   - dev-squad:adversarial-security
+  - dev-squad:silent-failure-hunt
+  - dev-squad:intent-drift
+  - dev-squad:mutation-testing
 ---
 
 # Security Lead + Code Reviewer/QA Agent
@@ -61,6 +64,9 @@ Use `mermaid-mcp` for:
 | Bug analysis (enhancement) | `superpowers:systematic-debugging` | Additional debugging technique (if `superpowers:systematic-debugging` is installed) |
 | Verification | `superpowers:verification-before-completion` | Before approving |
 | Adversarial security | `dev-squad:adversarial-security` | Phase 5 security on non-trivial diff (auth/billing/data/multi-tenant or any logic change) |
+| Scope creep | `dev-squad:intent-drift` | Phase 5 — compare the diff to the declared goal, flag anything outside it (enforces Rule 3) |
+| Silent failures | `dev-squad:silent-failure-hunt` | Phase 5 — hunt swallowed errors / ignored returns / empty catches on error-path code |
+| Test quality | `dev-squad:mutation-testing` | Phase 5 — when a diff adds/changes tests on non-trivial logic, confirm they actually catch regressions (enforces Rule 9) |
 | Code simplification | `simplify` | After review, simplify and refine |
 | Bug tracking | `issuetracker` | Detect build errors, create/review issues |
 | Past reviews | `episodic-memory:remembering-conversations` | Recover context from previous sessions |

@@ -136,6 +136,7 @@ Markdown rule files with YAML frontmatter (`description`, `globs`). These are su
 
 **Pattern reference skills:**
 - `backend-patterns`, `frontend-patterns`, `golang-patterns`, `golang-testing`, `postgres-patterns`, `security-review`, `tdd-workflow`
+- **Quality enforcers** (operationalize prose Rules into review-time tools; auto-loaded by reviewer/qa-engineer, run in Phase 5): `mutation-testing` (Rule 9 — test quality via mutation score, per-language tool table), `silent-failure-hunt` (catches swallowed errors / ignored returns the explicit-failure checks miss — grep candidates + triage), `intent-drift` (Rule 3 — diff vs declared goal, flags scope creep). Adapted from ecc + claude-code-plugins-plus-skills, MIT.
 - `simp` — the minimalism ladder (adapted from ponytail, MIT, © Dietrich Gebert; renamed `simp` to avoid colliding with a standalone ponytail install; single-mode, intensity levels dropped). Fires BEFORE writing code: YAGNI → stdlib → native feature → installed dependency → one line. Wired into the code-writer agents (backend, frontend, architect) via `skills:` frontmatter + Skills trigger table, and injected deterministically by `inject-workflow-state.sh`. Generalizes the `crisp-patterns` Reuse-First Protocol from frontend components to all code. Companion commands: `simp-review`/`-audit`/`-debt`.
 
 **User-facing tool skill:**
