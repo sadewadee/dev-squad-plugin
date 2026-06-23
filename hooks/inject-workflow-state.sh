@@ -64,4 +64,18 @@ echo "Dispatch the 'search-conversations' agent (episodic-memory) for this task'
 echo "Past sessions hold tried-and-rejected approaches and prior root causes. Skipping recall = re-deriving solved problems — the #1 cause of wrong debugging."
 echo ""
 
+# 6. Minimalism ladder — fires 100% before any subagent writes code (the prose Rule 2
+#    in CLAUDE.md only fires ~50-80%). Kills the most expensive failure mode: building
+#    your own thing instead of using the stdlib / native feature / installed dep that
+#    already exists. Full reflex + commands: dev-squad:simp skill, /dev-squad simp-review.
+echo "=== MINIMALISM LADDER (before writing any non-trivial code — stop at the first rung that holds) ==="
+echo "1. Does this need to exist at all? Speculative = skip it, say so in one line. (YAGNI)"
+echo "2. Stdlib does it? Use it."
+echo "3. Native platform feature covers it? (<input type=date> over a lib, CSS over JS, DB constraint over app code) Use it."
+echo "4. Already-installed dependency solves it? Check the manifest FIRST. Never add a new dep for what an installed one — or a few lines — already does."
+echo "5. Can it be one line? One line. Only then: the minimum code that works."
+echo "Verify rungs 2-4 (check the manifest, query context7, grep-github) — do not guess that a custom build is needed."
+echo "NEVER lazy on: input validation at trust boundaries, data-loss error handling, security, accessibility, anything explicitly requested."
+echo ""
+
 exit 0

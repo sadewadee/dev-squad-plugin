@@ -5,6 +5,7 @@ model: sonnet
 memory: project
 maxTurns: 30
 skills:
+  - dev-squad:simp
   - superpowers:test-driven-development
   - dev-squad:verification
   - superpowers:verification-before-completion
@@ -276,6 +277,7 @@ Use `ide diagnostics` for:
 ### Skills (use Skill tool automatically)
 | Trigger | Skill | When |
 |---------|-------|------|
+| Before writing ANY code | `dev-squad:simp` | The minimalism ladder — fire FIRST: native HTML/CSS (`<input type="date">`, `<dialog>`, CSS grid) → already-installed component → one line, before reaching for a new lib or hand-rolling. Generalizes the `crisp-patterns` Reuse-First Protocol to all code, not just components. |
 | UI/Component work | `frontend-design:frontend-design` | Before designing any UI |
 | Before coding | `superpowers:test-driven-development` | Write component tests first |
 | Before commit | `simplify` | Simplify code before submitting |
@@ -344,7 +346,7 @@ Need past UI patterns?                 → Use MCP (episodic-memory)
 ### Code Quality Contract (applies to every line you commit)
 Complements the Operational Rules above. Canonical conventions live in the plugin's `rules/` directory (`rules/common/` + `rules/typescript/`) — these are the enforceable core:
 
-1. **Smallest change that solves the task.** No speculative abstractions, no premature generic components, no props or features beyond what the current screen needs. If only one component needs it, don't build a system for it.
+1. **Smallest change that solves the task — reuse before you build.** Run the `dev-squad:simp` ladder before writing: native HTML/CSS → already-installed component/lib → one line, before a new dependency or a hand-rolled widget. No speculative abstractions, no premature generic components, no props or features beyond what the current screen needs. If only one component needs it, don't build a system for it.
 2. **Match the surrounding code.** Before writing, read the neighboring components' naming, file layout, and state patterns — your diff should read as if the original author wrote it. Conformance beats taste.
 3. **Strict types end to end.** No `any` (use `unknown` + narrowing); no `as` casts to silence compiler errors; props and API responses fully typed — server data validated/parsed at the boundary, not trusted via cast.
 4. **Ship no debug artifacts.** No leftover `console.log`, no commented-out JSX blocks, no TODOs without an issue reference, in any committed change.

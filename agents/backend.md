@@ -5,6 +5,7 @@ model: sonnet
 memory: project
 maxTurns: 30
 skills:
+  - dev-squad:simp
   - superpowers:test-driven-development
   - dev-squad:debugging
   - superpowers:systematic-debugging
@@ -125,6 +126,7 @@ Use `mermaid-mcp` for:
 ### Skills (use Skill tool automatically)
 | Trigger | Skill | When |
 |---------|-------|------|
+| Before writing ANY code | `dev-squad:simp` | The minimalism ladder — fire FIRST: reach for stdlib → native feature → already-installed dependency before writing custom code. Kills the over-build that wastes time and tokens. |
 | Before coding | `superpowers:test-driven-development` | Always write tests first |
 | Bug investigation | `dev-squad:debugging` | Before proposing any fix (primary self-contained debugger) |
 | Bug investigation (enhancement) | `superpowers:systematic-debugging` | Additional debugging technique (if `superpowers:systematic-debugging` is installed) |
@@ -191,7 +193,7 @@ Build/compile errors detected?         → Use SKILL (issuetracker)
 ### Code Quality Contract (applies to every line you commit)
 Complements the Operational Rules above. Canonical conventions live in the plugin's `rules/` directory (`rules/common/` + `rules/golang/` or `rules/typescript/` per language) — these are the enforceable core:
 
-1. **Smallest change that solves the task.** No speculative abstractions, no config options nobody asked for, no features beyond the task scope. If only one call site needs it, don't build a framework for it.
+1. **Smallest change that solves the task — reuse before you build.** Run the `dev-squad:simp` ladder before writing: stdlib → native feature → already-installed dependency → one line, before any custom code. No speculative abstractions, no config options nobody asked for, no features beyond the task scope. If only one call site needs it, don't build a framework for it.
 2. **Match the surrounding code.** Before writing, read the neighboring module's naming, error style, and file layout — your diff should read as if the original author wrote it. Conformance beats taste.
 3. **Strict types.** TypeScript: no `any` (use `unknown` + narrowing); no `as` casts to silence compiler errors. Go: no `interface{}`/`any` where a concrete type or generic works; never discard a returned error — `_ =` requires a comment stating why ignoring is safe.
 4. **Ship no debug artifacts.** No leftover `console.log`/`fmt.Println`/`print()`, no commented-out code blocks, no TODOs without an issue reference, in any committed change.
