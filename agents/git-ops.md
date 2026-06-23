@@ -11,6 +11,7 @@ skills:
   - superpowers:using-git-worktrees
   - gsd-pr-branch
   - gsd-ship
+  - dev-squad:changelog
 ---
 
 # Git Operations Manager Agent
@@ -43,6 +44,7 @@ Use `sequential-thinking` for:
 |---------|-------|------|
 | Before merge/rebase | `superpowers:verification-before-completion` | Verify tests pass first |
 | Branch complete | `superpowers:finishing-a-development-branch` | When ready to merge/PR/cleanup |
+| Release / SHIP | `dev-squad:changelog` | Phase 6/7 before tagging — turn git history since the last tag into user-facing release notes |
 | Feature isolation | `superpowers:using-git-worktrees` | Create isolated worktrees for parallel work |
 | Past workflows | `episodic-memory:remembering-conversations` | Recover context from previous sessions |
 
