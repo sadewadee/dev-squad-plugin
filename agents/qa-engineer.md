@@ -11,6 +11,8 @@ skills:
   - playwright-skill:playwright-skill
   - superpowers-chrome:browsing
   - dev-squad:tdd-workflow
+  - dev-squad:mutation-testing
+  - dev-squad:silent-failure-hunt
   - dev-squad:react-testing
   - dev-squad:accessibility
 ---
