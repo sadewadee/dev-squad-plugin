@@ -62,6 +62,7 @@ The plugin is wired together via three layers that you must understand to make n
 - `commands/build.md` — slash command `/dev-squad build <description>`. Contains the entire 9-phase zero-to-ship orchestration prompt (phases 0-7 plus the 3.5 design gate) that the coordinator agent receives. Editing this changes what zero-to-ship runs.
 - `commands/status.md` — slash command `/dev-squad status`. Reads `.dev-squad/workflow-active` in the user's project.
 - `commands/pitch.md`, `commands/evolve.md`, `commands/retrospective.md` — slash commands for the pre-build idea diagnostic, instinct distillation, and PDCA retrospective respectively.
+- `commands/simp-review.md`, `commands/simp-audit.md`, `commands/simp-debt.md` — over-engineering review tools (adapted from ponytail, MIT). Review the diff / audit the whole repo / harvest `simp:` debt comments. After-the-fact companions to the `simp` skill, which fires at write time.
 - `skills/dev-squad/SKILL.md` — entrypoint when invoked as a skill (e.g. via `/dev-squad`, `/dev-squad start`, or `/dev-squad <db|schema|migrate|optimize|deploy-db>`). Routes to the coordinator with the right prompt.
 
 ### 2. Agents (`agents/*.md`)
@@ -81,7 +82,7 @@ Hooks fire on Claude Code lifecycle events and inject context or block actions. 
 | Event | Script | Purpose |
 |-------|--------|---------|
 | `SessionStart` | `auto-update.sh`, `session-gotchas.sh`, `validate-workflow-schema.sh`, `check-companions.sh` | Auto-pull plugin updates from git tags; remind agent to read `.dev-squad/gotchas.md`; validate workflow JSONs; warn about missing companion plugins |
-| `SubagentStart` | `inject-workflow-state.sh` | Injects `.dev-squad/workflow-active` JSON so subagents resume from current phase |
+| `SubagentStart` | `inject-workflow-state.sh` | Injects `.dev-squad/workflow-active` JSON so subagents resume from current phase; also injects the minimalism ladder (the `simp` reflex) so it fires deterministically before any subagent writes code |
 | `SubagentStop` | `check-workflow.sh`, `auto-governor.sh` | Checks if zero-to-ship workflow has incomplete phases (non-blocking reminder); enforce auto-mode dispatch budget |
 | `PreToolUse` (Bash) | `guard-dangerous-ops.sh` | Blocks `rm -rf` of filesystem roots, `DROP DATABASE`, force-push to main, etc. |
 | `PreToolUse` (Write\|Edit\|MultiEdit\|NotebookEdit) | `guard-unsafe-code.py` | Blocks introducing dangerous code patterns (eval, injection, etc.) |
@@ -135,6 +136,7 @@ Markdown rule files with YAML frontmatter (`description`, `globs`). These are su
 
 **Pattern reference skills:**
 - `backend-patterns`, `frontend-patterns`, `golang-patterns`, `golang-testing`, `postgres-patterns`, `security-review`, `tdd-workflow`
+- `simp` — the minimalism ladder (adapted from ponytail, MIT, © Dietrich Gebert; renamed `simp` to avoid colliding with a standalone ponytail install; single-mode, intensity levels dropped). Fires BEFORE writing code: YAGNI → stdlib → native feature → installed dependency → one line. Wired into the code-writer agents (backend, frontend, architect) via `skills:` frontmatter + Skills trigger table, and injected deterministically by `inject-workflow-state.sh`. Generalizes the `crisp-patterns` Reuse-First Protocol from frontend components to all code. Companion commands: `simp-review`/`-audit`/`-debt`.
 
 **User-facing tool skill:**
 - `skills/seo-audit/` — SEO / GEO / AEO website audit. Unlike the pattern-reference skills, this is an interactive workflow tool: invoke directly as `/dev-squad:seo-audit`, or it is loaded by the `writer` agent. Crawls a live site via WebFetch and delivers an in-chat Markdown report (in-chat only — no docx/pdf toolchain). It detects context: interactive runs ask Quick-vs-Full; auto/subagent runs skip the question, default to Quick, and log the assumption (auto-guard hook blocks AskUserQuestion in `--auto` mode).

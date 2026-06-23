@@ -6,6 +6,7 @@ think_harder: true
 memory: project
 maxTurns: 30
 skills:
+  - dev-squad:simp
   - superpowers:brainstorming
   - superpowers:writing-plans
   - gsd-plan-phase
@@ -59,6 +60,7 @@ Use `context7` BEFORE:
 ### Skills (use Skill tool automatically)
 | Trigger | Skill | When |
 |---------|-------|------|
+| Before any design or tech-stack decision | `dev-squad:simp` | The minimalism ladder applied to architecture — rung 1: does this component/service/abstraction need to exist at all? rung 3-4: prefer a native platform feature or an already-chosen dependency over adding to the stack. The cheapest architecture is the one you don't design. |
 | Design decisions | `superpowers:brainstorming` | Before any architecture decision |
 | Writing specs | `superpowers:writing-plans` | For implementation specs |
 | Past decisions | `episodic-memory:remembering-conversations` | Recover past architectural decisions |

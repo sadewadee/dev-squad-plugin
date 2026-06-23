@@ -8,7 +8,7 @@
     {
       "name": "dev-squad",
       "description": "Ship full-stack projects autonomously with 11 coordinated AI agents. 9-phase pipeline with anti-AI-slop UI design gate, 3-way code review, and pre-seeded .claude/ self-docs. SaaS scope (BETA) — Phase 0 runs 10-question intake covering market, admin hierarchy, role model, trial+plan, self-service auth, customer API, email lifecycle, invoice, operational readiness, and compliance jurisdiction to prevent post-implementation retrofits.",
-      "version": "4.32.0",
+      "version": "4.33.0",
       "source": "./",
       "author": {
         "name": "sadewadee"
