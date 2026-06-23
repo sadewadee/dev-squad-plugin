@@ -63,6 +63,7 @@ The plugin is wired together via three layers that you must understand to make n
 - `commands/status.md` — slash command `/dev-squad status`. Reads `.dev-squad/workflow-active` in the user's project.
 - `commands/pitch.md`, `commands/evolve.md`, `commands/retrospective.md` — slash commands for the pre-build idea diagnostic, instinct distillation, and PDCA retrospective respectively.
 - `commands/simp-review.md`, `commands/simp-audit.md`, `commands/simp-debt.md` — over-engineering review tools (adapted from ponytail, MIT). Review the diff / audit the whole repo / harvest `simp:` debt comments. After-the-fact companions to the `simp` skill, which fires at write time.
+- `commands/skill-stocktake.md` — maintenance audit of this plugin's own `skills/` (frontmatter validity, weak descriptions, overlap, stale references). Quick/Full mode. Report-only. Run it as the plugin grows. Adapted from ecc, MIT.
 - `skills/dev-squad/SKILL.md` — entrypoint when invoked as a skill (e.g. via `/dev-squad`, `/dev-squad start`, or `/dev-squad <db|schema|migrate|optimize|deploy-db>`). Routes to the coordinator with the right prompt.
 
 ### 2. Agents (`agents/*.md`)
@@ -137,6 +138,7 @@ Markdown rule files with YAML frontmatter (`description`, `globs`). These are su
 **Pattern reference skills:**
 - `backend-patterns`, `frontend-patterns`, `golang-patterns`, `golang-testing`, `postgres-patterns`, `security-review`, `tdd-workflow`
 - **Quality enforcers** (operationalize prose Rules into review-time tools; auto-loaded by reviewer/qa-engineer, run in Phase 5): `mutation-testing` (Rule 9 — test quality via mutation score, per-language tool table), `silent-failure-hunt` (catches swallowed errors / ignored returns the explicit-failure checks miss — grep candidates + triage), `intent-drift` (Rule 3 — diff vs declared goal, flags scope creep). Adapted from ecc + claude-code-plugins-plus-skills, MIT.
+- `changelog` — git history since the last tag → user-facing release notes (Keep a Changelog format), grouped by impact, internal noise dropped. Auto-loaded by `git-ops` at Phase 6/7 SHIP before tagging. Adapted from claude-code-plugins-plus-skills, MIT.
 - `simp` — the minimalism ladder (adapted from ponytail, MIT, © Dietrich Gebert; renamed `simp` to avoid colliding with a standalone ponytail install; single-mode, intensity levels dropped). Fires BEFORE writing code: YAGNI → stdlib → native feature → installed dependency → one line. Wired into the code-writer agents (backend, frontend, architect) via `skills:` frontmatter + Skills trigger table, and injected deterministically by `inject-workflow-state.sh`. Generalizes the `crisp-patterns` Reuse-First Protocol from frontend components to all code. Companion commands: `simp-review`/`-audit`/`-debt`.
 
 **User-facing tool skill:**
