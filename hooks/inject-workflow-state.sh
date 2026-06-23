@@ -58,6 +58,22 @@ if [ -d "$DS/instincts" ]; then
   fi
 fi
 
+# 4.5 Design system — make the Phase 3.5 design spec a LIVING GATE, not an inert doc.
+#      The designer writes .dev-squad/design/*.md in Phase 3.5; without this the frontend
+#      agent is only told in prose to read it (fires ~50-80%) and silently defaults to raw
+#      shadcn/Tailwind values. Injecting the tokens here guarantees every UI-writing subagent
+#      sees the binding palette/type/spacing, head-limited, with a pointer to the rest.
+if [ -f "$DS/design/design-tokens.md" ]; then
+  echo "=== DESIGN SYSTEM (.dev-squad/design/design-tokens.md — BINDING for any UI/component code; do NOT default to raw shadcn/Tailwind values) ==="
+  head -60 "$DS/design/design-tokens.md"
+  echo ""
+  echo "Full design spec — read the relevant file before writing UI:"
+  for f in visual-spec component-inventory responsive-spec drill-down-spec; do
+    [ -f "$DS/design/$f.md" ] && echo "  - .dev-squad/design/$f.md"
+  done
+  echo ""
+fi
+
 # 5. L1 — mandatory episodic recall. The directive is deterministic; running the search is the agent's job.
 echo "=== MANDATORY RECALL (before debugging / review / any 'this is new' assumption) ==="
 echo "Dispatch the 'search-conversations' agent (episodic-memory) for this task's topic BEFORE forming hypotheses."
