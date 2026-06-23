@@ -82,7 +82,7 @@ Hooks fire on Claude Code lifecycle events and inject context or block actions. 
 | Event | Script | Purpose |
 |-------|--------|---------|
 | `SessionStart` | `auto-update.sh`, `session-gotchas.sh`, `validate-workflow-schema.sh`, `check-companions.sh` | Auto-pull plugin updates from git tags; remind agent to read `.dev-squad/gotchas.md`; validate workflow JSONs; warn about missing companion plugins |
-| `SubagentStart` | `inject-workflow-state.sh` | Injects `.dev-squad/workflow-active` JSON so subagents resume from current phase; also injects the minimalism ladder (the `simp` reflex) so it fires deterministically before any subagent writes code |
+| `SubagentStart` | `inject-workflow-state.sh` | Injects `.dev-squad/workflow-active` JSON so subagents resume from current phase; also injects the minimalism ladder (the `simp` reflex) so it fires deterministically before any subagent writes code; and injects `.dev-squad/design/design-tokens.md` (when present) so the Phase 3.5 design spec is a binding live gate on Phase 4 UI code, not an inert doc |
 | `SubagentStop` | `check-workflow.sh`, `auto-governor.sh` | Checks if zero-to-ship workflow has incomplete phases (non-blocking reminder); enforce auto-mode dispatch budget |
 | `PreToolUse` (Bash) | `guard-dangerous-ops.sh` | Blocks `rm -rf` of filesystem roots, `DROP DATABASE`, force-push to main, etc. |
 | `PreToolUse` (Write\|Edit\|MultiEdit\|NotebookEdit) | `guard-unsafe-code.py` | Blocks introducing dangerous code patterns (eval, injection, etc.) |
