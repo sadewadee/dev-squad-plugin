@@ -59,12 +59,39 @@ done
 # Conditional guard: failure injection / destructive env manipulation (auditor Bucket D) is
 # permitted ONLY in an isolated staging env, signalled by the .dev-squad/staging-env flag.
 # auditor.md carries a prose "HARD GUARD" for this, but prose fires only if the agent remembers
-# to include it — this enforces the highest-risk patterns deterministically. (kill -SIG of a
-# worker pid stays prose-guarded: too ambiguous to match without false-positiving on legitimate
-# process kills.) When the flag IS present, these are allowed.
-if [ ! -f ".dev-squad/staging-env" ]; then
-  if echo "$COMMAND" | grep -Eq 'iptables|docker[ -]compose (stop|kill)'; then
-    echo "BLOCKED by dev-squad safety guard: '$COMMAND' is a failure-injection / destructive environment operation, allowed only in an isolated staging env. Create .dev-squad/staging-env (confirms: ephemeral, no real users, no real data) first, or run it manually outside dev-squad."
+# it — this enforces it deterministically. Substring regex is both leaky (whitespace, flags,
+# alternate tools) AND over-broad (matches the word inside `echo`/`grep` args), so detection is
+# command-POSITION based: tokenize on separators, skip env-assignments/sudo, and only match when
+# the destructive binary is the actual command being run. (kill -SIG <pid> stays prose-guarded:
+# too ambiguous to match without false-positiving on legitimate process kills.) Flag present = allowed.
+# Fast path: only invoke python when a trigger word is present at all.
+if [ ! -f ".dev-squad/staging-env" ] && printf '%s' "$COMMAND" | grep -Eqw 'iptables|ip6tables|nft|pkill|systemctl|docker|docker-compose|podman'; then
+  STAGING_VERDICT=$(python3 - "$COMMAND" <<'PY' 2>/dev/null
+import sys, re, os, shlex
+cmd = sys.argv[1] if len(sys.argv) > 1 else ""
+SIMPLE = {"iptables", "ip6tables", "nft", "pkill"}
+def hit(c):
+    for seg in re.split(r"&&|\|\||\||;|\n", c):
+        try: toks = shlex.split(seg)
+        except Exception: toks = seg.split()
+        i = 0
+        while i < len(toks) and (re.match(r"^[A-Za-z_]\w*=", toks[i]) or toks[i] in ("sudo", "env", "nohup", "time", "exec", "command")):
+            i += 1
+        if i >= len(toks): continue
+        base = os.path.basename(toks[i]); rest = toks[i+1:]
+        if base in SIMPLE: return True
+        if base == "systemctl" and any(a in ("stop", "kill", "restart", "mask") for a in rest): return True
+        if base in ("docker", "podman"):
+            if rest[:1] and rest[0] in ("stop", "kill", "rm"): return True
+            if rest[:2] == ["network", "disconnect"]: return True
+            if rest[:1] == ["compose"] and any(a in ("stop", "kill", "down", "rm") for a in rest[1:]): return True
+        if base == "docker-compose" and any(a in ("stop", "kill", "down", "rm") for a in rest): return True
+    return False
+print("BLOCK" if hit(cmd) else "OK")
+PY
+)
+  if [ "$STAGING_VERDICT" = "BLOCK" ]; then
+    echo "BLOCKED by dev-squad safety guard: '$COMMAND' is destructive failure-injection / teardown (service stop|kill|down|rm, network manipulation, process kill), allowed only in an isolated staging env. Create .dev-squad/staging-env (confirms: ephemeral, no real users, no real data) first, or run it manually outside dev-squad."
     exit 2
   fi
 fi

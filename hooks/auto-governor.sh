@@ -11,7 +11,7 @@ RUN_FILE=".dev-squad/auto-run.json"
 
 INPUT=$(cat - 2>/dev/null || echo '{}')
 
-MODE=$(python3 -c "import json,sys; print((json.load(open(sys.argv[1])).get('mode') or '').strip().lower())" "$WORKFLOW_FILE" 2>/dev/null)
+MODE=$(python3 -c "import json,sys; print(str(json.load(open(sys.argv[1])).get('mode') or '').strip().lower())" "$WORKFLOW_FILE" 2>/dev/null)
 [ "$MODE" = "auto" ] || exit 0
 
 EVENT=$(printf '%s' "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('hook_event_name',''))" 2>/dev/null)

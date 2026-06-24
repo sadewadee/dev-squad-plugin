@@ -43,7 +43,7 @@ try:
     wf=json.load(open(sys.argv[1]))
 except Exception:
     print("workflow-active is not valid JSON — the --auto safeguards cannot read 'mode' and the run is effectively UNGUARDED. Fix the file."); sys.exit(0)
-mode=(wf.get("mode") or "").strip().lower()
+mode=str(wf.get("mode") or "").strip().lower()
 if mode=="auto":
     auto=wf.get("auto") or {}
     missing=[k for k in ("started_at","max_total_dispatches","wall_clock_cap_min") if k not in auto]
