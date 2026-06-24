@@ -11,14 +11,17 @@ RUN_FILE=".dev-squad/auto-run.json"
 
 INPUT=$(cat - 2>/dev/null || echo '{}')
 
-MODE=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('mode',''))" "$WORKFLOW_FILE" 2>/dev/null)
+MODE=$(python3 -c "import json,sys; print(str(json.load(open(sys.argv[1])).get('mode') or '').strip().lower())" "$WORKFLOW_FILE" 2>/dev/null)
 [ "$MODE" = "auto" ] || exit 0
 
 EVENT=$(printf '%s' "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('hook_event_name',''))" 2>/dev/null)
 TOOL=$(printf '%s' "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_name',''))" 2>/dev/null)
 
-# Ensure run file exists
-[ -f "$RUN_FILE" ] || printf '%s' '{"total_dispatches":0,"halted":false,"halt_reason":null}' > "$RUN_FILE"
+# Ensure run file exists. Stamp a governor-owned start time (written ONCE, here) so the
+# wall-clock cap has a deterministic anchor even when the coordinator omits auto.started_at
+# from workflow-active (M2). NOTE: do not use workflow-active's mtime as a fallback — that file
+# is rewritten on every phase update, so its mtime keeps moving forward and the cap never fires.
+[ -f "$RUN_FILE" ] || printf '{"total_dispatches":0,"halted":false,"halt_reason":null,"governor_started_at":"%s"}' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$RUN_FILE"
 
 if [ "$EVENT" = "SubagentStop" ]; then
   python3 - "$RUN_FILE" <<'PY' 2>/dev/null
@@ -49,7 +52,9 @@ maxmin=int(auto.get("wall_clock_cap_min",480));  maxmin = maxmin if maxmin>=1 el
 n=int(run.get("total_dispatches",0))
 if n>=maxd:
     print(f"EXCEEDED: max_total_dispatches ({n}>={maxd})"); sys.exit(0)
-started=auto.get("started_at")
+# Prefer the coordinator-declared start; fall back to the governor's own first-dispatch stamp
+# (auto-run.json, written once) so a missing auto.started_at does not silently disable the cap (M2).
+started=auto.get("started_at") or run.get("governor_started_at")
 if started:
     try:
         t0=datetime.datetime.fromisoformat(started.replace("Z","+00:00"))

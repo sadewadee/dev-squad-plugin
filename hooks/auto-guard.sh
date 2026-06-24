@@ -6,7 +6,7 @@
 WORKFLOW_FILE=".dev-squad/workflow-active"
 [ -f "$WORKFLOW_FILE" ] || exit 0
 
-MODE=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('mode',''))" "$WORKFLOW_FILE" 2>/dev/null)
+MODE=$(python3 -c "import json,sys; print(str(json.load(open(sys.argv[1])).get('mode') or '').strip().lower())" "$WORKFLOW_FILE" 2>/dev/null)
 [ "$MODE" = "auto" ] || exit 0
 
 echo "AUTO MODE: do not ask the user. Infer this decision from the project description and conservative defaults, then append it to .dev-squad/assumption-ledger.md (with confidence: high|med|low + rationale + risk-if-wrong). For irreversible decisions (tenancy, identity hierarchy, billing/payment provider, compliance scope) pick the conservative default and mark confidence: low. Then continue. See commands/build.md 'Auto Mode' rules."

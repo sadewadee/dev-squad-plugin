@@ -235,6 +235,8 @@ fi
 
 The flag file confirms: this environment is isolated, ephemeral, and has no real users. Without it, any failure injection could destroy data.
 
+This is no longer prose-only: `hooks/guard-dangerous-ops.sh` deterministically blocks `iptables` and `docker compose stop|kill` at `PreToolUse(Bash)` when `.dev-squad/staging-env` is absent, so a forgotten check cannot let destructive injection through. (Worker-kill via `kill -SIG <pid>` stays prose-guarded — too ambiguous to block deterministically without false-positiving on legitimate process kills, so keep the prose check for that one.)
+
 ```bash
 # 1. DB unavailability
 docker compose stop postgres
