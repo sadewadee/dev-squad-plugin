@@ -270,7 +270,7 @@ JSDOM (used by Vitest/Jest) cannot:
 - Handle iframes, popups, downloads, cross-origin flows
 - Run real network in a controlled environment with full DevTools support
 
-For any of those, use Playwright Component Testing (component test in real browser) or full E2E. See [e2e-testing skill](../e2e-testing/SKILL.md).
+For any of those, use Playwright Component Testing (component test in real browser) or full E2E — the `qa-engineer` agent drives the golden-path E2E via playwright in Phase 5.5 (runtime functional verification).
 
 Decision boundary:
 

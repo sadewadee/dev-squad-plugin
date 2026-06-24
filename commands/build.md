@@ -450,6 +450,10 @@ Agent tool with:
       - [ ] Health check endpoints working
       - [ ] All P0-P1 findings FIXED before proceeding
 
+    Fix step (authors apply, review reports — Phase 5 stays CHECK, never mutate):
+      - When Phase 5.7 metrics flag duplication or cyclomatic complexity above threshold, the author agent (backend/frontend) applies `dev-squad:code-simplifier` to the flagged files only, preserving behavior. This is the apply-half of the simp family: `simp` prevents over-engineering pre-write (Phase 4); `code-simplifier` reduces complexity post-write when the metrics demand it.
+      - RE-VERIFY after simplifying: build + full test suite must still pass before re-review. A review lane (reviewer/auditor) NEVER rewrites code — it reports; authors fix, then re-verify. This keeps the Phase 5 metrics valid (the code measured is the code shipped).
+
     ### Phase 6: SHIP (Verification-Before-Completion)
     - Before ANY completion claim: IDENTIFY command → RUN fresh → READ output → VERIFY → ONLY THEN claim
     - SELF-HEALING: After `docker compose up` check health endpoints — if fails, diagnose → fix → retry (max 5)
