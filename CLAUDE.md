@@ -64,6 +64,7 @@ The plugin is wired together via three layers that you must understand to make n
 - `commands/pitch.md`, `commands/evolve.md`, `commands/retrospective.md` — slash commands for the pre-build idea diagnostic, instinct distillation, and PDCA retrospective respectively.
 - `commands/simp-review.md`, `commands/simp-audit.md`, `commands/simp-debt.md` — over-engineering review tools (adapted from ponytail, MIT). Review the diff / audit the whole repo / harvest `simp:` debt comments. After-the-fact companions to the `simp` skill, which fires at write time.
 - `commands/skill-stocktake.md` — maintenance audit of this plugin's own `skills/` (frontmatter validity, weak descriptions, overlap, stale references). Quick/Full mode. Report-only. Run it as the plugin grows. Adapted from ecc, MIT.
+- `commands/hook-stocktake.md` — maintenance audit of this plugin's own hook artifact loops: every `.dev-squad/*` file a hook writes should have a consumer, and vice versa. Catches write-only orphans (state saved but never restored) and dangling reads. Report-only. The hook-layer companion to `skill-stocktake`.
 - `skills/dev-squad/SKILL.md` — entrypoint when invoked as a skill (e.g. via `/dev-squad`, `/dev-squad start`, or `/dev-squad <db|schema|migrate|optimize|deploy-db>`). Routes to the coordinator with the right prompt.
 
 ### 2. Agents (`agents/*.md`)
@@ -82,7 +83,7 @@ Hooks fire on Claude Code lifecycle events and inject context or block actions. 
 
 | Event | Script | Purpose |
 |-------|--------|---------|
-| `SessionStart` | `auto-update.sh`, `session-gotchas.sh`, `validate-workflow-schema.sh`, `check-companions.sh` | Auto-pull plugin updates from git tags; remind agent to read `.dev-squad/gotchas.md`; validate workflow JSONs; warn about missing companion plugins |
+| `SessionStart` | `auto-update.sh`, `restore-compact-state.sh`, `session-gotchas.sh`, `validate-workflow-schema.sh`, `check-companions.sh` | Auto-pull plugin updates from git tags; re-inject `.dev-squad/pre-compact-state.md` when the session start is a post-compaction (`source=compact`) — the consumer half of `pre-compact-save.sh`; remind agent to read `.dev-squad/gotchas.md`; validate workflow JSONs; warn about missing companion plugins |
 | `SubagentStart` | `inject-workflow-state.sh` | Injects `.dev-squad/workflow-active` JSON so subagents resume from current phase; also injects the minimalism ladder (the `simp` reflex) so it fires deterministically before any subagent writes code; and injects `.dev-squad/design/design-tokens.md` (when present) so the Phase 3.5 design spec is a binding live gate on Phase 4 UI code, not an inert doc |
 | `SubagentStop` | `check-workflow.sh`, `auto-governor.sh` | Checks if zero-to-ship workflow has incomplete phases (non-blocking reminder); enforce auto-mode dispatch budget |
 | `PreToolUse` (Bash) | `guard-dangerous-ops.sh` | Blocks `rm -rf` of filesystem roots, `DROP DATABASE`, force-push to main, etc. |
@@ -93,7 +94,7 @@ Hooks fire on Claude Code lifecycle events and inject context or block actions. 
 | `PostToolUse` (Grep\|Bash) | `truncation-check.sh` | Detects truncated tool output |
 | `PostToolUse` (Write\|Edit\|Bash) | `observe-learning.sh` (async) | Captures observations for continuous learning |
 | `TaskCreated` / `TaskCompleted` | `validate-task-scope.sh`, `validate-task.sh` | Validate task scope and completion |
-| `PreCompact` | `pre-compact-save.sh` | Save state before context compaction |
+| `PreCompact` | `pre-compact-save.sh` | Save state before context compaction (producer half; `restore-compact-state.sh` re-injects it on the next `source=compact` SessionStart) |
 | `Stop` | `stop-verify.sh` (300s timeout) | Final verification before stopping |
 | `TeammateIdle` | `check-teammate.sh` | Block teammate from going idle while workflow tasks are incomplete |
 

@@ -1,7 +1,8 @@
 #!/bin/bash
 # dev-squad: PreCompact hook
 # Save critical state before context compaction (~167K tokens)
-# Agent can read .dev-squad/pre-compact-state.md after compaction to restore context
+# Producer half of the compaction loop: restore-compact-state.sh re-injects this file
+# deterministically on the SessionStart that fires right after compaction (source=compact).
 
 STATE_DIR=".dev-squad"
 STATE_FILE="$STATE_DIR/pre-compact-state.md"
