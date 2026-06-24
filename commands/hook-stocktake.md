@@ -16,7 +16,15 @@ Every `.dev-squad/<artifact>` path referenced anywhere in `hooks/` should be ref
 Run this from the plugin root (deterministic — do not eyeball the hooks by hand):
 
 ```bash
+# CLAUDE_PLUGIN_ROOT is set when this runs via hooks.json, but is usually EMPTY in an
+# agent-run shell — so fall back to CWD, then fail LOUD if CWD is not the plugin repo.
+# (A silent audit of the wrong directory is exactly the lying-tool failure this command exists to stop.)
 ROOT="${CLAUDE_PLUGIN_ROOT:-.}"; cd "$ROOT" || exit 1
+if [ ! -d hooks ] || [ ! -f .claude-plugin/plugin.json ]; then
+  echo "hook-stocktake: '$ROOT' is not the dev-squad plugin root (no hooks/ + .claude-plugin/plugin.json)."
+  echo "Run this from the plugin repo, or set CLAUDE_PLUGIN_ROOT to it. Aborting rather than auditing the wrong tree."
+  exit 1
+fi
 # -I ignores binaries; exclude compiled/cache/git/test noise so counts are real.
 GREP() { grep "$@" -I --exclude-dir=__pycache__ --exclude-dir=.git --exclude='*.pyc' --exclude-dir=tests; }
 arts=$(GREP -rhoE '\.dev-squad/[A-Za-z0-9._/-]+' hooks/ 2>/dev/null \
