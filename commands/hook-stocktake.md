@@ -33,19 +33,35 @@ if not (os.path.isdir("hooks") and os.path.isfile(".claude-plugin/plugin.json"))
 DEV = re.compile(r'\.dev-squad/([A-Za-z0-9._/-]+)')
 WRITE = re.compile(r'(>>?\s|\btee\b|open\([^)]*[\'"][aw]|\.write\()')
 READ = re.compile(r'(\bcat\b|\bhead\b|\btail\b|\bgrep\b|\bsed\b|\bawk\b|\bsource\b|\[\s*-[fs]\b|<\s|json\.load\(open|open\([^)]*[\'"]r)')
+VARDEF = r'(?m)^\s*(?:export\s+)?([A-Za-z_]\w*)\s*='   # bash VAR=, export VAR=, python var =
+EXTLESS_OK = {"workflow-active"}  # known extensionless state files (real files, not dirs)
 def hooks():
     return [f for f in sorted(glob.glob("hooks/*.sh")+glob.glob("hooks/*.py")) if "/tests/" not in f]
+def file_artifacts(path):
+    # Discover artifacts even when the path is built from variables (e.g. PLAN_FILE="$STATE_DIR/master-plan.md",
+    # export DS_OBS="$DS/observations.jsonl") by resolving VAR assignments before scanning for .dev-squad/ paths.
+    text = open(path, errors="ignore").read()
+    vrs = {m.group(1): m.group(2).strip() for m in re.finditer(VARDEF + r'\s*"?([^"\n#]+?)"?\s*$', text)}
+    def resolve(v, d=0):
+        if d > 4: return v
+        nv = re.sub(r'\$\{?([A-Za-z_]\w*)\}?', lambda m: vrs.get(m.group(1), m.group(0)), v)
+        return resolve(nv, d + 1) if nv != v else nv
+    found = set()
+    for blob in [text] + [resolve(v) for v in vrs.values()]:
+        for m in DEV.finditer(blob):
+            p = m.group(1).rstrip(".,;:)")   # strip trailing sentence punctuation from comment captures
+            if p.endswith("/"): continue
+            base = p.split("/")[-1]
+            if re.search(r'\.[a-z0-9]+$', base) or base in EXTLESS_OK:  # keep files (incl. extensionless state files), drop dirs
+                found.add(p)
+    return found
 def artifacts():
-    a=set()
-    for f in hooks():
-        for line in open(f, errors="ignore"):
-            for m in DEV.finditer(line):
-                p=m.group(1)
-                if not p.endswith("/") and re.search(r'\.[a-z]+$', p): a.add(p)
+    a = set()
+    for f in hooks(): a |= file_artifacts(f)
     return sorted(a)
 def role(path, art):
     text=open(path, errors="ignore").read()
-    vrs=re.findall(r'(?m)^\s*([A-Za-z_]\w*)\s*=\s*.*'+re.escape(art)+r'["\']?\s*$', text)
+    vrs=re.findall(VARDEF + r'\s*.*'+re.escape(art)+r'["\']?\s*$', text)
     pats=[re.escape(art)]+[r'\$\{?'+v+r'\b' for v in vrs]+[r'\b'+v+r'\b' for v in vrs]
     refre=re.compile("|".join(pats)); w=r=False
     for line in text.splitlines():

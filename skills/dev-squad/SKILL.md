@@ -497,6 +497,10 @@ Extract the command type and description:
 - `migrate` or `migration`: Database migration workflow
 - `optimize` or `performance`: Query optimization workflow
 - `deploy-db`: Database deployment workflow
+- `fix` or `bugfix`: Bug-fix workflow -- launch coordinator with `.claude-plugin/workflows/bug-fix.json`
+- `feature`: Feature-development workflow -- launch coordinator with `.claude-plugin/workflows/feature-development.json`
+- `refactor`: Refactoring workflow -- launch coordinator with `.claude-plugin/workflows/refactoring.json`
+- `readiness`: SaaS pre-launch readiness sprint -- launch coordinator with `.claude-plugin/workflows/saas-readiness-sprint.json`
 - `status`: Show current swarm progress (active agents, phases, blockers)
 - No args or `start`: Ask user what they need
 
