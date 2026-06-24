@@ -6,6 +6,7 @@ memory: project
 maxTurns: 30
 skills:
   - dev-squad:simp
+  - dev-squad:code-simplifier
   - superpowers:test-driven-development
   - dev-squad:verification
   - superpowers:verification-before-completion
