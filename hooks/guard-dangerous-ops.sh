@@ -82,10 +82,16 @@ def hit(c):
         if base in SIMPLE: return True
         if base == "systemctl" and any(a in ("stop", "kill", "restart", "mask") for a in rest): return True
         if base in ("docker", "podman"):
+            # plain form: docker stop|kill|rm <ctr>
             if rest[:1] and rest[0] in ("stop", "kill", "rm"): return True
+            # management-command form (canonical since Docker 1.13): docker container|service|stack stop|kill|rm
+            if len(rest) >= 2 and rest[0] in ("container", "service", "stack") and rest[1] in ("stop", "kill", "rm"): return True
             if rest[:2] == ["network", "disconnect"]: return True
             if rest[:1] == ["compose"] and any(a in ("stop", "kill", "down", "rm") for a in rest[1:]): return True
         if base == "docker-compose" and any(a in ("stop", "kill", "down", "rm") for a in rest): return True
+        # NOTE: 'restart' is deliberately NOT blocked — it is self-healing (the service comes back)
+        # and a routine ops action (config reload / bounce); the auditor's failure injection uses
+        # 'stop' (sustained outage), not 'restart'. Blocking restart would false-positive on legit ops.
     return False
 print("BLOCK" if hit(cmd) else "OK")
 PY
