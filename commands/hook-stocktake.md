@@ -11,56 +11,82 @@ This is the hook-layer companion to `/dev-squad skill-stocktake` (which audits `
 
 ## Check
 
-Every `.dev-squad/<artifact>` path referenced anywhere in `hooks/` should be referenced by **at least two files**: something produces it, something consumes it. An artifact referenced by only one file is a dead-end candidate.
+For every `.dev-squad/<artifact>` a hook touches, the audit classifies **each side** of the loop as a deterministic hook or only prose:
 
-Run this from the plugin root (deterministic — do not eyeball the hooks by hand):
+- **deterministic producer** — a hook script that WRITES it (`>`/`>>`/`tee`, or a Python open-for-write).
+- **deterministic consumer** — a hook script that READS it (`cat`/`head`/`grep`/`[ -f ]`/`source`/`<`, or a Python open-for-read).
+- **prose touch** — a `commands`/`skills`/`agents` `.md` that merely mentions it (an agent is *told* to write/read it — fires ~50-80%).
+
+Plain reference-counting is not enough: it can't tell a real hook-closed loop from a prose mention, so it marks half-prose loops "healthy" (this is the exact blind spot that let the `pre-compact-state.md` orphan and the `iteration-log.md` fail-open hide). This audit resolves variable indirection (`> "$STATE_FILE"`) so the write/read classification is real, not literal-path-only.
+
+Run from the plugin root (uses `python3`, already a hook dependency):
 
 ```bash
-# CLAUDE_PLUGIN_ROOT is set when this runs via hooks.json, but is usually EMPTY in an
-# agent-run shell — so fall back to CWD, then fail LOUD if CWD is not the plugin repo.
-# (A silent audit of the wrong directory is exactly the lying-tool failure this command exists to stop.)
-ROOT="${CLAUDE_PLUGIN_ROOT:-.}"; cd "$ROOT" || exit 1
-if [ ! -d hooks ] || [ ! -f .claude-plugin/plugin.json ]; then
-  echo "hook-stocktake: '$ROOT' is not the dev-squad plugin root (no hooks/ + .claude-plugin/plugin.json)."
-  echo "Run this from the plugin repo, or set CLAUDE_PLUGIN_ROOT to it. Aborting rather than auditing the wrong tree."
-  exit 1
-fi
-# -I ignores binaries; exclude compiled/cache/git/test noise so counts are real.
-GREP() { grep "$@" -I --exclude-dir=__pycache__ --exclude-dir=.git --exclude='*.pyc' --exclude-dir=tests; }
-arts=$(GREP -rhoE '\.dev-squad/[A-Za-z0-9._/-]+' hooks/ 2>/dev/null \
-  | sed -E 's#^\.dev-squad/##' | grep -vE '/$' | grep -E '\.[a-z]+$' | sort -u)
-printf '%-26s %5s  %s\n' "ARTIFACT" "FILES" "AREAS (h=hooks c=cmd s=skill g=agent)  [FLAG]"
-for a in $arts; do
-  files=$(GREP -rl "$a" hooks/ commands/ skills/ agents/ 2>/dev/null | sort -u)
-  n=$(printf '%s' "$files" | grep -c .)
-  h=$(printf '%s\n' "$files" | grep -c '^hooks/');    c=$(printf '%s\n' "$files" | grep -c '^commands/')
-  s=$(printf '%s\n' "$files" | grep -c '^skills/');   g=$(printf '%s\n' "$files" | grep -c '^agents/')
-  flag=""
-  [ "$n" -le 1 ] && flag="  <-- ORPHAN (<=1 referencer: write-only or dead-end)"
-  [ "$n" -gt 1 ] && [ "$c" = 0 ] && [ "$s" = 0 ] && [ "$g" = 0 ] && flag="  (hooks-only: confirm producer AND consumer both present)"
-  printf '%-26s %5s  h=%s c=%s s=%s g=%s%s\n' "$a" "$n" "$h" "$c" "$s" "$g" "$flag"
-done
+python3 - <<'PY'
+import os, re, glob, sys
+ROOT = os.environ.get("CLAUDE_PLUGIN_ROOT") or "."
+os.chdir(ROOT)
+if not (os.path.isdir("hooks") and os.path.isfile(".claude-plugin/plugin.json")):
+    print("hook-stocktake: not the dev-squad plugin root (need hooks/ + .claude-plugin/plugin.json).")
+    print("Run from the plugin repo or set CLAUDE_PLUGIN_ROOT. Aborting rather than auditing the wrong tree.")
+    sys.exit(1)
+DEV = re.compile(r'\.dev-squad/([A-Za-z0-9._/-]+)')
+WRITE = re.compile(r'(>>?\s|\btee\b|open\([^)]*[\'"][aw]|\.write\()')
+READ = re.compile(r'(\bcat\b|\bhead\b|\btail\b|\bgrep\b|\bsed\b|\bawk\b|\bsource\b|\[\s*-[fs]\b|<\s|json\.load\(open|open\([^)]*[\'"]r)')
+def hooks():
+    return [f for f in sorted(glob.glob("hooks/*.sh")+glob.glob("hooks/*.py")) if "/tests/" not in f]
+def artifacts():
+    a=set()
+    for f in hooks():
+        for line in open(f, errors="ignore"):
+            for m in DEV.finditer(line):
+                p=m.group(1)
+                if not p.endswith("/") and re.search(r'\.[a-z]+$', p): a.add(p)
+    return sorted(a)
+def role(path, art):
+    text=open(path, errors="ignore").read()
+    vrs=re.findall(r'(?m)^\s*([A-Za-z_]\w*)\s*=\s*.*'+re.escape(art)+r'["\']?\s*$', text)
+    pats=[re.escape(art)]+[r'\$\{?'+v+r'\b' for v in vrs]+[r'\b'+v+r'\b' for v in vrs]
+    refre=re.compile("|".join(pats)); w=r=False
+    for line in text.splitlines():
+        if refre.search(line):
+            if WRITE.search(line): w=True
+            if READ.search(line): r=True
+    return w, r
+def prose(art):
+    fs=glob.glob("commands/**/*.md",recursive=True)+glob.glob("skills/**/*.md",recursive=True)+glob.glob("agents/**/*.md",recursive=True)
+    return [f for f in fs if art in open(f, errors="ignore").read()]
+print(f"{'ARTIFACT':28} {'HOOK-W':22} {'HOOK-R':22} PROSE  VERDICT")
+for a in artifacts():
+    w=[os.path.basename(h) for h in hooks() if role(h,a)[0]]
+    r=[os.path.basename(h) for h in hooks() if role(h,a)[1]]
+    p=prose(a)
+    if w and r: v="OK         deterministic loop closed"
+    elif w and not r: v="FRAGILE    det-write / PROSE-only read (pre-compact class)" if p else "ORPHAN     write-only (no consumer at all)"
+    elif r and not w: v="FRAGILE    det-read / PROSE-only write (fail-open class)" if p else "ORPHAN     read-only / dangling (no producer)"
+    else: v="prose-only (no hook either side)" if p else "?? unreferenced"
+    print(f"{a:28} {(','.join(w) or '-'):22} {(','.join(r) or '-'):22} {len(p):^5}  {v}")
+PY
 ```
 
 ## Interpreting the result
 
-The reference count is a robust signal (it survives variable-based redirects like `> "$STATE_FILE"`, which literal-path matching misses), but it is a **candidate filter, not a verdict** — confirm each flag by reading the files:
+The classification is real (write vs read, resolving variables), but the **severity is a judgment call** — read the file before acting:
 
-- **ORPHAN (`<=1` referencer)** — the artifact is touched by a single file. Either it is write-only (a hook saves it, nothing restores it — the bug this audit exists to catch) or read-only (a hook reads it, nothing produces it). Open the file and decide. A deliberate forensic/append log (e.g. a security warnings log meant for humans, not programmatic consumption) is a legitimate write-only — note it as intentional rather than "broken".
-- **hooks-only** — referenced only inside `hooks/`, never by a command/skill/agent. Fine for internal hook state (e.g. a governor that reads back its own budget file across invocations). Open the files and confirm one hook writes it AND one reads it; a pair of pure writers with no reader is still a dead-end.
-- **Otherwise** — the loop spans producers and consumers across areas; almost always healthy.
-
-One side being prose (an agent writes the file via its prompt, a hook reads it — or vice versa) is acceptable by design; flag it only if the prose side is the *restore* of something the user relies on surviving (that should be hook-enforced, not hoped for).
+- **ORPHAN** — no hook (and no prose) on one side. A genuine dead-end *unless* it is a deliberate forensic/append log meant for humans, not programmatic consumption (e.g. a security-warnings log) — note that as intentional, not broken.
+- **FRAGILE: det-write / PROSE-only read** (the pre-compact class) — a hook invests effort writing a file, but only an agent-prose instruction reads it. If the read is something the user relies on (restoring state, surfacing a failure), make the consumer a hook. If the producer also emits a deterministic pointer at the right moment (e.g. a Stop-hook message), it is softer.
+- **FRAGILE: det-read / PROSE-only write** (the fail-open class) — a hook makes a decision based on a file only an agent-prose instruction writes. **Dangerous when the hook is a safety gate** (absent/misformatted file → silent wrong pass — this is how `iteration-log.md`'s escalation gate failed open). **Acceptable when the consumer degrades gracefully** and the file is inherently agent-authored knowledge a hook cannot generate (`gotchas.md`, `design-tokens.md`, `memory.md`, `record.md`, `component-registry.json`, the core `workflow-active`). Decide which it is by reading what the hook DOES with the file.
+- **OK** — both sides are hooks. The loop is deterministically closed.
 
 ## Output
 
 ```
 Hook artifact stocktake: <N> artifacts audited
-  ORPHAN     — <artifact>: <write-only|read-only> (<the one file>) — <bug | intentional?>
-  HOOKS-ONLY — <artifact>: confirm producer + consumer (<files>)
-Clean: <count> artifacts with a closed loop
+  ORPHAN   — <artifact>: <write-only|read-only> (<file>) — <bug | intentional log?>
+  FRAGILE  — <artifact>: <pre-compact|fail-open> class — <safety-critical? then fix : by-design?>
+  OK       — <count> artifacts with a deterministic closed loop
 ```
 
-If every artifact has a closed loop: `All <N> artifacts have both a producer and a consumer. No dead-ends.`
+If every artifact is OK or by-design: `No dead-ends and no safety-critical prose legs.`
 
 Do not edit hooks — this is an audit. Hand the fix-list to the maintainer.

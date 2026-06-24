@@ -164,6 +164,7 @@ At workflow start, READ the canonical workflow definition:
 /dev-squad feature     -> .claude-plugin/workflows/feature-development.json
 /dev-squad fix         -> .claude-plugin/workflows/bug-fix.json
 /dev-squad refactor    -> .claude-plugin/workflows/refactoring.json
+/dev-squad readiness   -> .claude-plugin/workflows/saas-readiness-sprint.json
 ```
 
 Each phase in the JSON has `external_skills.preferred[]` listing which companion skills to invoke (with `invoked_by` agent and `rationale`). Use these as your dispatch source-of-truth. Fall back to implicit prompt knowledge if JSON missing.

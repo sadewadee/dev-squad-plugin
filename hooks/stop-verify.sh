@@ -173,6 +173,22 @@ if [ "$AUTO_MODE" = "auto" ]; then
     FLOOR_FAIL="${FLOOR_FAIL}unresolved P0/P1 findings; "
   fi
 
+  # Deterministic phase-completeness floor. The iteration-log check above is a PROSE handoff:
+  # coordinator.md:738 says a failed gate must write 'UNRESOLVED P1' to iteration-log.md so this
+  # hook picks it up — but if the agent forgets that line, the gate silently passes (fail-open).
+  # A failed gate also means "Do NOT pass", so it leaves the phase not-complete. Reading the phase
+  # status directly closes that gap without depending on the prose marker. Only pending/in_progress
+  # count as a miss; complete/skipped/absent do not (no false positives on legitimately skipped phases).
+  WF_CONTENT=$(cat ".dev-squad/workflow-active" 2>/dev/null)
+  INCOMPLETE_PHASES=""
+  for phase in ultraplan discover design scaffold ui_design implement review ship learn; do
+    st=$(printf '%s' "$WF_CONTENT" | grep -o "\"$phase\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | grep -o '"[^"]*"$' | tr -d '"')
+    if [ "$st" = "pending" ] || [ "$st" = "in_progress" ]; then
+      INCOMPLETE_PHASES="${INCOMPLETE_PHASES}${phase} "
+    fi
+  done
+  [ -n "$INCOMPLETE_PHASES" ] && FLOOR_FAIL="${FLOOR_FAIL}incomplete phases: ${INCOMPLETE_PHASES}; "
+
   if [ -f ".dev-squad/auto-run.json" ] && python3 -c "import json,sys; sys.exit(0 if json.load(open('.dev-squad/auto-run.json')).get('halted') else 1)" 2>/dev/null; then
     HALT_REASON=$(python3 -c "import json; print(json.load(open('.dev-squad/auto-run.json')).get('halt_reason') or 'budget exceeded')" 2>/dev/null)
     FLOOR_FAIL="${FLOOR_FAIL}governor halted run (${HALT_REASON}); "

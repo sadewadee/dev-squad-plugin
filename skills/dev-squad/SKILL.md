@@ -19,6 +19,7 @@ description: Invoke the dev-squad agent swarm for collaborative development. Ful
 - `/dev-squad migrate <description>` - Database migration workflow
 - `/dev-squad optimize <description>` - Query optimization workflow
 - `/dev-squad deploy-db <description>` - Database deployment workflow
+- `/dev-squad readiness [scope]` - SaaS pre-launch readiness sprint (6-A→6-H sub-phase decomposition, saas-readiness Section 9). Routes to `.claude-plugin/workflows/saas-readiness-sprint.json`. Invoked by build Phase 6 when 10+ P0/P1 items span 4+ domains.
 - `/dev-squad status` - Check swarm progress (active agents, phases, blockers)
 - `/dev-squad help` - Show available commands
 
