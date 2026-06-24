@@ -32,6 +32,30 @@ if [ -f "$WORKFLOW_FILE" ]; then
   echo ""
   echo "=== Current phase status — continue from where the workflow left off ==="
   echo ""
+
+  # 1.5 Auto-mode config sanity (H1). All three --auto safeguards (auto-guard, auto-governor,
+  # stop-verify) gate on mode=="auto" read from this prose-written file; a malformed config
+  # silently disables ALL of them, so an --auto run can proceed UNGUARDED without any signal.
+  # This does not block — it makes the misconfiguration visible.
+  AUTO_WARN=$(python3 - "$WORKFLOW_FILE" <<'PY' 2>/dev/null
+import json,sys
+try:
+    wf=json.load(open(sys.argv[1]))
+except Exception:
+    print("workflow-active is not valid JSON — the --auto safeguards cannot read 'mode' and the run is effectively UNGUARDED. Fix the file."); sys.exit(0)
+mode=(wf.get("mode") or "").strip().lower()
+if mode=="auto":
+    auto=wf.get("auto") or {}
+    missing=[k for k in ("started_at","max_total_dispatches","wall_clock_cap_min") if k not in auto]
+    if missing:
+        print("auto-mode is ON but the 'auto' object is missing: "+", ".join(missing)+" — caps fall back to defaults/governor-stamp; declare these in workflow-active for accurate budgets.")
+PY
+)
+  if [ -n "$AUTO_WARN" ]; then
+    echo "=== AUTO-MODE CONFIG WARNING (safeguards depend on this) ==="
+    echo "$AUTO_WARN"
+    echo ""
+  fi
 fi
 
 # 2. L3 — working memory (decisions/conventions). Head-limited to keep context small.

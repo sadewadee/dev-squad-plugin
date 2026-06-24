@@ -56,4 +56,17 @@ for pattern in "${BLOCKED_PATTERNS[@]}"; do
   fi
 done
 
+# Conditional guard: failure injection / destructive env manipulation (auditor Bucket D) is
+# permitted ONLY in an isolated staging env, signalled by the .dev-squad/staging-env flag.
+# auditor.md carries a prose "HARD GUARD" for this, but prose fires only if the agent remembers
+# to include it — this enforces the highest-risk patterns deterministically. (kill -SIG of a
+# worker pid stays prose-guarded: too ambiguous to match without false-positiving on legitimate
+# process kills.) When the flag IS present, these are allowed.
+if [ ! -f ".dev-squad/staging-env" ]; then
+  if echo "$COMMAND" | grep -Eq 'iptables|docker[ -]compose (stop|kill)'; then
+    echo "BLOCKED by dev-squad safety guard: '$COMMAND' is a failure-injection / destructive environment operation, allowed only in an isolated staging env. Create .dev-squad/staging-env (confirms: ephemeral, no real users, no real data) first, or run it manually outside dev-squad."
+    exit 2
+  fi
+fi
+
 exit 0

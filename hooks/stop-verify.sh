@@ -18,7 +18,7 @@ if [ ! -f ".dev-squad/workflow-active" ]; then
 fi
 
 # Read mode once here so both the no-project-files guard and the auto-mode block below share it
-AUTO_MODE=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('mode',''))" ".dev-squad/workflow-active" 2>/dev/null)
+AUTO_MODE=$(python3 -c "import json,sys; print((json.load(open(sys.argv[1])).get('mode') or '').strip().lower())" ".dev-squad/workflow-active" 2>/dev/null)
 
 # Skip if no project files detected (not in a project directory)
 # In auto mode, no project files means scaffold never ran — treat as floor-miss
