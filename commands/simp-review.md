@@ -21,6 +21,7 @@ Every finding states **what** to cut, **why** it's safe (provenance), and the **
    ```
 
    - `fix:` is **always** required and names the concrete target — the exact stdlib/native API, the installed dep that absorbs the job, or the surviving function and its merged signature.
+   - The fix must be the **leanest correct** option and **net-negative** — prefer delete / inline / reuse over any new abstraction. If the simplest correct fix isn't smaller than what it replaces, don't propose it. The cure is never bigger than the disease.
    - `why:` is **required for `delete`, `delete?`, and `merge`**; optional for the rest when self-evident.
 
 3. Tags:

@@ -21,6 +21,7 @@ A finding is only useful if the reader can act on it. So every line states three
    ```
 
    - `fix:` is **always** required and must name the concrete target — the exact stdlib/native API, the installed dependency that absorbs the job, or the surviving function and its merged signature. "Use the stdlib" is not a fix; "`Array.prototype.flat()`" is.
+   - The fix must be the **leanest correct** option and **net-negative** in code. Prefer delete / inline / call-the-existing over any new abstraction — a `merge` that adds a base class or wrapper to unify two functions is over-engineering the cure. If the simplest correct fix is not smaller than what it replaces, do not propose it. The cure is never bigger than the disease.
    - `why:` is **required for `delete`, `delete?`, and `merge`** (these carry root-cause and safety weight). For `stdlib`/`native`/`shrink`/`yagni` it may be omitted when self-evident.
 
 3. Tags:
